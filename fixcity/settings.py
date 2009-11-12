@@ -135,6 +135,15 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     )
 
 
+# Config needed for bootstrapping a spatial db for tests.
+TEST_RUNNER='django.contrib.gis.tests.run_tests'
+try:
+    POSTGIS_SQL_PATH = config.get('db', 'POSTGIS_SQL_PATH')
+except:
+    # fall back to default behavior, which works on some systems
+    # (notably not ubuntu, hence the need for a config option)
+    pass
+
 # Logging?
 import logging
 import sys
