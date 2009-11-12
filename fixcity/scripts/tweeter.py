@@ -7,16 +7,6 @@ import tweepy
 import pickle
 import os
 
-configfile = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'config.ini'))
-assert os.path.exists(configfile), "Config file %s not found" % configfile
-
-config = ConfigParser.RawConfigParser()
-
-config.read(configfile)
-auth = tweepy.BasicAuthHandler(config.get('twitter', 'user'),
-                               config.get('twitter', 'password'))
-api = tweepy.API(auth)
 
 def parse(tweet):
     # XXX what's the actual tweet format going to look like?
@@ -34,18 +24,20 @@ def get_tweets(since_id=None):
     http://apiwiki.twitter.com/Things-Every-Developer-Should-Know#6Therearepaginationlimits
     """
     tweets = []
+    max_pages = 16
+    max_per_page = 200
     for tweet_func in api.mentions, api.direct_messages:
-        for page in range(1, 17):
+        for page in range(1, max_pages + 1):
             if since_id is not None:
-                more_tweets = tweet_func(count=200, page=page, since_id=since_id)
+                more_tweets = tweet_func(count=max_per_page, page=page, since_id=since_id)
             else:
-                more_tweets = tweet_func(count=200, page=page)
+                more_tweets = tweet_func(count=max_per_page, page=page)
             tweets += more_tweets
-            if len(more_tweets) < 200:
+            if len(more_tweets) < max_per_page:
                 break
     return sorted(tweets, key=lambda t: t.id, reverse=True)
 
-def main(url, recent_only=True):
+def main(url, twitter_api, recent_only=True):
     last_processed_id = None
     if recent_only:
         status_file_path = '/tmp/tweet.pickle'
@@ -66,7 +58,6 @@ def main(url, recent_only=True):
     for tweet in all_tweets:
         title, location = parse(tweet)
         if title and location:
-            import pdb; pdb.set_trace()
             new_rack(title, location, tweet.user.name, url)
 
         # TODO: batch-notification of success to cut down on posts:
@@ -82,7 +73,7 @@ def main(url, recent_only=True):
         # - build a bit.ly version of the URL and insert it in the message
         # - tweet the message
         # - repeat until we're out of users, or hit our API limit
-    print api.rate_limit_status()
+    print twitter_api.rate_limit_status()
 
 
 
@@ -173,5 +164,20 @@ def new_rack(title, address, user, url):
         return
 
 
+def api_factory():
+    configfile = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), '..', 'config.ini'))
+    assert os.path.exists(configfile), "Config file %s not found" % configfile
+
+    config = ConfigParser.RawConfigParser()
+
+    config.read(configfile)
+    auth = tweepy.BasicAuthHandler(config.get('twitter', 'user'),
+                                   config.get('twitter', 'password'))
+    api = tweepy.API(auth)
+    return api
+
 if __name__ == '__main__':
-    main('http://localhost:8000/rack/', False)
+    api = api_factory()
+    main('http://localhost:8000/rack/', api, False)
+
