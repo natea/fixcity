@@ -9,6 +9,10 @@ DEFAULT_FROM_EMAIL = foo@example.com
 
 GOOGLE_ANALYTICS_KEY =
 
+[twitter]
+user =
+password =
+
 [db]
 
 # Engine: 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
