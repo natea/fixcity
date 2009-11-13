@@ -27,5 +27,6 @@ setup(name='fixcity',
         'wsgilog>=0.1',
         'httplib2',
         'poster',
+        'mock',
         ],
       )

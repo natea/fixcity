@@ -2,92 +2,110 @@
 proof-of-concept twitter bot
 """
 
-import ConfigParser
-import tweepy
-import pickle
-import os
-
-
-def parse(tweet):
-    # XXX what's the actual tweet format going to look like?
-    try:
-        title, location = tweet.text.split('#address', 1)
-        return title, location
-    except ValueError:
-        print "couldn't parse tweet %r" % tweet.text
-        return None, None
-
-def get_tweets(since_id=None):
-    """
-    Try to get all our mentions and direct messages.
-    Subject to Twitter's pagination limits,
-    http://apiwiki.twitter.com/Things-Every-Developer-Should-Know#6Therearepaginationlimits
-    """
-    tweets = []
-    max_pages = 16
-    max_per_page = 200
-    for tweet_func in api.mentions, api.direct_messages:
-        for page in range(1, max_pages + 1):
-            if since_id is not None:
-                more_tweets = tweet_func(count=max_per_page, page=page, since_id=since_id)
-            else:
-                more_tweets = tweet_func(count=max_per_page, page=page)
-            tweets += more_tweets
-            if len(more_tweets) < max_per_page:
-                break
-    return sorted(tweets, key=lambda t: t.id, reverse=True)
-
-def main(url, twitter_api, recent_only=True):
-    last_processed_id = None
-    if recent_only:
-        status_file_path = '/tmp/tweet.pickle'
-        try:
-            statusfile = open(status_file_path, 'r')
-            status = pickle.load(statusfile)
-            last_processed_id = status['last_processed_id']
-            statusfile.close()
-        except (IOError, EOFError):
-            pass
-    all_tweets = get_tweets(last_processed_id)
-    if all_tweets and last_processed_id:
-        statusfile = open(status_file_path, 'w')
-        pickle.dump({'last_processed_id': all_tweets[0].id}, statusfile)
-        statusfile.close()
-    else:
-        print "No new tweets"
-    for tweet in all_tweets:
-        title, location = parse(tweet)
-        if title and location:
-            new_rack(title, location, tweet.user.name, url)
-
-        # TODO: batch-notification of success to cut down on posts:
-        # if success, maintain a queue of recently successful posts,
-        # and every N minutes:
-        # - start with a template success message like
-        # 'thanks for rack suggestions, see http://bit.ly/XXX'
-        # - while chars < 140:
-        # -   pop a suggestion from the queue
-        # -   prepend @username to the message
-        # -   append &id=X to a url like http://fixcity.org/rack/by_id?...
-        # -   ... this would be a new view that shows all the id'd racks.
-        # - build a bit.ly version of the URL and insert it in the message
-        # - tweet the message
-        # - repeat until we're out of users, or hit our API limit
-    print twitter_api.rate_limit_status()
-
-
-
 from datetime import datetime
-import time
 from django.utils import simplejson as json
+import ConfigParser
 import httplib2
+import os
+import pickle
 import socket
+import time
+import tweepy
+
+
+class TwitterFetcher(object):
+
+    def __init__(self, twitter_api, username):
+        self.twitter_api = twitter_api
+        self.username = username
+        
+    def parse(self, tweet):
+        msg = tweet.text.replace('@' + self.username, '')
+        # XXX what's the actual tweet format going to look like?
+        try:
+            title, location = msg.split('#bikerack', 1)
+            return title.strip(), location.strip()
+        except ValueError:
+            print "couldn't parse tweet %r" % msg
+            return None, None
+
+    def get_tweets(self, since_id=None):
+        """
+        Try to get all our mentions and direct messages.
+        Subject to Twitter's pagination limits,
+        http://apiwiki.twitter.com/Things-Every-Developer-Should-Know#6Therearepaginationlimits
+        """
+        tweets = []
+        max_pages = 16
+        max_per_page = 200
+        for tweet_func in (self.twitter_api.mentions,
+                           self.twitter_api.direct_messages):
+            for page in range(1, max_pages + 1):
+                if since_id is not None:
+                    more_tweets = tweet_func(count=max_per_page, page=page, since_id=since_id)
+                else:
+                    more_tweets = tweet_func(count=max_per_page, page=page)
+                tweets += more_tweets
+                if len(more_tweets) < max_per_page:
+                    break
+        tweets.sort(key=lambda t: t.id, reverse=True)
+        return tweets
+
+
+class RackBuilder(object):
+
+    def __init__(self, url, config, api):
+        self.url = url
+        self.username = config.get('twitter', 'user')
+        self.password = config.get('twitter', 'password')
+        self.twitter_api = api
+    
+    def main(self, recent_only=True):
+        url = self.url
+        last_processed_id = None
+        if recent_only:
+            status_file_path = '/tmp/tweet.pickle'
+            try:
+                statusfile = open(status_file_path, 'r')
+                status = pickle.load(statusfile)
+                last_processed_id = status['last_processed_id']
+                statusfile.close()
+            except (IOError, EOFError):
+                pass
+        twit = TwitterFetcher(self.twitter_api, self.username)
+        all_tweets = twit.get_tweets(last_processed_id)
+        if all_tweets and last_processed_id:
+            statusfile = open(status_file_path, 'w')
+            pickle.dump({'last_processed_id': all_tweets[0].id}, statusfile)
+            statusfile.close()
+        for tweet in all_tweets:
+            title, location = twit.parse(tweet)
+            if title and location:
+                new_rack(title, location, tweet.user.name, url)
+
+            # TODO: batch-notification of success to cut down on posts:
+            # if success, maintain a queue of recently successful posts,
+            # and every N minutes:
+            # - start with a template success message like
+            # 'thanks for rack suggestions, see http://bit.ly/XXX'
+            # - while chars < 140:
+            # -   pop a suggestion from the queue
+            # -   prepend @username to the message
+            # -   append &id=X to a url like http://fixcity.org/rack/by_id?...
+            # -   ... this would be a new view that shows all the id'd racks.
+            # - build a bit.ly version of the URL and insert it in the message
+            # - tweet the message
+            # - repeat until we're out of users, or hit our API limit
+            
+        print self.twitter_api.rate_limit_status()
+
+
+
 
 
 def bounce(*args, **kw):
-    print "OUCH %s %s" % (str(args), str(kw))
     # XXX TODO
-    "whoopsie"
+    print "OUCH %s %s" % (str(args), str(kw))
 
 def adapt_errors(adict):
     # XXX TODO
@@ -164,20 +182,25 @@ def new_rack(title, address, user, url):
         return
 
 
-def api_factory():
+def get_config():
+    import fixcity
     configfile = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '..', 'config.ini'))
+        os.path.join(os.path.dirname(fixcity.__file__), 'config.ini'))
     assert os.path.exists(configfile), "Config file %s not found" % configfile
-
     config = ConfigParser.RawConfigParser()
-
     config.read(configfile)
-    auth = tweepy.BasicAuthHandler(config.get('twitter', 'user'),
-                                   config.get('twitter', 'password'))
-    api = tweepy.API(auth)
-    return api
+    return config
 
+
+def api_factory(config):
+     auth = tweepy.BasicAuthHandler(config.get('twitter', 'user'),
+                                    config.get('twitter', 'password'))
+     api = tweepy.API(auth)
+     return api
+    
 if __name__ == '__main__':
-    api = api_factory()
-    main('http://localhost:8000/rack/', api, False)
+    config = get_config()
+    api = api_factory(config)
+    builder = RackBuilder('http://localhost:8000/rack/', config, api)
+    builder.main(False)
 
