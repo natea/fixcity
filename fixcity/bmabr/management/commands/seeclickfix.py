@@ -30,7 +30,7 @@ def create_rack(json_data):
 
 def fetch_feed(feed_url):
     #XXX for now just stub it out for testing
-    return [{"rating":1,"description":"I need a bike rack for my mobster fixie crew.","page":1,"lat":40.7172736790292,"object_id":"issue9738","address":"1315 Grand St, New York, NY 11211","lng":-73.9256286621094,"summary":"Junkyard bike rack","issue_id":9738,"id":"issue9738","created_at":"11\/12\/2009 at 05:45PM","updated_at_raw":"2009/11/12 17:45:36 -0500","status":"Open","updated_at":"11\/12\/2009 at 05:45PM"}]
+    return [{"rating":1,"description":"I need a bike rack for my mobster fixie crew.","page":1,"lat":40.7172736790292,"object_id":"issue9738","address":"1315 Grand St, New York, NY 11211","lng":-73.9256286621094,"summary":"Junkyard bike rack","issue_id":9738,"id":"issue9738","created_at":"11/12/2009 at 05:45PM","updated_at_raw":"2009/11/12 17:45:36 -0500","status":"Open","updated_at":"11/12/2009 at 05:45PM"}]
 
 def get_latest_date_seen():
     #XXX need to fill this in
@@ -41,7 +41,7 @@ def set_latest_date_seen(date):
 
 def create_datetime_from_jsonstring(s):
     """return a datetime object given a string in a seeclickfix format"""
-    return datetime.strptime(s, '%m\\/%d\\/%Y at %I:%M%p')
+    return datetime.strptime(s, '%m/%d/%Y at %I:%M%p')
 
 
 class Command(BaseCommand):
