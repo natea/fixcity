@@ -13,6 +13,8 @@ import time
 import tweepy
 
 
+http = httplib2.Http()
+
 class TwitterFetcher(object):
 
     def __init__(self, twitter_api, username):
@@ -129,7 +131,6 @@ def new_rack(title, address, user, url):
                 )
 
     jsondata = json.dumps(data)
-    http = httplib2.Http()
     headers = {'Content-type': 'application/json'}
             
     # TODO: if errors, respond to user (privately?) w/ error info.

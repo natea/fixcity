@@ -21,18 +21,17 @@ class TestTweeter(unittest.TestCase):
         fetcher = tweeter.TwitterFetcher(None, username)
         self.assertEqual(('a title', 'an address'), fetcher.parse(StubTweet))
 
+    @mock.patch('fixcity.bmabr.tweeter.new_rack')
     @mock.patch('tweepy.API')
-    def test_main(self, MockTweepyAPI):
-
+    def test_main(self, MockTweepyAPI, mock_new_rack):
         tweepy_mock = MockTweepyAPI()
-
         user = 'fixcity_test'
-        class Config(object):
+        class MockConfig(object):
             def get(self, *args, **kw):
                 return user # we don't care about anything else.
 
         builder = tweeter.RackBuilder('http://localhost:8000/rack/',
-                                      Config(), tweepy_mock)
+                                      MockConfig(), tweepy_mock)
         # The Mock API works OK but setting attrs is a bit tedious...
         # i wish you could pass a dict as the spec argument.
         status = mock.Mock(['id', 'text', 'user'])
@@ -42,10 +41,9 @@ class TestTweeter(unittest.TestCase):
         status.user.name = 'some twitter user'
         tweepy_mock.mentions.return_value = [status]
         tweepy_mock.direct_messages.return_value = []
-        # XXX TO DO: mock httplib2.Http.
-        # XXX TO DO: main doesn't return anything, test
-        # for side effects
         builder.main(False)
-
-    
-                      
+        self.assertEqual(mock_new_rack.call_count, 1)
+        self.assertEqual(mock_new_rack.call_args,
+                         (('mention', '13 thames st, brooklyn, ny',
+                           'some twitter user',
+                           'http://localhost:8000/rack/'), {}))
