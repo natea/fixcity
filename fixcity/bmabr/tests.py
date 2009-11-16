@@ -7,12 +7,8 @@ import mock
 
 class TestTweeter(unittest.TestCase):
 
-    def setUp(self):
+    def test_new_rack(self):
         pass
-
-    def tearDown(self):
-        pass
-
 
     def test_parse(self):
         username = 'fixcity_testing'
