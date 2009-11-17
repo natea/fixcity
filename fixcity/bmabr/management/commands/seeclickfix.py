@@ -5,9 +5,12 @@ from datetime import datetime
 from django.contrib.gis.geos.point import Point
 from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
+from pickle import dump
+from pickle import load
 from fixcity.bmabr.models import Rack
 from fixcity.bmabr.views import SRID
 import httplib2
+import os
 
 def create_rack(json_data):
     """create a bike rack given json_data as returned by seeclickfix"""
@@ -41,12 +44,30 @@ def fetch_feed(feed_url):
     assert response.status == 200, "Did not receive 200 response from seeclickfix"
     return json.loads(content)
 
+def get_latest_pickle_path():
+    curpath = os.path.abspath(__file__)
+    dirname = os.path.dirname(curpath)
+    return os.path.join(dirname, 'latest.pickle')
+
 def get_latest_date_seen():
-    #XXX need to fill this in
-    return datetime(2009, 1, 1)
+    curpath = os.path.abspath(__file__)
+    dirname = os.path.dirname(curpath)
+    pickle_path = get_latest_pickle_path()
+    try:
+        f = open(pickle_path)
+        latest_date = load(f)
+        f.close()
+    except IOError:
+        # use a date for racks that we haven't seen yet
+        latest_date = datetime(2009, 1, 1)
+    return latest_date
 
 def set_latest_date_seen(date):
     """keep track of the latest date to avoid making repetitions"""
+    pickle_path = get_latest_pickle_path()
+    f = open(pickle_path, 'w')
+    dump(date, f)
+    f.close()
 
 def create_datetime_from_jsonstring(s):
     """return a datetime object given a string in a seeclickfix format"""
