@@ -1,6 +1,11 @@
 /*-----------------------
 General styles
 -----------------------*/
+@font-face {
+  font-family: Museo; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
+  src: url(/site_media/fonts/Museu500-Regular.otf) format("opentype");
+}
+
 body {
 font: small helvetica, verdana, sans-serif;
 background: #fff;
@@ -495,6 +500,7 @@ background: #00b0f1;
 border: 0 none transparent;
 color: #fff;
 padding: 0.5em;
+font-family: Museo, helvetica,verdana,sans-serif;
 }
 
 #content form input.button,
