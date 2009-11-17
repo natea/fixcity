@@ -25,7 +25,7 @@ class Rack(models.Model):
     title = models.CharField(max_length=50)
     date = models.DateTimeField()
     description = models.CharField(max_length=300, blank=True)
-    email = models.EmailField()
+    email = models.EmailField(blank=True)
     photo = ImageWithThumbnailsField(
                               upload_to='images/racks/', 
                               thumbnail={'size': (100, 100)},
@@ -165,6 +165,19 @@ class RackForm(ModelForm):
                 raise ValidationError(errors)
         return verified
 
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        if self.is_bound:
+            if not cleaned_data.get("email") or self.instance.source:
+                # FIXME: this isn't a very useful msg to the end user.
+                raise ValidationError(
+                    "If email address is not provided, another source "
+                    "must be specified")
+
+        # Always return the full collection of cleaned data.
+        return cleaned_data
+        
+    
 class CommentForm(ModelForm): 
     class Meta: 
         model = Comment
