@@ -28,7 +28,6 @@ urlpatterns = patterns(
 
     (r'^geocode/$', 'fixcity.bmabr.views.geocode'),
     (r'^reverse/$', 'fixcity.bmabr.views.reverse_geocode'),
-    (r'^getcommunityboard/$', 'fixcity.bmabr.views.get_communityboard'),
    
 
     (r'verify/$','fixcity.bmabr.views.verify'),
