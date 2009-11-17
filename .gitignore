@@ -2,5 +2,6 @@
 *~
 *.egg-info
 fixcity/media/images/racks/*
+fixcity/uploads/*
 fixcity/config.ini
 fixcity/media/openlayers/lib
