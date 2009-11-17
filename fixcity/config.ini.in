@@ -17,6 +17,11 @@ MEDIA_ROOT = uploads
 # This is for CSS, JS, etc.
 STATIC_DOC_ROOT = media
 
+
+[twitter]
+user =
+password =
+
 [db]
 
 # Engine: 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
@@ -36,3 +41,8 @@ DATABASE_HOST = localhost
 
 # Set to empty string for default. Not used with sqlite3.         
 DATABASE_PORT =       
+
+# Uncomment this and tweak as needed if you have problems running
+# tests on eg. Ubuntu.
+# It should point to the location of lwpostgis.sql and spatial_ref_sys.sql.
+#POSTGIS_SQL_PATH = /usr/share/postgresql-8.3-postgis/

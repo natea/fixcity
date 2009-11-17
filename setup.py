@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 version='0.1dev'
 
 install_requires=[
-      'geopy',
+      'geopy==dev,>=0.93dev-r84',
       'sorl-thumbnail>=3.2.2',
       'Django>=1.1.1',
       'django-registration>=0.7',
@@ -12,6 +12,7 @@ install_requires=[
       'wsgilog>=0.1',
       'httplib2',
       'poster',
+      'mock',
       ]
 
 import sys

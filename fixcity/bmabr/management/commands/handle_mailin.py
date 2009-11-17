@@ -217,7 +217,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         else:
             #msg_file = '/var/tmp/msg.txt'
             msg_file = os.path.join(self.TMPDIR, 'msg.txt')
-
+ 
         print 'TD: saving email to %s' % msg_file
         fx = open(msg_file, 'wb')
         fx.write('%s' % message)
@@ -637,6 +637,10 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                         %(status, original, file_size, max_size)
                 continue
 
+            # We use SimpleUploadedFile because it conveniently
+            # supports the subset of file-like behavior needed by
+            # poster.  Too bad, that's the last reason we really need
+            # to import anything from django.
             results[u'photo'] = SimpleUploadedFile.from_dict(
                 {'filename': filename, 'content': text,
                  'content-type': 'image/jpeg'})
