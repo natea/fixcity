@@ -64,6 +64,7 @@ function loadMap() {
             var this_li = li_template.clone();
             this_li.find("h3").text("No racks in this area.");
             this_li.show();
+            this_li.find("span.rack-verified").hide();
             $("#racklist").append(this_li);
         }
         for (var i = 0; i < layer.features.length; ++i) {
@@ -167,7 +168,8 @@ function loadMap() {
 
     function replaceFeatures(layer, newfeatures) {
       // Remove old features
-      for (var index=0; index<layer.features.length; ++index) {
+
+      for (var index=layer.features.length - 1; index>=0; --index) {
           var oldf = layer.features[index];
           var found = false;
           for (var search=0; search<newfeatures.length; ++search) {
@@ -178,6 +180,13 @@ function loadMap() {
                   break;
                 }
                 found = true;
+		// Even if the feature is the same, pagination might be different,
+		// and the order might not be the same as the order in the KML,
+		// so we need the new pagination always.
+		oldf.attributes.page_previous = newf.attributes.page_previous;
+		oldf.attributes.page_next = newf.attributes.page_next;
+		oldf.attributes.num_pages = newf.attributes.num_pages;
+		oldf.attributes.page_number = newf.attributes.page_number;
                 break;
               }
           }
@@ -230,7 +239,6 @@ function loadMap() {
                   }
               }
           }
-
 
 	  replaceFeatures(this.layer, resp.features);
 	  this.layer.events.triggerEvent("loadend");

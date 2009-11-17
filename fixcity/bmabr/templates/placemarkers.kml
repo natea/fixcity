@@ -23,11 +23,6 @@
         <Data name="verified"><value>true</value></Data>
       {% endif %}
 
-      {% if forloop.first %}
-        <!-- let's sneak pagination in here. 
-             I tried to use http://tools.ietf.org/html/rfc5005#section-3
-             but the KML parser in OpenLayers doesn't handle it. 
-         -->
         <Data name="page_number"><value>{{page.number}}</value></Data>
 
         {% if page.has_previous %}
@@ -37,7 +32,7 @@
           <Data name="page_next"><value>{{page.next_page_number}}</value></Data>
         {% endif %}
         <Data name="num_pages"><value>{{page.paginator.num_pages}}</value></Data>
-      {% endif %}
+
     </ExtendedData>      
 
   </Placemark>

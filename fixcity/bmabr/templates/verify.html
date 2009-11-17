@@ -62,32 +62,6 @@
 
     </p>
 
-
-<!--
-    <p id="pagination">
-      {% if racks_page.has_previous %}
-        <a href="?page={{ racks_page.previous_page_number }}">Previous Page</a>
-      {% endif %}
-
-      {% for page_number in page_numbers %}
-        {% ifequal page_number racks_page.number %}
-          <span id="current-page">{{ page_number }}</span>
-        {% else %}
-          {% ifequal page_number "..." %}
-            ...
-          {% else %}
-            <a href="?page={{page_number}}">{{page_number}}</a>
-          {% endifequal %}
-
-        {% endifequal %}
-      {% endfor %}
-
-      {% if racks_page.has_next %}
-        <a href="?page={{ racks_page.next_page_number }}">Next Page</a>
-      {% endif %}
-    </p>
--->
-
 </div><!-- /#racks -->
 <div id="verify-map-wrap">
   <div id="verify-map"><div id="map-legend" class="pngfix"></div></div>
