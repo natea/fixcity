@@ -77,7 +77,7 @@ function loadMap(draggable) {
       lon: lon
     },
     function (data) {
-      $("#address").val(data).change();
+      $("#address").val(data).effect("highlight", {color: "#44c5f5"}, 3000).change();
       $("#geocoded").val(1);
     });
   }
