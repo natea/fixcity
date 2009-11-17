@@ -14,6 +14,8 @@ from fixcity.bmabr.views import SRID
 import httplib2
 import os
 
+SEECLICKFIX_DOMAIN = 'http://www.seeclickfix.com'
+
 def create_rack(json_data):
     """create a bike rack given json_data as returned by seeclickfix"""
     title = json_data['summary']
@@ -47,7 +49,7 @@ def create_rack(json_data):
 
 def generate_image_url(image_link):
     """generate an absolute seeclickfix url from a relative image url"""
-    return 'http://seeclickfix.com%s' % image_link
+    return SEECLICKFIX_DOMAIN + image_link
 
 def fetch_feed(feed_url):
     """fetch a json feed from seeclick fix and load into a python object"""
@@ -93,7 +95,7 @@ def fetch_issue(issue_id):
     this has some additional information we're interested in, like who the rack
     was submitted by and if it contains an image"""
 
-    url = 'http://seeclickfix.com/issues/%d.json' % issue_id
+    url = '%s/issues/%d.json' % (SEECLICKFIX_DOMAIN, issue_id)
     return fetch_feed(url)[0]
 
 
