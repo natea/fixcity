@@ -39,13 +39,46 @@ class Rack(models.Model):
     location = models.PointField(srid=4326)
 
     verified = models.BooleanField(default=False, blank=True)
+
+    # keep track of where the rack was submitted from
+    # if not set, that means it was submitted from the web
+    source = models.ForeignKey('Source', null=True)
     
     objects = models.GeoManager()
 
-
-
     def __unicode__(self):
         return self.address
+
+
+
+class Source(models.Model):
+    """base class representing the source of where a rack was submitted from"""
+
+    # string based name used to identify where a source came from
+    name = models.CharField(max_length=20)
+
+
+class EmailSource(Source):
+    address = models.EmailField()
+
+
+class TwitterSource(Source):
+    user = models.CharField(max_length=50)
+    status_id = models.IntegerField()
+
+    def get_absolute_url(self):
+        user = self.user
+        status_id = self.status_id
+        return 'http://twitter.com/%(user)s/%(status_id)d' % locals()
+
+
+class SeeClickFixSource(Source):
+    issue_id = models.IntegerField()
+    image_url = models.URLField(blank=True)
+
+    def get_absolute_url(self):
+        return 'http://www.seeclickfix.com/issues/%d' % self.issue_id
+
 
 
 class StatementOfSupport(models.Model): 
