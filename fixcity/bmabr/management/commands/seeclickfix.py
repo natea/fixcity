@@ -22,13 +22,10 @@ def create_rack(json_data):
     lat = json_data['lat']
     lng = json_data['lng']
     location = str(Point(lng, lat, srid=SRID))
-    # XXX how do we handle user?
-    user = u'seeclickfix'
     rack = Rack(title=title,
                 description=description,
                 address=address,
                 date=date,
-                user=user,
                 location=location,
                 )
     return rack
