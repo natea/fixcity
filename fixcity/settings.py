@@ -55,14 +55,21 @@ SITE_ID = 1
 # to load the internationalization machinery.
 USE_I18N = True
 
-# Absolute path to the directory that holds media.
-# Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = os.path.join(HERE, 'media')
+
+# Absolute path that serves RESOURCE media (css, js, etc).
+STATIC_DOC_ROOT = config.get('main', 'STATIC_DOC_ROOT')
+if not STATIC_DOC_ROOT.startswith('/'):
+    STATIC_DOC_ROOT = os.path.abspath(os.path.join(HERE, STATIC_DOC_ROOT))
+
+# Absolute path to the directory that holds UPLOADED media.
+MEDIA_ROOT = config.get('main', 'MEDIA_ROOT')
+if not MEDIA_ROOT.startswith('/'):
+    MEDIA_ROOT = os.path.abspath(os.path.join(HERE, MEDIA_ROOT))
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = '/site_media/'
+MEDIA_URL = '/uploads/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -91,8 +98,6 @@ MIDDLEWARE_CLASSES = (
 )
 
 ROOT_URLCONF = 'fixcity.urls'
-
-STATIC_DOC_ROOT = MEDIA_ROOT
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".

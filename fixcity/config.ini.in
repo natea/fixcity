@@ -9,6 +9,14 @@ DEFAULT_FROM_EMAIL = foo@example.com
 
 GOOGLE_ANALYTICS_KEY =
 
+# This is for uploaded files. 
+# It's probably advisable to use an absolute path outside your source tree
+# so you don't have to remember to copy them if you do a new build.
+MEDIA_ROOT = uploads
+
+# This is for CSS, JS, etc.
+STATIC_DOC_ROOT = media
+
 [db]
 
 # Engine: 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
