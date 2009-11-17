@@ -16,7 +16,6 @@ from django.shortcuts import get_object_or_404
 from django.utils.http import base36_to_int
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.gis.geos import fromstr
 from django.contrib.gis.geos.point import Point
 from django.contrib.gis.geos.polygon import Polygon
 from django.contrib.gis.shortcuts import render_to_kml
@@ -182,53 +181,8 @@ def submit(request):
 
 def verify(request): 
     racks_query = Rack.objects.order_by(*DEFAULT_RACK_ORDER)
-    paginator = Paginator(racks_query, 5)
-
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
-    # If page request (9999) is out of range, deliver last page of results.
-    try:
-        racks_page = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        racks_page = paginator.page(paginator.num_pages)
-
-    # XXX Do we still need this awfulness?
-    # Pagination link clustering logic. Tried doing this purely in the
-    # template, it was hideous.  The goal is to have page links like
-    # (when eg. viewing page 7): '1 ... 5 6 7 8 9 ... 18' with a
-    # cluster in the middle.    
-    # It's a bit easier if we just generate a list of page numbers that
-    # the UI should show, and have the template only deal with markup.
-    page_numbers = []
-    pagination_cluster_size = 5
-    if paginator.num_pages <= pagination_cluster_size + 2:
-        # There's not enough pages to need clustering.
-        page_numbers = range(1, paginator.num_pages + 1)
-    else:
-        page_numbers.append(1)
-        cluster_start = max(2,
-                            racks_page.number - (pagination_cluster_size / 2))
-        cluster_start = min(cluster_start,
-                            paginator.num_pages - pagination_cluster_size)
-        cluster_end = min(cluster_start + pagination_cluster_size,
-                          paginator.num_pages)
-        middle_cluster = range(cluster_start, cluster_end)
-        if middle_cluster[0] > 2:
-            # There's a gap here.
-            page_numbers.append('...')
-        page_numbers.extend(middle_cluster)
-        if middle_cluster[-1] < (paginator.num_pages - 1):
-            # There's a gap here.
-            page_numbers.append('...')
-        page_numbers.append(paginator.num_pages)
-    if page_numbers == [1]:
-        page_numbers = []
     return render_to_response('verify.html', { 
             'rack_query': racks_query,
-            'racks_page': racks_page,
-            'page_numbers': page_numbers,
             },
             context_instance=RequestContext(request))
 

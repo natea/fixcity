@@ -3,7 +3,7 @@ from django.forms import ModelForm, ValidationError
 from sorl.thumbnail.fields import ImageWithThumbnailsField 
 
 
-class  CommunityBoard(models.Model):
+class CommunityBoard(models.Model):
     gid = models.IntegerField(primary_key=True)
     borocd = models.IntegerField()
     name = models.CharField(max_length=10)
