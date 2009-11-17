@@ -84,7 +84,7 @@ class Command(BaseCommand):
         racks_saved = []
         for json_data in json_data_list:
             date = create_datetime_from_jsonstring(json_data['created_at'])
-            if date < latest_date_seen:
+            if date <= latest_date_seen:
                 continue
             rack = create_rack(json_data)
             rack.save()
