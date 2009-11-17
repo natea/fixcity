@@ -774,6 +774,60 @@ background: #fff;
 color: #44c5f5;	
 }
 
+/* popups */
+
+body .olPopup {
+background: transparent url(/site_media/img/map-popup-bg.png) no-repeat !important;
+width:300px !important;
+height: 78px !important;
+padding: 3px 14px 3px 3px !important;
+}
+
+body .olFramedCloudPopupContent {
+padding: 0 0 0 5px !important;
+background: transparent none !important;
+}
+
+body .olPopupCloseBox {
+background:transparent url(/site_media/img/close.gif) no-repeat scroll 0 0;
+top: 7px !important;
+right: 21px !important;
+}
+
+body .olPopup div.rack-info {
+width: 280px;
+height: 69px;
+}
+
+body .olPopup img {
+width: 50px;
+float: left;
+margin-left: -3px;
+}
+
+* html body .olPopup img {
+margin-left: -1px;
+}
+
+body .olPopup h3 {
+color: #57bbf1;
+margin: 0 0 0.2em 55px;
+font-size: 1.1em;
+}
+
+body .olPopup h4 {
+color: #e1ab25;
+font-size: 1em;
+margin: 0 0 0.1em 55px;
+}
+
+body .olPopup h5 {
+background: url(/site_media/img/tick.png) 3px 50% no-repeat;
+color: #a5c665;
+padding: 2px 0 2px 22px;
+font-size: 1em;
+margin: 0 0 0 55px;
+}
 
 /* - */
 
@@ -782,22 +836,5 @@ border-top: 1px solid #8fb9cc;
 padding: 1em 0;
 margin: 1em auto;
 text-align: right;
-
-}
-body .olPopup {
-background: transparent url(/site_media/img/map-popup-bg.png) no-repeat !important;
-width:243px !important;
-height: 88px !important;
-padding: 3px 14px 3px 3px !important;
-}
-
-body .olFramedCloudPopupContent {
-padding: 0 0 0 5px !important;
-}
-
-body .olPopupCloseBox {
-background:transparent url(/site_media/img/close.gif) no-repeat scroll 0 0;
-top: 10px !important;
-right: 15px !important;
 }
 
