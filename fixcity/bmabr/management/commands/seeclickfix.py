@@ -34,9 +34,6 @@ def create_rack(json_data):
 def fetch_feed(feed_url):
     """fetch a json feed from seeclick fix and load into a python object"""
 
-    # this stub is what it would typically look like
-    #return [{"rating":1,"description":"I need a bike rack for my mobster fixie crew.","page":1,"lat":40.7172736790292,"object_id":"issue9738","address":"1315 Grand St, New York, NY 11211","lng":-73.9256286621094,"summary":"Junkyard bike rack","issue_id":9738,"id":"issue9738","created_at":"11/12/2009 at 05:45PM","updated_at_raw":"2009/11/12 17:45:36 -0500","status":"Open","updated_at":"11/12/2009 at 05:45PM"}]
-
     http = httplib2.Http()
     response, content = http.request(feed_url)
     assert response.status == 200, "Did not receive 200 response from seeclickfix"
