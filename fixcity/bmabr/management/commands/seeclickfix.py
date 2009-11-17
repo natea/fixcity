@@ -9,6 +9,7 @@ from django.utils import simplejson as json
 from pickle import dump
 from pickle import load
 from fixcity.bmabr.models import Rack
+from fixcity.bmabr.models import SeeClickFixSource
 from fixcity.bmabr.views import SRID
 import httplib2
 import os
@@ -19,17 +20,34 @@ def create_rack(json_data):
     address = json_data['address']
     description = json_data['description']
     date = create_datetime_from_jsonstring(json_data['created_at'])
-    # skip photo for now
     lat = json_data['lat']
     lng = json_data['lng']
     location = str(Point(lng, lat, srid=SRID))
+
+    # seeclickfix source information
+    issue_id = int(json_data['issue_id'])
+    image_link = json_data.get('public_filename')
+    if image_link is not None:
+        image_url = generate_image_url(image_link)
+    else:
+        image_url = ''
+    source = SeeClickFixSource(name='seeclickfix',
+                               issue_id=issue_id,
+                               image_url=image_url,
+                               )
+
     rack = Rack(title=title,
                 description=description,
                 address=address,
                 date=date,
                 location=location,
+                source=source,
                 )
     return rack
+
+def generate_image_url(image_link):
+    """generate an absolute seeclickfix url from a relative image url"""
+    return 'http://seeclickfix.com%s' % image_link
 
 def fetch_feed(feed_url):
     """fetch a json feed from seeclick fix and load into a python object"""
@@ -69,6 +87,16 @@ def create_datetime_from_jsonstring(s):
     return datetime.strptime(s, '%m/%d/%Y at %I:%M%p')
 
 
+def fetch_issue(issue_id):
+    """given an issue id, fetch the json data for it
+
+    this has some additional information we're interested in, like who the rack
+    was submitted by and if it contains an image"""
+
+    url = 'http://seeclickfix.com/issues/%d.json' % issue_id
+    return fetch_feed(url)[0]
+
+
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
@@ -80,7 +108,15 @@ class Command(BaseCommand):
             date = create_datetime_from_jsonstring(json_data['created_at'])
             if date <= latest_date_seen:
                 continue
-            rack = create_rack(json_data)
+            issue_id = json_data['issue_id']
+            issue_data = fetch_issue(issue_id)
+            rack = create_rack(issue_data)
+            # the source needs to have an id when it's assigned to a rack
+            # for the correct link to the rack to be established
+            # XXX transactional?
+            source = rack.source
+            source.save()
+            rack.source = source
             rack.save()
             racks_saved.append(rack)
         latest = reduce(max, [x.date for x in racks_saved], latest_date_seen)
