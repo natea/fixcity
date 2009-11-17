@@ -780,11 +780,17 @@ color: #44c5f5;
 #OpenLayers\.Control\.PanZoom_5_panup,
 #OpenLayers\.Control\.PanZoom_5_panright,
 #OpenLayers\.Control\.PanZoom_5_pandown,
-#OpenLayers\.Control\.PanZoom_5_panleft { 
+#OpenLayers\.Control\.PanZoom_5_panleft,
+#OpenLayers\.Control\.PanZoom_4_zoomworld,
+#OpenLayers\.Control\.PanZoom_4_panup,
+#OpenLayers\.Control\.PanZoom_4_panright,
+#OpenLayers\.Control\.PanZoom_4_pandown,
+#OpenLayers\.Control\.PanZoom_4_panleft { /* not sure why edit map uses "4" instead of "5" */
 display: none !important; 
 }
 
-#OpenLayers\.Control\.PanZoom_5_zoomin {
+#OpenLayers\.Control\.PanZoom_5_zoomin,
+#OpenLayers\.Control\.PanZoom_4_zoomin {
 background: url(/site_media/img/custom-zoomin.png) no-repeat !important;
 height: 23px !important;
 width: 23px !important;
@@ -793,7 +799,8 @@ left: 5px !important;
 cursor: pointer;
 }
 
-#OpenLayers\.Control\.PanZoom_5_zoomout {
+#OpenLayers\.Control\.PanZoom_5_zoomout,
+#OpenLayers\.Control\.PanZoom_4_zoomout {
 background: url(/site_media/img/custom-zoomout.png) 0 -1px no-repeat !important;
 height: 22px !important;
 width: 23px !important;
@@ -803,10 +810,11 @@ cursor: pointer;
 }
 
 #OpenLayers\.Control\.PanZoom_5_zoomin img,
-#OpenLayers\.Control\.PanZoom_5_zoomout img {
+#OpenLayers\.Control\.PanZoom_5_zoomout img,
+#OpenLayers\.Control\.PanZoom_4_zoomin img,
+#OpenLayers\.Control\.PanZoom_4_zoomout img {
 display: none;	
 }
-
 
 body .olPopup {
 background: transparent url(/site_media/img/map-popup-bg.png) no-repeat !important;
