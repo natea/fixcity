@@ -84,6 +84,8 @@ SECRET_KEY = config.get('main', 'SECRET_KEY')
 assert SECRET_KEY != 'YOU MUST CHANGE THIS', \
         'You really need to change the SECRET_KEY setting in your config.ini!'
 
+SEECLICKFIX_JSON_URL = config.get('main', 'SEECLICKFIX_JSON_URL')
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',

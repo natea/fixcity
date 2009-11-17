@@ -2,6 +2,7 @@
 # Expected to be run from cron at regular intervals
 
 from datetime import datetime
+from django.conf import settings
 from django.contrib.gis.geos.point import Point
 from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
@@ -74,8 +75,7 @@ def create_datetime_from_jsonstring(s):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        #XXX hardcoded url, possibly move to django conf settings?
-        feed_url = 'http://www.seeclickfix.com/issues.json?above_map=issue_report&below_map=big_map_std&end=&lat=40.7188924961886&layout=&left_map=issues_feeds_list&lng=-73.9453268051147&num_results=&page=&radius=&right_map=&search=&sort=&start=&status=&type=mapmove&watcher_token=53a6a0df7ecef794679f668acf8137fe5c25d45c&zoom=13'
+        feed_url = settings.SEECLICKFIX_JSON_URL
         json_data_list = fetch_feed(feed_url)
         latest_date_seen = get_latest_date_seen()
         racks_saved = []
