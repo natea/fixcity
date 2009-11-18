@@ -684,14 +684,11 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
     def notify_admin(self, subject, body):
         admin_email = settings.SERVICE_FAILURE_EMAIL
-        if admin_email:
-            if self.msg and self.msg.get('to'):
-                from_addr = self.msg['to']
-            else:
-                from_addr = 'racks@fixcity.org'
-            send_mail(subject, body, from_addr,
-                      [self.parameters['admin_email']],
-                      fail_silently=False)
+        if self.msg and self.msg.get('to'):
+            from_addr = self.msg['to']
+        else:
+            from_addr = 'racks@fixcity.org'
+        send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
 
 
 def _find_in_list(astr, alist):

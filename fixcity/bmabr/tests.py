@@ -1,3 +1,7 @@
+
+# XXX I feel kinda icky importing settings during test
+from django.conf import settings
+
 from django.contrib.gis.geos.point import Point
 from django.utils import simplejson as json
 from fixcity.bmabr.views import SRID
@@ -130,13 +134,9 @@ class TestTweeter(unittest.TestCase):
     @mock.patch('tweepy.API')
     def test_main(self, MockTweepyAPI, mock_new_rack):
         tweepy_mock = MockTweepyAPI()
-        user = 'fixcity_test'
-        class MockConfig(object):
-            def get(self, *args, **kw):
-                return user # we don't care about anything else.
-
+        user = settings.TWITTER_USER
         builder = tweeter.RackBuilder('http://localhost:8000/rack/',
-                                      MockConfig(), tweepy_mock)
+                                      settings, tweepy_mock)
         # The Mock API works OK but setting attrs is a bit tedious...
         # i wish you could pass a dict as the spec argument.
         status = mock.Mock(['id', 'text', 'user'])

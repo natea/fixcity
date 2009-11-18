@@ -3,10 +3,11 @@ proof-of-concept twitter bot
 """
 
 from datetime import datetime
+from django.conf import settings
+from django.core.mail import send_mail
+from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
-import ConfigParser
 import httplib2
-import os
 import pickle
 import socket
 import time
@@ -14,6 +15,7 @@ import tweepy
 
 
 http = httplib2.Http()
+
 
 class TwitterFetcher(object):
 
@@ -58,8 +60,8 @@ class RackBuilder(object):
 
     def __init__(self, url, config, api):
         self.url = url
-        self.username = config.get('twitter', 'user')
-        self.password = config.get('twitter', 'password')
+        self.username = config.TWITTER_USER
+        self.password = config.TWITTER_PASSWORD
         self.twitter_api = api
     
     def main(self, recent_only=True):
@@ -77,6 +79,7 @@ class RackBuilder(object):
         twit = TwitterFetcher(self.twitter_api, self.username)
         all_tweets = twit.get_tweets(last_processed_id)
         if all_tweets and last_processed_id:
+            # XXX we shouldn't do this if there's a server error
             statusfile = open(status_file_path, 'w')
             pickle.dump({'last_processed_id': all_tweets[0].id}, statusfile)
             statusfile.close()
@@ -105,15 +108,35 @@ class RackBuilder(object):
 
 
 
-def bounce(*args, **kw):
-    # XXX TODO
-    print "OUCH %s %s" % (str(args), str(kw))
+def bounce(user, message, notify_admin='', notify_admin_body=''):
+    
+    # XXX TODO notify the user
+    if notify_admin:
+        admin_subject = 'FixCity tweeter bounce! %s' % notify_admin
+        admin_body = 'Bouncing to: %s\n' % user
+        admin_body += 'Bounce message: %r\n' % message
+        admin_body += 'Time: %s\n' % datetime.now().isoformat(' ')
+        if notify_admin_body:
+            admin_body += 'Additional info:\n'
+            admin_body += notify_admin_body
+        _notify_admin(admin_subject, admin_body)
+
+
+def _notify_admin(subject, body):
+    admin_email = settings.SERVICE_FAILURE_EMAIL
+    from_addr = 'racks@fixcity.org'
+    send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
+    # person receiving cron messages will get stdout
+    print body
 
 def adapt_errors(adict):
     # XXX TODO
     return adict
 
 def new_rack(title, address, user, tweetid, url):
+    # XXX Batch error messages? We might get a bunch if the server
+    # goes down and cron keeps running this script...
+    
     # XXX strip out our username from the title
     
     # XXX UGH, copy-pasted from handle_mailin.py. Refactoring time!
@@ -121,13 +144,14 @@ def new_rack(title, address, user, tweetid, url):
     # We don't bother with microsecond precision because
     # Django datetime fields can't parse it anyway.
     now = datetime.fromtimestamp(int(time.time()))
-    data = dict(title=title,
-                description=description,
-                date=now.isoformat(' '),
-                address=address,
-                geocoded=0,  # Do server-side geocoding.
+    data = dict(source_type='twitter',
                 twitter_user=user,
                 twitter_id=tweetid,
+                title=title,
+                description=description,
+                date=now.isoformat(' '),  # XXX use the tweet's own date?
+                address=address,
+                geocoded=0,  # Do server-side geocoding.
                 )
 
     jsondata = json.dumps(data)
@@ -136,21 +160,17 @@ def new_rack(title, address, user, tweetid, url):
     # TODO: if errors, respond to user (privately?) w/ error info.
     #  -- possibly with a URL to a single generic help page?
     
-    error_subject = "Unsuccessful Rack Request"
+    error_subject = "Unsuccessful bikerack request"
     try:
         response, content = http.request(url, 'POST',
                                          headers=headers,
                                          body=jsondata)
     except socket.error:
-        bounce(
-            error_subject,
-            "Thanks for trying to suggest a rack.\n"
-            "We are unfortunately experiencing some difficulties at the\n"
-            "moment -- please try again in an hour or two!",
-            notify_admin='Server down??'
-            )
+        err_msg = error_subject + ": fixcity.org is down. Notifying admins. Your rack should be OK once fixcity is up."
+        _notify_admin('Server down??',
+                      'Could not post some tweets, fixcity.org dead?')
         return
-
+    
     if response.status >= 500:
         err_msg = (
             "Thanks for trying to suggest a rack.\n"
@@ -183,25 +203,16 @@ def new_rack(title, address, user, tweetid, url):
         return
 
 
-def get_config():
-    import fixcity
-    configfile = os.path.abspath(
-        os.path.join(os.path.dirname(fixcity.__file__), 'config.ini'))
-    assert os.path.exists(configfile), "Config file %s not found" % configfile
-    config = ConfigParser.RawConfigParser()
-    config.read(configfile)
-    return config
-
-
-def api_factory(config):
-     auth = tweepy.BasicAuthHandler(config.get('twitter', 'user'),
-                                    config.get('twitter', 'password'))
+def api_factory(settings):
+     auth = tweepy.BasicAuthHandler(settings.TWITTER_USER,
+                                    settings.TWITTER_PASSWORD)
      api = tweepy.API(auth)
      return api
-    
-if __name__ == '__main__':
-    config = get_config()
-    api = api_factory(config)
-    builder = RackBuilder('http://localhost:8000/rack/', config, api)
-    builder.main(False)
+
+class Command(BaseCommand):
+
+    def handle(self, *args, **options):
+        api = api_factory(settings)
+        builder = RackBuilder('http://localhost:8000/rack/', settings, api)
+        builder.main(recent_only=False)
 
