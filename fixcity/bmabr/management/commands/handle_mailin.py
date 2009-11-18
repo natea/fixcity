@@ -31,6 +31,8 @@ from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
 
+from django.conf import settings
+
 class EmailParser(object):
     env = None
     comment = '> '
@@ -681,7 +683,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                   fail_silently=False)
 
     def notify_admin(self, subject, body):
-        admin_email = self.parameters.get('admin_email')
+        admin_email = settings.SERVICE_FAILURE_EMAIL
         if admin_email:
             if self.msg and self.msg.get('to'):
                 from_addr = self.msg['to']
@@ -748,8 +750,6 @@ class Command(BaseCommand):
                     help="Remove signatures from incoming mail"),
         make_option('--max-attachment-size', type="int",
                     help="Max size of uploaded files."),
-        make_option('--admin-email', help="Address to notify of errors.",
-                    action="store"),
     )
 
     def handle(self, *args, **options):
