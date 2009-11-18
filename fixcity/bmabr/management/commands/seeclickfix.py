@@ -106,6 +106,26 @@ def fetch_issue(issue_id):
     url = '%s/issues/%d.json' % (SEECLICKFIX_DOMAIN, issue_id)
     return fetch_feed(url)[0]
 
+def retrieve_image_for(rack):
+    """download the source's image from seeclickfix, if any and attach to rack"""
+    image_url = rack.source.image_url
+    if not image_url:
+        return
+    # saving it all in memory is easier
+    # the images aren't going to be too huge to fit
+    http = httplib2.Http()
+    response, content = http.request(image_url)
+    assert response.status == 200, "Error downloading image url: %s" % image_url
+    from django.core.files.base import ContentFile
+    from django.core.files.storage import default_storage
+    content_file = ContentFile(content)
+    image_name = image_url.split('/')[-1]
+    #XXX put storage location in one spot
+    filename = default_storage.save('images/rack/%s' % image_name, content_file)
+    filehandle = default_storage.open(filename)
+    filehandle.open()
+    rack.photo = filehandle
+
 
 class Command(BaseCommand):
 
@@ -125,6 +145,7 @@ class Command(BaseCommand):
                 # the source needs to have an id when it's assigned to a rack
                 # for the correct link to the rack to be established
                 # XXX transactional?
+                retrieve_image_for(rack)
                 source = rack.source
                 source.save()
                 rack.source = source
