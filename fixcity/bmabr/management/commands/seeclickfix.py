@@ -14,6 +14,7 @@ from fixcity.bmabr.models import SeeClickFixSource
 from fixcity.bmabr.views import SRID
 import httplib2
 import os
+import time
 import traceback
 
 SEECLICKFIX_DOMAIN = 'http://www.seeclickfix.com'
@@ -90,7 +91,10 @@ def set_latest_date_seen(date):
 
 def create_datetime_from_jsonstring(s):
     """return a datetime object given a string in a seeclickfix format"""
-    return datetime.strptime(s, '%m/%d/%Y at %I:%M%p')
+    # you can simply do this with python 2.6
+    #return datetime.strptime(s, '%m/%d/%Y at %I:%M%p')
+    timeobj = time.strptime(s, '%m/%d/%Y at %I:%M%p')
+    return datetime(*(timeobj[:5]))
 
 
 def fetch_issue(issue_id):
