@@ -63,7 +63,7 @@ function loadMap(draggable) {
 	dropHandler(feature, null, false);
     }
   }
-  map.events.register('moveend', map, moveHandler);
+  
   var point_control = new OpenLayers.Control.DragFeature(
   address_point, {
     onComplete: dropHandler
@@ -72,6 +72,7 @@ function loadMap(draggable) {
   if(draggable) {
     map.addControl(point_control);
     point_control.activate();
+    map.events.register('moveend', map, moveHandler);
   }
 
   function getAddress(lonlat) {
