@@ -4,6 +4,7 @@
 from datetime import datetime
 from django.conf import settings
 from django.contrib.gis.geos.point import Point
+from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
 from pickle import dump
@@ -13,6 +14,7 @@ from fixcity.bmabr.models import SeeClickFixSource
 from fixcity.bmabr.views import SRID
 import httplib2
 import os
+import traceback
 
 SEECLICKFIX_DOMAIN = 'http://www.seeclickfix.com'
 
@@ -104,24 +106,33 @@ def fetch_issue(issue_id):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        feed_url = settings.SEECLICKFIX_JSON_URL
-        json_data_list = fetch_feed(feed_url)
-        latest_date_seen = get_latest_date_seen()
-        racks_saved = []
-        for json_data in json_data_list:
-            date = create_datetime_from_jsonstring(json_data['created_at'])
-            if date <= latest_date_seen:
-                continue
-            issue_id = json_data['issue_id']
-            issue_data = fetch_issue(issue_id)
-            rack = create_rack(issue_data)
-            # the source needs to have an id when it's assigned to a rack
-            # for the correct link to the rack to be established
-            # XXX transactional?
-            source = rack.source
-            source.save()
-            rack.source = source
-            rack.save()
-            racks_saved.append(rack)
-        latest = reduce(max, [x.date for x in racks_saved], latest_date_seen)
-        set_latest_date_seen(latest)
+        try:
+            feed_url = settings.SEECLICKFIX_JSON_URL
+            json_data_list = fetch_feed(feed_url)
+            latest_date_seen = get_latest_date_seen()
+            racks_saved = []
+            for json_data in json_data_list:
+                date = create_datetime_from_jsonstring(json_data['created_at'])
+                if date <= latest_date_seen:
+                    continue
+                issue_id = json_data['issue_id']
+                issue_data = fetch_issue(issue_id)
+                rack = create_rack(issue_data)
+                # the source needs to have an id when it's assigned to a rack
+                # for the correct link to the rack to be established
+                # XXX transactional?
+                source = rack.source
+                source.save()
+                rack.source = source
+                rack.save()
+                racks_saved.append(rack)
+            latest = reduce(max, [x.date for x in racks_saved], latest_date_seen)
+            set_latest_date_seen(latest)
+        except Exception, e:
+            # mail any failures
+            mail_to = [settings.SERVICE_FAILURE_EMAIL]
+            msg = str(e) + '\n\n' + traceback.format_exc()
+            send_mail(u'Seeclickfix service error', msg,
+                      'seeclickfix@fixcity.com', mail_to, fail_silently=False)
+            # person receiving cron messages will get stdout
+            print msg
