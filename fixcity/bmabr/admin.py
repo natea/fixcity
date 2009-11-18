@@ -1,6 +1,10 @@
 from django.contrib.gis import admin
 from django.contrib import admin as oldAdmin 
 from fixcity.bmabr.models import Rack, Comment, Neighborhoods, CommunityBoard, SubwayStations
+from fixcity.bmabr.models import SeeClickFixSource
+from fixcity.bmabr.models import Source
+from fixcity.bmabr.models import EmailSource
+from fixcity.bmabr.models import TwitterSource
 from fixcity.bmabr.models import  StatementOfSupport
 
 
@@ -39,3 +43,8 @@ admin.site.register(Neighborhoods,NeighborhoodsAdmin)
 class CommunityBoardAdmin(admin.GeoModelAdmin): 
     list_display = ('name','gid')
 admin.site.register(CommunityBoard,CommunityBoardAdmin)
+
+admin.site.register(Source)
+admin.site.register(SeeClickFixSource)
+admin.site.register(EmailSource)
+admin.site.register(TwitterSource)

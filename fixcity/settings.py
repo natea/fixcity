@@ -84,6 +84,11 @@ SECRET_KEY = config.get('main', 'SECRET_KEY')
 assert SECRET_KEY != 'YOU MUST CHANGE THIS', \
         'You really need to change the SECRET_KEY setting in your config.ini!'
 
+SEECLICKFIX_JSON_URL = config.get('main', 'SEECLICKFIX_JSON_URL')
+
+# email address to mail when there is a failure with an integration service
+SERVICE_FAILURE_EMAIL = config.get('main', 'SERVICE_FAILURE_EMAIL')
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',

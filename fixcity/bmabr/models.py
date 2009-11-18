@@ -60,6 +60,9 @@ class Source(models.Model):
     # eg. 'twitter', 'email', etc.
     name = models.CharField(max_length=20)
 
+    def __unicode__(self):
+        return self.name
+
     def get_child_source(self):
         """Try to get a more specific subclass instance."""
         if self.name:
@@ -71,10 +74,11 @@ class Source(models.Model):
             except AttributeError:
                 pass
 
-
 class EmailSource(Source):
     address = models.EmailField()
 
+    def __unicode__(self):
+        return self.address
 
 class TwitterSource(Source):
     user = models.CharField(max_length=50)
@@ -85,14 +89,20 @@ class TwitterSource(Source):
         status_id = self.status_id
         return 'http://twitter.com/%(user)s/%(status_id)d' % locals()
 
+    def __unicode__(self):
+        return self.get_absolute_url().decode('utf-8')
+
 
 class SeeClickFixSource(Source):
     issue_id = models.IntegerField()
-    image_url = models.URLField(blank=True)
+    reporter = models.CharField(max_length=100)
+    image_url = models.URLField()
 
     def get_absolute_url(self):
         return 'http://www.seeclickfix.com/issues/%d' % self.issue_id
 
+    def __unicode__(self):
+        return self.get_absolute_url().decode('utf-8')
 
 
 class StatementOfSupport(models.Model): 
