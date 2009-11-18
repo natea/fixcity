@@ -74,7 +74,8 @@ class TwitterSource(Source):
 
 class SeeClickFixSource(Source):
     issue_id = models.IntegerField()
-    image_url = models.URLField(blank=True)
+    reporter = models.CharField(max_length=100)
+    image_url = models.URLField()
 
     def get_absolute_url(self):
         return 'http://www.seeclickfix.com/issues/%d' % self.issue_id

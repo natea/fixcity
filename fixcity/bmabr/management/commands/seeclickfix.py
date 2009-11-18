@@ -33,8 +33,10 @@ def create_rack(json_data):
         image_url = generate_image_url(image_link)
     else:
         image_url = ''
+    reporter = json_data['reporter_display']
     source = SeeClickFixSource(name='seeclickfix',
                                issue_id=issue_id,
+                               reporter=reporter,
                                image_url=image_url,
                                )
 
