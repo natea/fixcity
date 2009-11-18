@@ -828,7 +828,7 @@ display: none;
 
 body .olPopup {
 background: transparent url(/site_media/img/map-popup-bg.png) no-repeat !important;
-width:300px !important;
+width: 292px !important;
 height: 78px !important;
 padding: 3px 14px 3px 3px !important;
 }
@@ -836,17 +836,19 @@ padding: 3px 14px 3px 3px !important;
 body .olFramedCloudPopupContent {
 padding: 0 0 0 5px !important;
 background: transparent none !important;
+width: 280px !important;
+overflow: visible !important;
 }
 
 body .olPopupCloseBox {
-background:transparent url(/site_media/img/close.gif) no-repeat scroll 0 0;
+background: transparent url(/site_media/img/close.gif) no-repeat scroll 0 0;
 top: 7px !important;
-right: 21px !important;
+right: 13px !important;
 }
 
-body .olPopup div.rack-info {
+
+body .olPopup div.rack {
 width: 280px;
-height: 69px;
 }
 
 body .olPopup img {
