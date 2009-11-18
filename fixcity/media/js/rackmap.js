@@ -51,10 +51,19 @@ function loadMap(draggable) {
     $("#location").val(location_wkt);
     xy.transform(map.displayProjection, map.projection);
     map.setCenter(xy);
-    if (map.getZoom() < 15) {
+    if ((arguments.length < 3) && (map.getZoom() < 15)) {
         map.zoomIn();
     }
   };
+  var moveHandler = function () {
+    if (!address_point.features[0].onScreen()) {
+        // Not here!
+	var feature = address_point.features[0];
+	feature.move(map.getCenter());
+	dropHandler(feature, null, false);
+    }
+  }
+  map.events.register('moveend', map, moveHandler);
   var point_control = new OpenLayers.Control.DragFeature(
   address_point, {
     onComplete: dropHandler
