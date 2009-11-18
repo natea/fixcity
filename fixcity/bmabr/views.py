@@ -6,7 +6,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
-from django.core.paginator import Paginator, InvalidPage, EmptyPage
+from django.core.paginator import Paginator
 
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
@@ -29,6 +29,7 @@ from fixcity.bmabr.models import Neighborhoods
 from fixcity.bmabr.models import CommunityBoard
 from fixcity.bmabr.models import RackForm, CommentForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
+from fixcity.bmabr.models import Source, TwitterSource, SeeClickFixSource, EmailSource
 
 from geopy import geocoders
 
@@ -202,7 +203,7 @@ def _preprocess_rack_form(postdata):
     Also do any other preprocessing needed.
     """
 
-    if postdata[u'geocoded'] != u'1':
+    if int(postdata[u'geocoded']) != 1:
         if postdata['address'].strip():
             results = _geocode(postdata['address'])
             # XXX handle multiple (or zero) results.
@@ -225,6 +226,8 @@ def _preprocess_rack_form(postdata):
         
 
 def _newrack(data, files):
+    """Thin wrapper around RackForm, returning a dict with some
+    info useful for UIs."""
     form = RackForm(data, files)
     new_rack = None
     message = ''
@@ -237,7 +240,36 @@ def _newrack(data, files):
         '''
     return {'rack': new_rack, 'message': message, 'form': form,
             'errors': form.errors}
-    
+
+def source_factory(data):
+    """Given something like a request.POST, decide which kind of Source
+    to create, if any."""
+    if data.get('source'):
+        source = Source.objects.filter(id=data['source']).all()
+        assert len(source) == 1, \
+               "Unexpectedly got %d sources with id %s" % (len(source), data['source'])
+        source = source[0]
+        # Try to get a more specific subclass instance.
+        source = source.get_child_source() or source
+        return source
+
+    source = None
+    source_type = data.get('source_type')
+    if source_type == 'twitter':
+        source = TwitterSource(name='twitter', user=data['twitter_user'],
+                               status_id=data['twitter_id'])
+    elif data.has_key('email'):
+        # XXX actually we don't know if this came via web or email. hmm.
+        pass
+    # XXX handle SeeClickFixSource here
+    if source:
+        # We need to save it to get the ID.
+        # As long as we have transactions enabled, this will roll back
+        # if the rack fails to validate. XXX TEST THAT
+        source.save()
+    return source
+
+
 def newrack_form(request):
     if request.method == 'POST':
         _preprocess_rack_form(request.POST)
@@ -275,6 +307,9 @@ def newrack_json(request):
     post.clear()  # it doesn't have anything in useful form..
     post.update(args)
     _preprocess_rack_form(post)
+    source = source_factory(post)
+    if source:
+        post['source'] = source.id
     rackresult = _newrack(post, files={})
     if rackresult['errors']:
         status = 400
@@ -294,6 +329,7 @@ def newrack_json(request):
                   'rack_url': '/rack/%d/' % rack.id,
                   'user': rack.user,
                   'email': rack.email,
+                  # XXX what about other Sources?
                   }
     return HttpResponse(json.dumps(output), mimetype='application/json',
                         status=status)

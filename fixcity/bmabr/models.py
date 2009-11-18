@@ -42,7 +42,7 @@ class Rack(models.Model):
 
     # keep track of where the rack was submitted from
     # if not set, that means it was submitted from the web
-    source = models.ForeignKey('Source', null=True)
+    source = models.ForeignKey('Source', null=True, blank=True)
     
     objects = models.GeoManager()
 
@@ -50,12 +50,26 @@ class Rack(models.Model):
         return self.address
 
 
-
 class Source(models.Model):
     """base class representing the source of where a rack was submitted from"""
 
-    # string based name used to identify where a source came from
+    # this uses multi-table inheritance, see
+    # http://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance
+    
+    # string based name used to identify where a source came from,
+    # eg. 'twitter', 'email', etc.
     name = models.CharField(max_length=20)
+
+    def get_child_source(self):
+        """Try to get a more specific subclass instance."""
+        if self.name:
+            # If it's a twittersource, emailsource, etc., we'll look
+            # that up via the child link that Django generates with
+            # multi-table inheritance.
+            try:
+                return getattr(self, self.name + 'source')
+            except AttributeError:
+                pass
 
 
 class EmailSource(Source):
@@ -147,6 +161,10 @@ class SubwayStations(models.Model):
 
 
 
+NEED_SOURCE_OR_EMAIL = "If email address is not provided, another source must be specified"
+
+NEED_PHOTO_TO_VERIFY = "You can't mark a rack as verified unless it has a photo"
+
 
 class RackForm(ModelForm): 
     class Meta: 
@@ -158,21 +176,15 @@ class RackForm(ModelForm):
         if verified:
             if not (self.cleaned_data.get('photo') or (
                 self.is_bound and bool(self.instance.photo))):
-                errors.append(
-                    "You can't mark a rack as verified unless it"
-                    " has a photo")
-            if errors:
-                raise ValidationError(errors)
+                raise ValidationError(NEED_PHOTO_TO_VERIFY)
         return verified
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        if self.is_bound:
-            if not cleaned_data.get("email") or self.instance.source:
-                # FIXME: this isn't a very useful msg to the end user.
-                raise ValidationError(
-                    "If email address is not provided, another source "
-                    "must be specified")
+        if not (cleaned_data.get("email") or cleaned_data.get("source")) or \
+               (self.is_bound and self.instance.source):
+            # FIXME: this isn't a very useful msg to the end user.
+            raise ValidationError(NEED_SOURCE_OR_EMAIL)
 
         # Always return the full collection of cleaned data.
         return cleaned_data

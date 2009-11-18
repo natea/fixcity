@@ -83,7 +83,7 @@ class RackBuilder(object):
         for tweet in all_tweets:
             title, location = twit.parse(tweet)
             if title and location:
-                new_rack(title, location, tweet.user.name, url)
+                new_rack(title, location, tweet.user.name, tweet.id, url)
 
             # TODO: batch-notification of success to cut down on posts:
             # if success, maintain a queue of recently successful posts,
@@ -113,7 +113,7 @@ def adapt_errors(adict):
     # XXX TODO
     return adict
 
-def new_rack(title, address, user, url):
+def new_rack(title, address, user, tweetid, url):
     # XXX strip out our username from the title
     
     # XXX UGH, copy-pasted from handle_mailin.py. Refactoring time!
@@ -125,9 +125,9 @@ def new_rack(title, address, user, url):
                 description=description,
                 date=now.isoformat(' '),
                 address=address,
-                geocoded=0,  # Do server-side location processing.
-                got_communityboard=0,   # Ditto.
-                email=user + '@twitter.com',  # XXX need to handle twitter accounts server-side!
+                geocoded=0,  # Do server-side geocoding.
+                twitter_user=user,
+                twitter_id=tweetid,
                 )
 
     jsondata = json.dumps(data)
