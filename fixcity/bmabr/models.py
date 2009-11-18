@@ -57,10 +57,14 @@ class Source(models.Model):
     # string based name used to identify where a source came from
     name = models.CharField(max_length=20)
 
+    def __unicode__(self):
+        return self.name
 
 class EmailSource(Source):
     address = models.EmailField()
 
+    def __unicode__(self):
+        return self.address
 
 class TwitterSource(Source):
     user = models.CharField(max_length=50)
@@ -71,6 +75,9 @@ class TwitterSource(Source):
         status_id = self.status_id
         return 'http://twitter.com/%(user)s/%(status_id)d' % locals()
 
+    def __unicode__(self):
+        return self.get_absolute_url().decode('utf-8')
+
 
 class SeeClickFixSource(Source):
     issue_id = models.IntegerField()
@@ -80,6 +87,8 @@ class SeeClickFixSource(Source):
     def get_absolute_url(self):
         return 'http://www.seeclickfix.com/issues/%d' % self.issue_id
 
+    def __unicode__(self):
+        return self.get_absolute_url().decode('utf-8')
 
 
 class StatementOfSupport(models.Model): 
