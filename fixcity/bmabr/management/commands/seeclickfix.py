@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
 from pickle import dump
 from pickle import load
+from fixcity.bmabr.models import RACK_IMAGE_LOCATION
 from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import SeeClickFixSource
 from fixcity.bmabr.views import SRID
@@ -121,7 +122,7 @@ def retrieve_image_for(rack):
     content_file = ContentFile(content)
     image_name = image_url.split('/')[-1]
     #XXX put storage location in one spot
-    filename = default_storage.save('images/rack/%s' % image_name, content_file)
+    filename = default_storage.save(RACK_IMAGE_LOCATION + image_name, content_file)
     filehandle = default_storage.open(filename)
     filehandle.open()
     rack.photo = filehandle
