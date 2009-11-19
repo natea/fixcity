@@ -192,15 +192,13 @@ class RackForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        if not (cleaned_data.get("email") or cleaned_data.get("source")) or \
-               (self.is_bound and self.instance.source):
-            # FIXME: this isn't a very useful msg to the end user.
-            raise ValidationError(NEED_SOURCE_OR_EMAIL)
+        if self.is_bound and self.instance.source:
+            return cleaned_data
+        if cleaned_data.get('email') or cleaned_data.get('source'):
+            return cleaned_data
+        raise ValidationError(NEED_SOURCE_OR_EMAIL)
 
-        # Always return the full collection of cleaned data.
-        return cleaned_data
-        
-    
+
 class CommentForm(ModelForm): 
     class Meta: 
         model = Comment
