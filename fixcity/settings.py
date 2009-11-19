@@ -86,8 +86,9 @@ assert SECRET_KEY != 'YOU MUST CHANGE THIS', \
 
 SEECLICKFIX_JSON_URL = config.get('main', 'SEECLICKFIX_JSON_URL')
 
-TWITTER_USER = config.get('twitter', 'user')
-TWITTER_PASSWORD = config.get('twitter', 'password')
+TWITTER_USER = config.get('twitter', 'USER')
+TWITTER_PASSWORD = config.get('twitter', 'PASSWORD')
+TWITTER_STATUS_PATH = config.get('twitter', 'STATUS_FILE_PATH')
 
 # email address to mail when there is a failure with an integration service
 SERVICE_FAILURE_EMAIL = config.get('main', 'SERVICE_FAILURE_EMAIL')

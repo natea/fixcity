@@ -82,7 +82,7 @@ class EmailSource(Source):
 
 class TwitterSource(Source):
     user = models.CharField(max_length=50)
-    status_id = models.IntegerField()
+    status_id = models.CharField(max_length=32)
 
     def get_absolute_url(self):
         user = self.user
