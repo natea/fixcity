@@ -634,3 +634,9 @@ def server_error(request, template_name='500.html'):
     return HttpResponseServerError(template.render(context),
                                    mimetype="application/xhtml+xml")
 
+def cb1racks(request):
+    cb1 = CommunityBoard.objects.get(name='1')
+    racks = Rack.objects.filter(location__contained=cb1.the_geom)
+    racks = racks.order_by('verified')
+    return render_to_response('cb1racks.html', {'racks': racks},
+                              context_instance=RequestContext(request))

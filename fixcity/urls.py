@@ -79,8 +79,8 @@ urlpatterns = patterns(
     # to INSTALLED_APPS to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    # Uncomment the next line to enable the admin:
-     (r'^admin/(.*)', admin.site.root),
+    (r'^cb1racks$', 'fixcity.bmabr.views.cb1racks'),
+    (r'^admin/(.*)', admin.site.root),
 )
 
 handler500 = 'fixcity.bmabr.views.server_error'
