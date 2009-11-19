@@ -28,7 +28,7 @@ class TwitterFetcher(object):
         msg = tweet.text.replace('@' + self.username, '')
         # XXX what's the actual tweet format going to look like?
         try:
-            title, location = msg.split('#bikerack', 1)
+            location, title = msg.split('#bikerack', 1)
             return title.strip(), location.strip()
         except ValueError:
             sys.stderr.write("couldn't parse tweet %r\n") % msg

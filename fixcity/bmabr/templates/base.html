@@ -43,13 +43,15 @@
       <div id="lede">
         {% block lede %}{% endblock %}
       </div><!-- /#lede -->
+      {% if flash_messages %}
       <div id="flash-message">
         <ul>
           {% for message in flash_messages %}
           <li>{{ message|safe }}</li>
           {% endfor %}
         </ul>
-      </div><!-- /#lede -->
+      </div><!-- /#flash_message -->
+      {% endif %}
       <div id="content" class="content selfclear">
         {% block content %}{% endblock %}
       </div><!-- /#content -->
