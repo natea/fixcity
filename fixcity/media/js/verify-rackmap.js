@@ -194,6 +194,7 @@ function loadMap() {
               }
           }
           if (!found) {
+            selectControl.clickoutFeature(oldf);
             layer.removeFeatures(oldf);
           }
       }
