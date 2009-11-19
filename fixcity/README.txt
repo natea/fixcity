@@ -35,7 +35,7 @@ get started:
 
  3) Load the data:
 
-   psql -d bmabr < fixcity/sql/gis_community_board.sql
+   psql -d bmabr -f fixcity/sql/gis_community_board.sql
 
  4) Bootstrap the django models:
 
