@@ -21,14 +21,19 @@
 {% block content %}
 
 <div id="racks">
-
+  <div id="quick-sort">
+  	<form action="#">
+  	  <div class="selfclear"><label for="communityboard">Community Board</label><select id="communityboard" name="communityboard"><option value="cb1">Community Board 1</option></select></div>
+  	  <div class="selfclear"><label for="sortorder">Filter by</label><select id="sortorder" name="sortorder"><option value="verified">Verified</option></select></div>
+    </form>
+  </div><!-- /#quick-sort -->
     <ul id="racklist">
 
            <li class="selfclear" id="" style="display: none;">
              <a class="rack-thumbnail" href="#"><img /></a>
              <div class="rack-info">
                <h3><a href="#"> </a></h3>
-	       <span class="rack-verified">verified</span>
+	       <span class="rack-verified"><em>verified</em></span>
                <h4> </h4>
                <p> </p>
              </div>
@@ -48,13 +53,8 @@
 </div><!-- /#racks -->
 <div id="verify-map-wrap">
   <div id="verify-map"><div id="map-legend" class="pngfix"></div></div>
-  <div id="quick-sort">
-  	<h2>Sort Racks By</h2>
-  	<form action="#">
-  	  <div class="selfclear"><label for="communityboard">Community Board</label><select id="communityboard" name="communityboard"><option value="cb1">Community Board 1</option></select></div>
-  	  <div class="selfclear"><label for="sortorder">Sort by</label><select id="sortorder" name="sortorder"><option value="verified">Verified</option></select></div>
-  	  <a id="print-list" class="fakebigbutton" href="#">Print List <img src="/site_media/img/print-list-icon.png" alt="Print List icon" /></a>
-    </form>
-  </div><!-- /#quick-sort -->
+	<div id="quick-check">
+	  <p>Suggestions must have a photo matching the <a class="photo-guidelines" href="#">guidelines</a> and meeting <a class="location-guidelines" href="#">placement requirements</a> to be verified. Support statements are optional for non-residential buildings.</p>
+  </div><!-- /#quick-check -->
 </div>
 {% endblock %}
