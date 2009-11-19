@@ -452,13 +452,6 @@ margin: 0;
 font-size: 0.95em;
 }
 
-#racklist .rack-info p.rack-source {
-text-transform: uppercase;
-color: #bababa;
-font-size: 10px;
-line-height: 20px;
-}
-
 #verify-map-wrap {
 float: left;
 width: 540px;
