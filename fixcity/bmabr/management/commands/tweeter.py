@@ -77,6 +77,11 @@ class RackBuilder(object):
                 statusfile.close()
             except (IOError, EOFError):
                 pass
+        limit_status = self.twitter_api.rate_limit_status()
+        if limit_status['remaining_hits'] <= 0:
+            raise Exception(
+                "We went over our twitter API rate limit. Resets at: %s"
+                % limit_status['reset_time'])
         twit = TwitterFetcher(self.twitter_api, self.username)
         all_tweets = twit.get_tweets(last_processed_id)
         if all_tweets:
@@ -103,7 +108,6 @@ class RackBuilder(object):
             # - tweet the message
             # - repeat until we're out of users, or hit our API limit
             
-        #print self.twitter_api.rate_limit_status()
 
 
 
