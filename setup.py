@@ -13,6 +13,7 @@ install_requires=[
       'httplib2',
       'poster',
       'mock',
+      'tweepy',
       ]
 
 import sys
