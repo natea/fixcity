@@ -77,7 +77,9 @@ def user_context(request):
         'user': request.user,
         'user_displayname': displayname,
         'user_email': email,
-        'flash_messages': iter_flash_messages(request),
+        # List-ify the flash messages to be sure the template can
+        # easily test whether it's empty.
+        'flash_messages': list(iter_flash_messages(request)),
     }
 
 def index(request):
