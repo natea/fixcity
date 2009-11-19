@@ -195,7 +195,7 @@ display: block;
 overflow: hidden;
 text-indent: -9999em;
 width: 135px;
-height: 91px;
+height: 101px;
 }
 
 #nav li a#add-rack {
@@ -211,8 +211,17 @@ margin: 0 15px 0 0;
 background: url(/site_media/img/verification-kit-bg.png) no-repeat;
 }
 
+#nav li a#add-rack:hover,
+#nav li a#add-rack.current,
+#nav li a#verify-rack:hover,
+#nav li a#verify-rack.current,
+#nav li a#verification-kit:hover,
+#nav li a#verification-kit.current {
+background-position: 0 -101px;
+}
+
 #lede {
-margin: 20px 0 15px;
+margin: 10px 0 15px;
 padding: 0 0 5px;
 border-bottom: 1px solid #8fb9cc;
 }
@@ -445,18 +454,13 @@ margin: 0;
 color: #bababa;
 text-transform: uppercase;
 font-size: 0.7em;
+line-height: 130%;
+margin: 0;
 }
 
-#racklist .rack-info p {
+#racklist .rack-snippet {
 margin: 0;
 font-size: 0.95em;
-}
-
-#racklist .rack-info p.rack-source {
-text-transform: uppercase;
-color: #bababa;
-font-size: 10px;
-line-height: 20px;
 }
 
 #verify-map-wrap {
@@ -872,6 +876,7 @@ background: transparent url(/site_media/img/map-popup-bg.png) no-repeat !importa
 width: 292px !important;
 height: 78px !important;
 padding: 3px 14px 3px 3px !important;
+outline: none !important;
 }
 
 body .olFramedCloudPopupContent {
@@ -894,7 +899,12 @@ width: 280px;
 
 /* prevent grey border in Safari */
 body .olPopup > div {
-/* outline: none; */
+outline: none !important;
+visibility: hidden !important;
+}
+
+body .olPopup > div > * {
+visibility: visible !important;
 }
 
 body .olPopup img {

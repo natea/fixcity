@@ -77,7 +77,7 @@ function loadMap() {
             this_li.find("p.rack-snippet").text(attrs.Snippet);
             var sourceValue = attrs.source.value;
             var dateValue = attrs.date.value;
-            this_li.find("p.rack-source").text('suggested via ' + sourceValue + ' ' + dateValue);
+            this_li.find("p.rack-meta").text('suggested via ' + sourceValue + ' ' + dateValue);
             this_li.find("a.rack-thumbnail").attr("href", "/rack/" + layer.features[i].fid + "/");
             this_li.find("h3 a").attr("href", "/rack/" + layer.features[i].fid + "/");
 	    if (isSelected(layer, layer.features[i])) {
