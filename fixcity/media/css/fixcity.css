@@ -454,9 +454,11 @@ margin: 0;
 color: #bababa;
 text-transform: uppercase;
 font-size: 0.7em;
+line-height: 130%;
+margin: 0;
 }
 
-#racklist .rack-info p {
+#racklist .rack-snippet {
 margin: 0;
 font-size: 0.95em;
 }
