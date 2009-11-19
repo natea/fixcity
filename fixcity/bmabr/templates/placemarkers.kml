@@ -33,6 +33,14 @@
         {% endif %}
         <Data name="num_pages"><value>{{page.paginator.num_pages}}</value></Data>
 
+      {% if rack.source %}
+        <Data name="source"><value>{{rack.source.name}}</value></Data>
+      {% else %}
+        <Data name="source"><value>web</value></Data>
+      {% endif %}
+
+      <Data name="date"><value>{{rack.date|date}}</value></Data>
+
     </ExtendedData>      
 
   </Placemark>
