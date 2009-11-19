@@ -143,8 +143,8 @@ class TestTweeter(unittest.TestCase):
         status = mock.Mock(['id', 'text', 'user'])
         status.id = 1
         status.text = '@%s mention #bikerack 13 thames st, brooklyn, ny' % user
-        status.user = mock.Mock(['name'])
-        status.user.name = 'some twitter user'
+        status.user = mock.Mock(['screen_name'])
+        status.user.screen_name = 'some twitter user'
         tweepy_mock.mentions.return_value = [status]
         tweepy_mock.direct_messages.return_value = []
         builder.main(False)

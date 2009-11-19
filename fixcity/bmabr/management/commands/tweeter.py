@@ -70,9 +70,8 @@ class RackBuilder(object):
         url = self.url
         last_processed_id = None
         if recent_only:
-            status_file_path = self.status_file_path
             try:
-                statusfile = open(status_file_path, 'r')
+                statusfile = open(self.status_file_path, 'r')
                 status = pickle.load(statusfile)
                 last_processed_id = status['last_processed_id']
                 statusfile.close()
@@ -82,7 +81,7 @@ class RackBuilder(object):
         all_tweets = twit.get_tweets(last_processed_id)
         if all_tweets:
             # XXX we shouldn't do this if there's a server error
-            statusfile = open(status_file_path, 'w')
+            statusfile = open(self.status_file_path, 'w')
             pickle.dump({'last_processed_id': all_tweets[0].id}, statusfile)
             statusfile.close()
         for tweet in all_tweets:
