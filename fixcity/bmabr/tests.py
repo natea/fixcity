@@ -4,10 +4,11 @@ from django.conf import settings
 
 from django.contrib.gis.geos.point import Point
 from django.utils import simplejson as json
+from fixcity.bmabr.management.commands import tweeter
 from fixcity.bmabr.views import SRID
 import mock
 import tweepy
-import tweeter
+
 import unittest
 
 
@@ -130,7 +131,7 @@ class TestTweeter(unittest.TestCase):
         self.failUnless(data.has_key('message'))
         
     
-    @mock.patch('fixcity.bmabr.tweeter.new_rack')
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.new_rack')
     @mock.patch('tweepy.API')
     def test_main(self, MockTweepyAPI, mock_new_rack):
         tweepy_mock = MockTweepyAPI()
