@@ -93,6 +93,9 @@ TWITTER_STATUS_PATH = config.get('twitter', 'STATUS_FILE_PATH')
 # email address to mail when there is a failure with an integration service
 SERVICE_FAILURE_EMAIL = config.get('main', 'SERVICE_FAILURE_EMAIL')
 
+# URL where scripts can post new racks.
+RACK_POSTING_URL = config.get('main', 'RACK_POSTING_URL')
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',

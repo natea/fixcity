@@ -31,7 +31,7 @@ class TwitterFetcher(object):
             title, location = msg.split('#bikerack', 1)
             return title.strip(), location.strip()
         except ValueError:
-            print "couldn't parse tweet %r" % msg
+            sys.stderr.write("couldn't parse tweet %r\n") % msg
             return None, None
 
     def get_tweets(self, since_id=None):
@@ -43,8 +43,8 @@ class TwitterFetcher(object):
         tweets = []
         max_pages = 16
         max_per_page = 200
-        for tweet_func in (self.twitter_api.mentions,
-                           self.twitter_api.direct_messages):
+        for tweet_func in (self.twitter_api.mentions,):
+            # XXX not doing direct messages for now.
             for page in range(1, max_pages + 1):
                 if since_id is not None:
                     more_tweets = tweet_func(count=max_per_page, page=page, since_id=since_id)
@@ -59,8 +59,8 @@ class TwitterFetcher(object):
 
 class RackBuilder(object):
 
-    def __init__(self, url, config, api):
-        self.url = url
+    def __init__(self, config, api):
+        self.url = config.RACK_POSTING_URL
         self.username = config.TWITTER_USER
         self.password = config.TWITTER_PASSWORD
         self.twitter_api = api
@@ -103,7 +103,7 @@ class RackBuilder(object):
             # - tweet the message
             # - repeat until we're out of users, or hit our API limit
             
-        print self.twitter_api.rate_limit_status()
+        #print self.twitter_api.rate_limit_status()
 
 
 
@@ -209,6 +209,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         api = api_factory(settings)
-        builder = RackBuilder('http://localhost:8000/rack/', settings, api)
+        builder = RackBuilder(settings, api)
         builder.main(recent_only=True)
 

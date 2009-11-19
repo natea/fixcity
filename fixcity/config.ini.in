@@ -24,6 +24,9 @@ SEECLICKFIX_JSON_URL = http://seeclickfix.com/issues.json?status[Open]=true&sort
 # eg. twitter, seeclickfix, email....
 SERVICE_FAILURE_EMAIL = admin@example.com
 
+# This is the URL where scripts can post new racks.
+RACK_POSTING_URL = http://localhost:8000/racks/
+
 [twitter]
 USER =
 PASSWORD =
