@@ -2,6 +2,7 @@ from django.contrib.gis.db import models
 from django.forms import ModelForm, ValidationError
 from sorl.thumbnail.fields import ImageWithThumbnailsField 
 
+RACK_IMAGE_LOCATION = 'images/racks/'
 
 class CommunityBoard(models.Model):
     gid = models.IntegerField(primary_key=True)
@@ -27,7 +28,7 @@ class Rack(models.Model):
     description = models.CharField(max_length=300, blank=True)
     email = models.EmailField(blank=True)
     photo = ImageWithThumbnailsField(
-                              upload_to='images/racks/', 
+                              upload_to=RACK_IMAGE_LOCATION,
                               thumbnail={'size': (100, 100)},
                               extra_thumbnails = {
                                    'large': {'size': (400,400)}, 
@@ -35,7 +36,7 @@ class Rack(models.Model):
                               blank=True, null=True)
     # We might make this a foreign key to a User eventually, but for now
     # it's optional.
-    user = models.CharField(max_length=20, blank=True, null=True)
+    user = models.CharField(max_length=20, blank=True)
     location = models.PointField(srid=4326)
 
     verified = models.BooleanField(default=False, blank=True)
