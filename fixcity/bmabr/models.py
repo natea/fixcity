@@ -36,7 +36,7 @@ class Rack(models.Model):
                               blank=True, null=True)
     # We might make this a foreign key to a User eventually, but for now
     # it's optional.
-    user = models.CharField(max_length=20, blank=True, null=True)
+    user = models.CharField(max_length=20, blank=True)
     location = models.PointField(srid=4326)
 
     verified = models.BooleanField(default=False, blank=True)
