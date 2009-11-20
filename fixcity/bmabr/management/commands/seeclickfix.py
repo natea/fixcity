@@ -66,9 +66,7 @@ def fetch_feed(feed_url):
     return json.loads(content)
 
 def get_latest_pickle_path():
-    curpath = os.path.abspath(__file__)
-    dirname = os.path.dirname(curpath)
-    return os.path.join(dirname, 'latest.pickle')
+    return settings.SEECLICKFIX_STATUS_PATH
 
 def get_latest_date_seen():
     curpath = os.path.abspath(__file__)
