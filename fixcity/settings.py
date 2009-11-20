@@ -138,13 +138,18 @@ FILE_UPLOAD_HANDLERS = (
 INSTALLED_APPS = (
     'sorl.thumbnail',
     'django.contrib.auth',
+    'django.contrib.comments',
     'django.contrib.contenttypes',
+    'django.contrib.markup',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.gis',
     'registration',
     'fixcity.bmabr',
+    'basic.blog',
+    'basic.inlines',
+    'tagging',
 )
 
 

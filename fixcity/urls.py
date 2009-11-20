@@ -82,6 +82,9 @@ urlpatterns = patterns(
 
     (r'^cb1racks/$', 'fixcity.bmabr.views.cb1racks'),
     (r'^admin/(.*)', admin.site.root),
+
+    (r'^blog/', include('basic.blog.urls')),
+    (r'^comments/', include('django.contrib.comments.urls')),
 )
 
 handler500 = 'fixcity.bmabr.views.server_error'

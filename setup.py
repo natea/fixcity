@@ -15,6 +15,7 @@ install_requires=[
       'mock',
       'tweepy',
       'python-bitly',
+      'django-basic-apps',
       ]
 
 import sys
@@ -36,6 +37,7 @@ setup(name='fixcity',
         'http://sourceforge.net/projects/ctypes/files/ctypes/1.0.2/ctypes-1.0.2.tar.gz/download#egg=ctypes-1.0.2',
         'https://svn.openplans.org/eggs/httplib2-0.4.0.zip',
         'https://svn.openplans.org/eggs/python-bitly-0.1.tar.gz',
+        'https://source.openplans.org/eggs/django-basic-apps-0.6.tar.gz',
         ],
       install_requires=install_requires,
       )
