@@ -322,6 +322,11 @@ def newrack_json(request):
             # it's a list subclass containing string subclasses.
             errors[key] = [s[:] for s in val]
         output = {'errors': errors}
+        # Bit of logging temporarily since we have no other way to
+        # debug these on the live site...
+        logger = logging.getLogger('')
+        logger.error("Errors in newrack_json: %s.\nInput data was: %s" %
+                     (str(errors), request.raw_post_data))
     else:
         status = 200
         rack = rackresult['rack']

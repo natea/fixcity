@@ -67,7 +67,6 @@ class RackBuilder(object):
         self.status_file_path = config.TWITTER_STATUS_PATH
     
     def main(self, recent_only=True):
-        url = self.url
         last_processed_id = None
         if recent_only:
             try:
@@ -83,16 +82,17 @@ class RackBuilder(object):
                 "We went over our twitter API rate limit. Resets at: %s"
                 % limit_status['reset_time'])
         twit = TwitterFetcher(self.twitter_api, self.username)
+
         all_tweets = twit.get_tweets(last_processed_id)
-        if all_tweets:
-            # XXX we shouldn't do this if there's a server error
-            statusfile = open(self.status_file_path, 'w')
-            pickle.dump({'last_processed_id': all_tweets[0].id}, statusfile)
-            statusfile.close()
-        for tweet in all_tweets:
+        for tweet in reversed(all_tweets):
             title, location = twit.parse(tweet)
+            statusfile = open(self.status_file_path, 'w')
+            # XXX don't want to do this if there's a socket error,
+            # but we do if there's any other kind of error.
+            pickle.dump({'last_processed_id': tweet.id}, statusfile)
+            statusfile.close()
             if title and location:
-                new_rack(title, location, tweet.user.screen_name, tweet.id, url)
+                self.new_rack(title, location, tweet.user.screen_name, tweet.id)
 
             # TODO: batch-notification of success to cut down on posts:
             # if success, maintain a queue of recently successful posts,
@@ -107,25 +107,91 @@ class RackBuilder(object):
             # - build a bit.ly version of the URL and insert it in the message
             # - tweet the message
             # - repeat until we're out of users, or hit our API limit
-            
+            # ... or something.
+
+            # XXX Also batch error messages? We might get a bunch if the server
+            # goes down and cron keeps running this script...
+
+            # XXX Or maybe we need to keep some state about tweets
+            # we couldn't process in case we want to retry them
+            # and notify user if they eventually succeed?
 
 
+    def new_rack(self, title, address, user, tweetid):
+        url = self.url
+        # XXX UGH, copy-pasted from handle_mailin.py. Refactoring time!
+        description = ''
+        # We don't bother with microsecond precision because
+        # Django datetime fields can't parse it anyway.
+        now = datetime.fromtimestamp(int(time.time()))
+        data = dict(source_type='twitter',
+                    twitter_user=user,
+                    twitter_id=tweetid,
+                    title=title,
+                    description=description,
+                    date=now.isoformat(' '),  # XXX use the tweet's own date?
+                    address=address,
+                    geocoded=0,  # Do server-side geocoding.
+                    )
+
+        jsondata = json.dumps(data)
+        headers = {'Content-type': 'application/json'}
+
+        error_subject = "Unsuccessful bikerack request"
+        try:
+            response, content = http.request(url, 'POST',
+                                             headers=headers,
+                                             body=jsondata)
+        except socket.error:
+            _notify_admin('Server down??',
+                          'Could not post some tweets, fixcity.org dead?')
+            sys.exit(1)
+
+        if response.status >= 500:
+            # XXX give a URL to a help page w/ more info?
+            # Maybe even a private URL to a page w/ this user's exact errors?
+            err_msg = (
+                "server error while handling your bike rack. Sorry!"
+                )
+            self.bounce(
+                user, err_msg,
+                notify_admin='fixcity: twitter: 500 Server error',
+                notify_admin_body=content)
+            return
+
+        result = json.loads(content)
+        if result.has_key('errors'):
+
+            err_msg = (
+                "Thanks for your rack suggestion, "
+                "but we couldn't process your tweet. "
+                "Check format and try again?"
+                )
+    ##         errors = adapt_errors(result['errors'])
+    ##         for k, v in sorted(errors.items()):
+    ##             err_msg += "%s: %s\n" % (k, '; '.join(v))
+
+            self.bounce(user, err_msg)
+            return
+        else:
+            self.bounce(user, "thanks! your rack request is at %s%s" %
+                        (self.url, result['rack']))
 
 
+    def bounce(self, user, message, notify_admin='', notify_admin_body=''):
+        message = '@%s %s' % (user, message)[:140]
+        self.twitter_api.update_status(message) # XXX add in_reply_to_id?
 
-def bounce(user, message, notify_admin='', notify_admin_body=''):
-    
-    # XXX TODO notify the user via twitter
-    
-    if notify_admin:
-        admin_subject = 'FixCity tweeter bounce! %s' % notify_admin
-        admin_body = 'Bouncing to: %s\n' % user
-        admin_body += 'Bounce message: %r\n' % message
-        admin_body += 'Time: %s\n' % datetime.now().isoformat(' ')
-        if notify_admin_body:
-            admin_body += 'Additional info:\n'
-            admin_body += notify_admin_body
-        _notify_admin(admin_subject, admin_body)
+        if notify_admin:
+            # XXX include the original tweet?
+            admin_subject = 'FixCity tweeter bounce! %s' % notify_admin
+            admin_body = 'Bouncing to: %s\n' % user
+            admin_body += 'Bounce message: %r\n' % message
+            admin_body += 'Time: %s\n' % datetime.now().isoformat(' ')
+            if notify_admin_body:
+                admin_body += 'Additional info:\n'
+                admin_body += notify_admin_body
+            _notify_admin(admin_subject, admin_body)
 
 
 def _notify_admin(subject, body):
@@ -139,67 +205,6 @@ def adapt_errors(adict):
     # XXX TODO
     return adict
 
-def new_rack(title, address, user, tweetid, url):
-    # XXX Batch error messages? We might get a bunch if the server
-    # goes down and cron keeps running this script...
-    # XXX Or maybe we need to keep some state about tweets
-    # we couldn't process in case we want to retry them
-    # and notify user if they eventually succeed?
-    
-    # XXX UGH, copy-pasted from handle_mailin.py. Refactoring time!
-    description = ''
-    # We don't bother with microsecond precision because
-    # Django datetime fields can't parse it anyway.
-    now = datetime.fromtimestamp(int(time.time()))
-    data = dict(source_type='twitter',
-                twitter_user=user,
-                twitter_id=tweetid,
-                title=title,
-                description=description,
-                date=now.isoformat(' '),  # XXX use the tweet's own date?
-                address=address,
-                geocoded=0,  # Do server-side geocoding.
-                )
-
-    jsondata = json.dumps(data)
-    headers = {'Content-type': 'application/json'}
-
-    error_subject = "Unsuccessful bikerack request"
-    try:
-        response, content = http.request(url, 'POST',
-                                         headers=headers,
-                                         body=jsondata)
-    except socket.error:
-        #err_msg = error_subject + ": fixcity.org is down. Notifying admins. Your rack should be OK once fixcity is up."
-        _notify_admin('Server down??',
-                      'Could not post some tweets, fixcity.org dead?')
-        sys.exit(1)
-    
-    if response.status >= 500:
-        # XXX give a URL to a help page w/ more info?
-        # Maybe even a private URL to a page w/ this user's exact errors?
-        err_msg = (
-            "server error while handling your bike rack. Sorry!"
-            )
-        bounce(user, err_msg,
-               notify_admin='fixcity: twitter: 500 Server error',
-               notify_admin_body=content)
-        return
-
-    result = json.loads(content)
-    if result.has_key('errors'):
-
-        err_msg = (
-            "Thanks for your rack suggestion, "
-            "but we couldn't process your tweet. "
-            "Check format and try again?"
-            )
-##         errors = adapt_errors(result['errors'])
-##         for k, v in sorted(errors.items()):
-##             err_msg += "%s: %s\n" % (k, '; '.join(v))
-
-        bounce(user, err_msg)
-        return
 
 
 def api_factory(settings):
