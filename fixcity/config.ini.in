@@ -33,7 +33,7 @@ PASSWORD =
 
 # We'll store recently seen twitter information here.
 # Set this to a path outside your source tree
-STATUS_FILE_PATH = '/tmp/twitter.pickle'
+STATUS_FILE_PATH = /tmp/twitter.pickle
 
 
 [db]
