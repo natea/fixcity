@@ -100,7 +100,7 @@ class TestTweeter(unittest.TestCase):
     def test_parse(self):
         username = 'fixcity_testing'
         class StubTweet:
-            text = '@%s a title #bikerack an address' % username
+            text = '@%s an address #bikerack a title' % username
         fetcher = tweeter.TwitterFetcher(None, username)
         self.assertEqual(('a title', 'an address'), fetcher.parse(StubTweet))
 
@@ -136,8 +136,7 @@ class TestTweeter(unittest.TestCase):
     def test_main(self, MockTweepyAPI, mock_new_rack):
         tweepy_mock = MockTweepyAPI()
         user = settings.TWITTER_USER
-        builder = tweeter.RackBuilder('http://localhost:8000/rack/',
-                                      settings, tweepy_mock)
+        builder = tweeter.RackBuilder(settings, tweepy_mock)
         # The Mock API works OK but setting attrs is a bit tedious...
         # i wish you could pass a dict as the spec argument.
         status = mock.Mock(['id', 'text', 'user'])
