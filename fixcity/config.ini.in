@@ -19,7 +19,7 @@ STATIC_DOC_ROOT = media
 
 # feed url to pull in seeclickfix data
 SEECLICKFIX_JSON_URL = http://seeclickfix.com/issues.json?status[Open]=true&sort=issues.created_at&num_results=100&page=1&start=24&end=0&watcher_token=53a6a0df7ecef794679f668acf8137fe5c25d45c
-SEECLICKFIX_PATH_URL = /tmp/seeclickfix.pickle
+SEECLICKFIX_STATUS_PATH = /tmp/seeclickfix.pickle
 
 # email address to mail when there is a failure with an integration service,
 # eg. twitter, seeclickfix, email....

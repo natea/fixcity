@@ -85,7 +85,7 @@ assert SECRET_KEY != 'YOU MUST CHANGE THIS', \
         'You really need to change the SECRET_KEY setting in your config.ini!'
 
 SEECLICKFIX_JSON_URL = config.get('main', 'SEECLICKFIX_JSON_URL')
-SEECLICKFIX_PATH_URL = config.get('main', 'SEECLICKFIX_PATH_URL')
+SEECLICKFIX_STATUS_PATH = config.get('main', 'SEECLICKFIX_STATUS_PATH')
 
 TWITTER_USER = config.get('twitter', 'USER')
 TWITTER_PASSWORD = config.get('twitter', 'PASSWORD')
