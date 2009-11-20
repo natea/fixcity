@@ -83,7 +83,7 @@ def user_context(request):
     }
 
 def index(request):
-    racks_query = Rack.objects.order_by(*DEFAULT_RACK_ORDER)[:13]
+    racks_query = Rack.objects.order_by(*DEFAULT_RACK_ORDER)[:7]
     return render_to_response('index.html',
        {'request':request,
         'recent_racks': racks_query,
