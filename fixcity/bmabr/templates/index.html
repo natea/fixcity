@@ -214,19 +214,22 @@ function loadMap() {
   <a id="learnmore-foot" href="/about">Learn more about fixcity.org Bike Racks...</a>
 </div><!-- /#home-main -->
 <div id="home-sidebar">
-  <h2>Latest posts</h2>
+  <h2 class="latest-posts-heading">Latest posts</h2>
   {% load blog %}
-  <ul id="recent-posts">
+  <ul class="home-list">
     {% get_latest_posts 5 as latest_posts %}
     {% for post in latest_posts %}
     <li>
-      <p><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></p>
-      <p>{{ post.tease }}</p>
+    <a href="{{ post.get_absolute_url }}">
+      <strong>{{ post.title }}</strong>
+      {{ post.tease }}
+    </a>
     </li>
     {% endfor %}
+    <li><a id="more-racks" href="/blog/">More posts</a></li>
   </ul>
   <h2>Recently Added Racks</h2>
-  <ul id="recent-racks">
+  <ul class="home-list">
    {% for rack in recent_racks %}
     <li id="rack_{{rack.id}}"><a href="/rack/{{rack.id}}"><strong>{{rack.title}}</strong>
       {{rack.address}}</a></li>
