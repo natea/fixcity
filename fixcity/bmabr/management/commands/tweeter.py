@@ -31,7 +31,7 @@ class TwitterFetcher(object):
             location, title = msg.split('#bikerack', 1)
             return title.strip(), location.strip()
         except ValueError:
-            sys.stderr.write("couldn't parse tweet %r\n") % msg
+            sys.stderr.write("couldn't parse tweet %r\n" % msg)
             return None, None
 
     def get_tweets(self, since_id=None):
