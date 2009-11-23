@@ -904,9 +904,14 @@ width: 280px;
 }
 
 /* prevent grey border in Safari */
-body .olPopup > div {
-/* outline: none; */
+.olPopup div div img {
+display: none !important;
 }
+
+.olPopup div div.rack-info img {
+display: block !important;
+}
+
 
 body .olPopup img {
 width: 50px;
