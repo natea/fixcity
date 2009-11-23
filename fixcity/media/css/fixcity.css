@@ -2,8 +2,21 @@
 General styles
 -----------------------*/
 @font-face {
-  font-family: Museo; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
-  src: url(/site_media/fonts/Museo500-Regular.otf) format("opentype");
+	font-family: 'Museo300'; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
+	src: url('/site_media/fonts/Museo300-Regular.eot');
+	src: local('Museo 300'), local('Museo-300'), url('/site_media/fonts/Museo300-Regular.woff') format('woff'), url('/site_media/fonts/Museo300-Regular.otf') format('opentype'), url('/site_media/fonts/Museo300-Regular.svg#Museo-300') format('svg');
+}
+
+@font-face {
+	font-family: 'Museo500'; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
+	src: url('/site_media/fonts/Museo500-Regular.eot');
+	src: local('Museo 500'), local('Museo-500'), url('/site_media/fonts/Museo500-Regular.woff') format('woff'), url('/site_media/fonts/Museo500-Regular.otf') format('opentype'), url('/site_media/fonts/Museo500-Regular.svg#Museo-500') format('svg');
+}
+
+@font-face {
+	font-family: 'Museo700'; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
+	src: url('/site_media/fonts/Museo700-Regular.eot');
+	src: local('Museo 700'), local('Museo-700'), url('/site_media/fonts/Museo700-Regular.woff') format('woff'), url('/site_media/fonts/Museo700-Regular.otf') format('opentype'), url('/site_media/fonts/Museo700-Regular.svg#Museo-700') format('svg');
 }
 
 body {
@@ -157,7 +170,7 @@ height: 110px;
 float: left;
 overflow: hidden;
 text-indent: -9999em;
-background: url(/site_media/img/logo.png) no-repeat;
+background: url(/site_media/img/beta-logo.gif) no-repeat;
 }
 
 #nav ul {
@@ -195,7 +208,7 @@ display: block;
 overflow: hidden;
 text-indent: -9999em;
 width: 135px;
-height: 101px;
+height: 91px;
 }
 
 #nav li a#add-rack {
@@ -211,17 +224,8 @@ margin: 0 15px 0 0;
 background: url(/site_media/img/verification-kit-bg.png) no-repeat;
 }
 
-#nav li a#add-rack:hover,
-#nav li a#add-rack.current,
-#nav li a#verify-rack:hover,
-#nav li a#verify-rack.current,
-#nav li a#verification-kit:hover,
-#nav li a#verification-kit.current {
-background-position: 0 -101px;
-}
-
 #lede {
-margin: 10px 0 15px;
+margin: 20px 0 15px;
 padding: 0 0 5px;
 border-bottom: 1px solid #8fb9cc;
 }
@@ -334,22 +338,21 @@ background: #edf2f6;
 font-weight: bold;
 font-size: 1.1em;
 padding: 8px;
-margin-top: 0;
 }
 
-#home-sidebar #recent-racks {
+#home-sidebar .home-list {
 list-style-type: none;
 margin: 0;
 padding: 0;
 }
 
-#home-sidebar #recent-racks li {
+#home-sidebar .home-list li {
 display: inline;
 margin: 0;
 padding: 0;
 }
 
-#home-sidebar #recent-racks li a {
+#home-sidebar .home-list li a {
 display: block;
 color: #7896a8;
 text-decoration: none;
@@ -357,22 +360,26 @@ padding: 0.5em 0;
 border-bottom: 1px solid #edf2f5;
 }
 
-#home-sidebar #recent-racks li a:hover {
+#home-sidebar .home-list li a:hover {
 
 }
 
-#home-sidebar #recent-racks li a strong {
+#home-sidebar .home-list li a strong {
 color: #57bbf1;
 }
 
-#home-sidebar #recent-racks li:last-child a {
+#home-sidebar .home-list li:last-child a {
 text-align: right;
 color: #57bbf1;
 border-bottom: 0 none transparent;
 }
 
-#home-sidebar #recent-racks li:last-child a:hover {
+#home-sidebar .home-list li:last-child a:hover {
 text-decoration: underline;
+}
+
+#home-sidebar .latest-posts-heading {
+margin-top: 0;
 }
 
 /* - */
@@ -455,11 +462,9 @@ margin: 0;
 color: #bababa;
 text-transform: uppercase;
 font-size: 0.7em;
-line-height: 130%;
-margin: 0;
 }
 
-#racklist .rack-snippet {
+#racklist .rack-info p {
 margin: 0;
 font-size: 0.95em;
 }
@@ -545,7 +550,7 @@ background: #00b0f1;
 border: 0 none transparent;
 color: #fff;
 padding: 0.5em;
-font-family: Museo, "Helvetica Neue", helvetica, verdana, sans-serif;
+font-family: "Museo500", "Helvetica Neue", helvetica, verdana, sans-serif;
 }
 
 #content form input.button,
@@ -555,6 +560,7 @@ background: #00b0f1;
 border: 0 none transparent;
 color: #fff;
 padding: 0.5em;
+font-family: "Museo500", "Helvetica Neue", helvetica, verdana, sans-serif;
 }
 
 #content a.fakebigbutton {
@@ -566,7 +572,7 @@ color: #fff;
 padding: 0.5em;
 text-align: center;
 text-decoration: none;
-font-family: Museo, "Helvetica Neue", helvetica, verdana, sans-serif;
+font-family: "Museo500", "Helvetica Neue", helvetica, verdana, sans-serif;
 }
 
 #content form input.standalone {
@@ -877,7 +883,6 @@ background: transparent url(/site_media/img/map-popup-bg.png) no-repeat !importa
 width: 292px !important;
 height: 78px !important;
 padding: 3px 14px 3px 3px !important;
-outline: none !important;
 }
 
 body .olFramedCloudPopupContent {
@@ -900,12 +905,7 @@ width: 280px;
 
 /* prevent grey border in Safari */
 body .olPopup > div {
-outline: none !important;
-visibility: hidden !important;
-}
-
-body .olPopup > div > * {
-visibility: visible !important;
+/* outline: none; */
 }
 
 body .olPopup img {
