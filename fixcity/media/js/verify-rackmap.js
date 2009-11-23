@@ -276,7 +276,7 @@ function loadMap() {
 	  $('ul#racklist li').removeClass('selected').filter('#rack_' + feature.fid).addClass('selected');
 					
           var popup = new FixcityPopup(null, feature.geometry.getBounds().getCenterLonLat(),
-                                       null, ('<div class="rack-info"><img src="' + ((feature.attributes.thumbnail != null) ? feature.attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" /><h3>' + feature.attributes.name + '</h3><h4>' + feature.attributes.address + '</h4>' + ((feature.attributes.verified == null) ? '' : '<h5>verified</h5>') + '</div>'),
+                                       null, ('<div class="rack-info"><a href="/rack/' + feature.fid + '"><img src="' + ((feature.attributes.thumbnail != null) ? feature.attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/rack/' + feature.fid + '">' + feature.attributes.name + '</a></h3><h4>' + feature.attributes.address + '</h4>' + ((feature.attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '</div>'),
                                        {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(-40, 48)},
                                        true, function() { selectControl.unselect(feature); });
           feature.popup = popup;
