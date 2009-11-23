@@ -340,41 +340,43 @@ font-size: 1.1em;
 padding: 8px;
 }
 
-#home-sidebar .home-list {
+#home-sidebar #recent-racks {
 list-style-type: none;
 margin: 0;
 padding: 0;
 }
 
-#home-sidebar .home-list li {
+#home-sidebar #recent-racks li {
 display: inline;
 margin: 0;
 padding: 0;
 }
 
-#home-sidebar .home-list li a {
+#home-sidebar #recent-racks li a {
 display: block;
 color: #7896a8;
 text-decoration: none;
-padding: 0.5em 0;
+padding: 0.5em 5px;
 border-bottom: 1px solid #edf2f5;
+margin: 0 -5px;
 }
 
-#home-sidebar .home-list li a:hover {
-
+#home-sidebar #recent-racks li.selected a,
+#home-sidebar #recent-racks li a:hover {
+background: #f2f3ed;
 }
 
-#home-sidebar .home-list li a strong {
+#home-sidebar #recent-racks li a strong {
 color: #57bbf1;
 }
 
-#home-sidebar .home-list li:last-child a {
+#home-sidebar #recent-racks li:last-child a {
 text-align: right;
 color: #57bbf1;
 border-bottom: 0 none transparent;
 }
 
-#home-sidebar .home-list li:last-child a:hover {
+#home-sidebar #recent-racks li:last-child a:hover {
 text-decoration: underline;
 }
 
@@ -912,7 +914,6 @@ display: none !important;
 display: block !important;
 }
 
-
 body .olPopup img {
 width: 50px;
 float: left;
@@ -938,13 +939,18 @@ line-height:130%;
 }
 
 body .olPopup h5 {
-background: url(/site_media/img/tick.png) 3px 50% no-repeat;
 color: #a5c665;
-padding: 2px 0 2px 22px;
+padding: 2px 0 2px 19px;
+text-transform: uppercase;
+background: url(/site_media/img/tick.png) 0 50% no-repeat;
 font-size: 1em;
 margin: 0 0 0 55px;
 }
 
+body .olPopup h5 em {
+font-style: normal;
+font-size: 0.7em;
+}
 
 /* - */
 
