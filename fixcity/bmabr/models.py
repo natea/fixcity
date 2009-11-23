@@ -7,7 +7,8 @@ RACK_IMAGE_LOCATION = 'images/racks/'
 class CommunityBoard(models.Model):
     gid = models.IntegerField(primary_key=True)
     borocd = models.IntegerField()
-    name = models.CharField(max_length=10)
+    name = models.IntegerField()
+    boro = models.CharField(max_length=50)
     the_geom = models.MultiPolygonField()
     objects = models.GeoManager()
 
