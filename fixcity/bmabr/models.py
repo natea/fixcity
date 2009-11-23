@@ -7,17 +7,17 @@ RACK_IMAGE_LOCATION = 'images/racks/'
 class CommunityBoard(models.Model):
     gid = models.IntegerField(primary_key=True)
     borocd = models.IntegerField()
-    name = models.IntegerField()
+    board = models.IntegerField()
     boro = models.CharField(max_length=50)
     the_geom = models.MultiPolygonField()
     objects = models.GeoManager()
 
     class Meta:
         db_table = u'gis_community_board'
-        ordering = ['name']
+        ordering = ['boro', 'board']
 
     def __unicode__(self):
-        return "Brooklyn Community Board %s " % self.name
+        return "Brooklyn Community Board %s " % self.board
 
 
 

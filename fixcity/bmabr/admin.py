@@ -41,7 +41,7 @@ admin.site.register(Neighborhoods,NeighborhoodsAdmin)
 
 
 class CommunityBoardAdmin(admin.GeoModelAdmin): 
-    list_display = ('boro','name','gid')
+    list_display = ('boro','board','gid')
     ordering = ('boro',)
 admin.site.register(CommunityBoard,CommunityBoardAdmin)
 

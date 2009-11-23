@@ -163,7 +163,7 @@ def submit_all(request):
 
 
 def submit(request): 
-    community_board_query = CommunityBoard.objects.filter(name='1')
+    community_board_query = CommunityBoard.objects.filter(board=1, boro='brooklyn')
     for communityboard in community_board_query:         
         racks_query = Rack.objects.filter(location__contained=communityboard.the_geom)
         racks_count = Rack.objects.filter(location__contained=communityboard.the_geom).count()
@@ -647,7 +647,7 @@ def server_error(request, template_name='500.html'):
                                    mimetype="application/xhtml+xml")
 
 def cb1racks(request):
-    cb1 = CommunityBoard.objects.get(name='1')
+    cb1 = CommunityBoard.objects.get(board=1, boro='brooklyn')
     racks = Rack.objects.filter(location__contained=cb1.the_geom)
     racks = racks.order_by('verified')
     nracks = len(racks)
