@@ -79,7 +79,7 @@ urlpatterns = patterns(
     # to INSTALLED_APPS to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    (r'^cb1racks$', 'fixcity.bmabr.views.cb1racks'),
+    (r'^cb1racks/$', 'fixcity.bmabr.views.cb1racks'),
     (r'^admin/(.*)', admin.site.root),
 )
 
