@@ -179,7 +179,8 @@ class RackBuilder(object):
 
 
     def bounce(self, user, message, notify_admin='', notify_admin_body=''):
-        message = '@%s %s' % (user, message)[:140]
+        message = '@%s %s' % (user, message)
+        message = message[:140]
         self.twitter_api.update_status(message) # XXX add in_reply_to_id?
 
         if notify_admin:
