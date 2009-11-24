@@ -147,12 +147,14 @@ class RackBuilder(object):
                           'Could not post some tweets, fixcity.org dead?')
             sys.exit(1)
 
+        # XXX for now we just have one error message
+        general_error_message = ("Thanks for the suggestion, but some error happened. "
+                                 "Check format e.g. http://bit.ly/76pXSi Try again. "
+                                 "Or @ us w/questions!")
         if response.status >= 500:
             # XXX give a URL to a help page w/ more info?
             # Maybe even a private URL to a page w/ this user's exact errors?
-            err_msg = (
-                "server error while handling your bike rack. Sorry!"
-                )
+            err_msg = general_error_message
             self.bounce(
                 user, err_msg,
                 notify_admin='fixcity: twitter: 500 Server error',
@@ -162,11 +164,7 @@ class RackBuilder(object):
         result = json.loads(content)
         if result.has_key('errors'):
 
-            err_msg = (
-                "Thanks for your rack suggestion, "
-                "but we couldn't process your tweet. "
-                "Check format and try again?"
-                )
+            err_msg = general_error_message
     ##         errors = adapt_errors(result['errors'])
     ##         for k, v in sorted(errors.items()):
     ##             err_msg += "%s: %s\n" % (k, '; '.join(v))
@@ -174,8 +172,10 @@ class RackBuilder(object):
             self.bounce(user, err_msg)
             return
         else:
-            self.bounce(user, "thanks! your rack request is at %s%s" %
-                        (self.url, result['rack']))
+            self.bounce(user, "Thank you! Here's the rack request %s%s "
+                              "Next? Register to verify your request or "
+                              "help your neighbors." % (self.url,
+                                                        result['rack']))
 
 
     def bounce(self, user, message, notify_admin='', notify_admin_body=''):
