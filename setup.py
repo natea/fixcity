@@ -14,6 +14,7 @@ install_requires=[
       'poster',
       'mock',
       'tweepy',
+      'python-bitly',
       ]
 
 import sys
@@ -34,6 +35,7 @@ setup(name='fixcity',
         'http://dist.repoze.org/PIL-1.1.6.tar.gz#egg=PIL-1.1.6',
         'http://sourceforge.net/projects/ctypes/files/ctypes/1.0.2/ctypes-1.0.2.tar.gz/download#egg=ctypes-1.0.2',
         'https://svn.openplans.org/eggs/httplib2-0.4.0.zip',
+        'https://svn.openplans.org/eggs/python-bitly-0.1.tar.gz',
         ],
       install_requires=install_requires,
       )
