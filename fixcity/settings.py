@@ -150,6 +150,7 @@ INSTALLED_APPS = (
     'basic.blog',
     'basic.inlines',
     'tagging',
+    'south',
 )
 
 
