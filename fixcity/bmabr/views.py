@@ -643,5 +643,12 @@ def cb1racks(request):
     cb1 = CommunityBoard.objects.get(name='1')
     racks = Rack.objects.filter(location__contained=cb1.the_geom)
     racks = racks.order_by('verified')
-    return render_to_response('cb1racks.html', {'racks': racks},
+    nracks = len(racks)
+    nverified = len([r for r in racks if r.verified])
+    nunverified = nracks - nverified
+    return render_to_response('cb1racks.html', {'racks': racks,
+                                                'nracks': nracks,
+                                                'nverified': nverified,
+                                                'nunverified': nunverified,
+                                                },
                               context_instance=RequestContext(request))
