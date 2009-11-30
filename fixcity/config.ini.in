@@ -28,6 +28,10 @@ SERVICE_FAILURE_EMAIL = admin@example.com
 # This is the URL where scripts can post new racks.
 RACK_POSTING_URL = http://localhost:8000/racks/
 
+[bitly]
+user =
+api_key =
+
 [twitter]
 USER =
 PASSWORD =
