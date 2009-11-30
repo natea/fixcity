@@ -698,21 +698,60 @@ position: relative;
 background: #edf2f5;
 border: 1px solid #8fb9cc;
 margin: 20px 0 0;
-padding: 20px;
+padding: 10px;
 }
 
 #quick-check h4 {
-font-size: 1.1em;
 margin: 0 0 0.5em;
+font-size: 1.4em;
+padding: 15px 0 15px 40px;
+background: url(/site_media/img/quick-check-clipboard.png) 0 50% no-repeat;
+color: #333;
+}
+
+#quick-check h5  {
+margin: 0 0 0.5em;
+padding: 0 0 0 40px;
+font-weight: bold;
+}
+
+#quick-check h5 a {
+text-transform: uppercase;
+text-decoration: none;
+}
+
+#quick-check h5 a:hover {
+text-decoration: underline;
 }
 
 #quick-check ul {
-margin-bottom: 1em;
+margin: 0 0 1em;
 }
 
-#quick-check .note {
-font-size: 0.9em;
-font-style: italic;
+#quick-check ul li {
+list-style-type: none;
+padding: 5px 0 5px 40px;
+}
+
+#quick-check ul li strong {
+text-transform: uppercase;
+font-size: 1.2em;
+}
+
+#quick-check ul li.surface strong{
+color: #00af33;
+}
+
+#quick-check ul li.objects strong{
+color: #ff7800;
+}
+
+#quick-check ul li.access strong{
+color: #c8001f;
+}
+
+#quick-check p {
+padding: 0 0 0 40px;
 margin: 0;
 }
 
@@ -877,6 +916,10 @@ color: #00af33;
 
 ul.permissive-clearance {
 color: #00af33;
+}
+
+ul.permissive-clearance li span {
+color: #333;
 }
 
 /* - */
