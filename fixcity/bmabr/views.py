@@ -503,6 +503,13 @@ def verification_kit(request):
         context_instance=RequestContext(request),
         )
 
+def placement_guide(request):
+    return render_to_response(
+        'placement-guide.html',
+        {},
+        context_instance=RequestContext(request),
+        )
+
 def activate(request, activation_key,
              template_name='registration/activate.html',
              extra_context=None):

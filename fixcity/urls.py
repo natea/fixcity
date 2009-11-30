@@ -13,6 +13,7 @@ urlpatterns = patterns(
     (r'^faq/$', 'fixcity.bmabr.views.faq'),
     (r'^contact/$', 'fixcity.bmabr.views.contact'),
     (r'^verification-kit/$', 'fixcity.bmabr.views.verification_kit'),
+    (r'^placement-guide/$', 'fixcity.bmabr.views.placement_guide'),
 
     # Account URL overrides.
     # Note these go first because django just iterates over these patterns and uses
