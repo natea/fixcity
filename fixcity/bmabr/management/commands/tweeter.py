@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
+from fixcity.bmabr.fixcity_bitly import shorten_url
 import httplib2
 import pickle
 import socket
@@ -59,6 +60,10 @@ class TwitterFetcher(object):
 
 class RackBuilder(object):
 
+    general_error_message = ("Thanks, but something went wrong! Check the "
+                             "format e.g. http://bit.ly/76pXSi and try again "
+                             "or @ us w/questions.")
+
     def __init__(self, config, api):
         self.url = config.RACK_POSTING_URL
         self.username = config.TWITTER_USER
@@ -91,8 +96,11 @@ class RackBuilder(object):
             # but we do if there's any other kind of error.
             pickle.dump({'last_processed_id': tweet.id}, statusfile)
             statusfile.close()
+            user = tweet.user.screen_name
             if title and location:
-                self.new_rack(title, location, tweet.user.screen_name, tweet.id)
+                self.new_rack(title, location, user, tweet.id)
+            else:
+                self.bounce(user, self.general_error_message)
 
             # TODO: batch-notification of success to cut down on posts:
             # if success, maintain a queue of recently successful posts,
@@ -150,9 +158,7 @@ class RackBuilder(object):
         if response.status >= 500:
             # XXX give a URL to a help page w/ more info?
             # Maybe even a private URL to a page w/ this user's exact errors?
-            err_msg = (
-                "server error while handling your bike rack. Sorry!"
-                )
+            err_msg = self.general_error_message
             self.bounce(
                 user, err_msg,
                 notify_admin='fixcity: twitter: 500 Server error',
@@ -161,12 +167,7 @@ class RackBuilder(object):
 
         result = json.loads(content)
         if result.has_key('errors'):
-
-            err_msg = (
-                "Thanks for your rack suggestion, "
-                "but we couldn't process your tweet. "
-                "Check format and try again?"
-                )
+            err_msg = self.general_error_message
     ##         errors = adapt_errors(result['errors'])
     ##         for k, v in sorted(errors.items()):
     ##             err_msg += "%s: %s\n" % (k, '; '.join(v))
@@ -174,12 +175,15 @@ class RackBuilder(object):
             self.bounce(user, err_msg)
             return
         else:
-            self.bounce(user, "thanks! your rack request is at %s%s" %
-                        (self.url, result['rack']))
-
+            shortened_url = shorten_url('%s%s/' % (self.url, result['rack']))
+            self.bounce(user,
+                        "Thank you! Here's the rack request %s; now you can "
+                        "register to verify your request "
+                        "http://bit.ly/84Myis" % shortened_url)
 
     def bounce(self, user, message, notify_admin='', notify_admin_body=''):
-        message = '@%s %s' % (user, message)[:140]
+        message = '@%s %s' % (user, message)
+        message = message[:140]
         self.twitter_api.update_status(message) # XXX add in_reply_to_id?
 
         if notify_admin:
