@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 version='0.1dev'
 
 install_requires=[
-      'geopy==dev,>=0.93dev-r84',
+      'geopy',
       'sorl-thumbnail>=3.2.2',
       'Django>=1.1.1',
       'django-registration>=0.7',
