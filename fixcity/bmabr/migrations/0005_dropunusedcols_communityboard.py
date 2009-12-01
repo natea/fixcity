@@ -18,15 +18,15 @@ class Migration:
     
     def backwards(self, orm):
         db.add_column(u'gis_community_board', 'borough',
-                      models.CharField(20, default=''), keep_default=False)
+                      models.CharField(max_length=20, null=True))
         db.add_column(u'gis_community_board', 'neighborho',
-                      models.CharField(100, default=''), keep_default=False)
+                      models.CharField(max_length=100, null=True))
         db.add_column(u'gis_community_board', 'population',
-                      models.IntegerField(default=-1), keep_default=False)
+                      models.IntegerField(null=True))
         db.add_column(u'gis_community_board', 'populat_01',
-                      models.IntegerField(default=-1), keep_default=False)
+                      models.IntegerField(null=True))
         db.add_column(u'gis_community_board', 'populat_02',
-                      models.IntegerField(default=-1), keep_default=False)
+                      models.IntegerField(null=True))
 
         
     models = {
