@@ -35,9 +35,9 @@
         <a id="logo" href="/">Fixcity.org Bike Racks</a>
         <!-- maybe a better fit for {% block menu %}{% endblock %} -->
         <ul>
-          <li><a id="add-rack" href="/rack/new/">Add a Rack</a></li>
-          <li><a id="verify-rack" href="/verify/">Verify a Rack</a></li>
-          <li><a id="verification-kit" href="/verification-kit/">Verification Kit</a></li>
+          <li>{% block addrack %}<a id="add-rack" href="/rack/new/">Add a Rack</a>{% endblock %}</li>
+          <li>{% block verifyrack %}<a id="verify-rack" href="/verify/">Verify a Rack</a>{% endblock %}</li>
+          <li>{% block verificationkit %}<a id="verification-kit" href="/verification-kit/">Verification Kit</a>{% endblock %}</li>
         </ul>
       </div><!-- /#nav -->
       <div id="lede">

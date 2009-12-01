@@ -208,20 +208,28 @@ display: block;
 overflow: hidden;
 text-indent: -9999em;
 width: 135px;
-height: 91px;
+height: 101px;
 }
 
 #nav li a#add-rack {
-background: url(/site_media/img/add-rack-bg.png) no-repeat;
+background-image: url(/site_media/img/add-rack-bg.png);
+background-repeat: no-repeat;
 }
 
 #nav li a#verify-rack {
-background: url(/site_media/img/verify-rack-bg.png) no-repeat;
+background-image: url(/site_media/img/verify-rack-bg.png);
+background-repeat: no-repeat;
 margin: 0 15px 0 0;
 }
 
 #nav li a#verification-kit {
-background: url(/site_media/img/verification-kit-bg.png) no-repeat;
+background-image: url(/site_media/img/verification-kit-bg.png);
+background-repeat: no-repeat;
+}
+
+#nav li a:hover,
+#nav li a.current {
+background-position: 0 -101px;
 }
 
 #lede {
