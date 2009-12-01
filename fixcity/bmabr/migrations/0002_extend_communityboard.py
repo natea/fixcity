@@ -8,10 +8,10 @@ class Migration:
     def forwards(self, orm):
         
         # Adding field 'CommunityBoard.board'
-        db.add_column(u'gis_community_board', 'board', orm['bmabr.communityboard:board'])
+        db.add_column(u'gis_community_board', 'board', models.IntegerField(default=-1), keep_default=False)
         
         # Adding field 'CommunityBoard.boro'
-        db.add_column(u'gis_community_board', 'boro', orm['bmabr.communityboard:boro'])
+        db.add_column(u'gis_community_board', 'boro', models.CharField(max_length=50, default=''), keep_default=False)
         
         # Deleting field 'CommunityBoard.name'
         db.delete_column(u'gis_community_board', 'name')
