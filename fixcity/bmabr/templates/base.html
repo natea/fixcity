@@ -46,7 +46,7 @@
       {% if flash %}
       <div id="flash-message">
         {% for msg_type, messages in flash.items %}
-        <ul class="flash_{{ msg_type }}">
+        <ul class="flash {{ msg_type }} pngfix">
           {% for message in messages %}
           <li>{{ message|safe }}</li>
           {% endfor %}

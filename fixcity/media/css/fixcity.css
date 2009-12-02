@@ -2,21 +2,21 @@
 General styles
 -----------------------*/
 @font-face {
-	font-family: 'Museo300'; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
-	src: url('/site_media/fonts/Museo300-Regular.eot');
-	src: local('Museo 300'), local('Museo-300'), url('/site_media/fonts/Museo300-Regular.woff') format('woff'), url('/site_media/fonts/Museo300-Regular.otf') format('opentype'), url('/site_media/fonts/Museo300-Regular.svg#Museo-300') format('svg');
+font-family: 'Museo300'; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
+src: url('/site_media/fonts/Museo300-Regular.eot');
+src: local('Museo 300'), local('Museo-300'), url('/site_media/fonts/Museo300-Regular.woff') format('woff'), url('/site_media/fonts/Museo300-Regular.otf') format('opentype'), url('/site_media/fonts/Museo300-Regular.svg#Museo-300') format('svg');
 }
 
 @font-face {
-	font-family: 'Museo500'; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
-	src: url('/site_media/fonts/Museo500-Regular.eot');
-	src: local('Museo 500'), local('Museo-500'), url('/site_media/fonts/Museo500-Regular.woff') format('woff'), url('/site_media/fonts/Museo500-Regular.otf') format('opentype'), url('/site_media/fonts/Museo500-Regular.svg#Museo-500') format('svg');
+font-family: 'Museo500'; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
+src: url('/site_media/fonts/Museo500-Regular.eot');
+src: local('Museo 500'), local('Museo-500'), url('/site_media/fonts/Museo500-Regular.woff') format('woff'), url('/site_media/fonts/Museo500-Regular.otf') format('opentype'), url('/site_media/fonts/Museo500-Regular.svg#Museo-500') format('svg');
 }
 
 @font-face {
-	font-family: 'Museo700'; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
-	src: url('/site_media/fonts/Museo700-Regular.eot');
-	src: local('Museo 700'), local('Museo-700'), url('/site_media/fonts/Museo700-Regular.woff') format('woff'), url('/site_media/fonts/Museo700-Regular.otf') format('opentype'), url('/site_media/fonts/Museo700-Regular.svg#Museo-700') format('svg');
+font-family: 'Museo700'; /* A font by Jos Buivenga (exljbris) -> www.exljbris.nl */
+src: url('/site_media/fonts/Museo700-Regular.eot');
+src: local('Museo 700'), local('Museo-700'), url('/site_media/fonts/Museo700-Regular.woff') format('woff'), url('/site_media/fonts/Museo700-Regular.otf') format('opentype'), url('/site_media/fonts/Museo700-Regular.svg#Museo-700') format('svg');
 }
 
 body {
@@ -46,11 +46,33 @@ color: #5c8699;
 /*-----------------------
 Utility Classes
 -----------------------*/
-#flash-message {
+.flash {
 background: #edf2f5;
 border: 1px solid #44c5f5;
 margin: 1em 0;
-padding: 20px;
+padding: 20px 20px 20px 68px;
+min-height: 20px;
+background-position: 10px 50%;
+background-repeat: no-repeat;
+}
+
+* html .flash { 
+height: expression( this.scrollHeight <= 20 ? "20px" : "auto" ); /* sets min-height for IE */
+}
+
+
+#flash-message .info {
+background-image: url(/site_media/img/flash-info.png);
+}
+
+
+#flash-message .confirm {
+background-image: url(/site_media/img/flash-check.png);
+}
+
+#flash-message .error {
+background-image: url(/site_media/img/flash-error.png);
+border-color: #f35824;
 }
 
 .errorlist {
