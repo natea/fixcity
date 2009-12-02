@@ -263,7 +263,7 @@ def newrack_form(request):
         result = _newrack(request.POST, request.FILES)
         form = result['form']
         if not result['errors']:
-            message = result['message'] + '''<a href="/rack/new/">Add another rack</a> or continue to see other suggestions.'''
+            message = '''<h2>Thank you for your suggestion!</h2><p>Racks can take six months or more for the DOT to install, but we'll be in touch about its progress.</p><a href="/rack/new/">Add another rack</a> or continue to see other suggestions.'''
             flash(message, request)
             return HttpResponseRedirect('/verify/')
         else:

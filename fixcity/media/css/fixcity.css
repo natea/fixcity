@@ -298,16 +298,20 @@ position: relative;
 
 #map-legend {
 position: absolute;
-bottom: 10px;
-left: 10px;
-width: 370px;
+top: 10px;
+left: 40px;
+width: 478px;
 height: 23px;
 background: url(/site_media/img/map-legend-bg.png) no-repeat;
 z-index: 5000;
 }
 
-#home-map #map-legend {/* for now, suppress legend - though we may want an alternate one at some point */
-background: none transparent no-repeat;
+#home-map #map-legend,
+#verify-map #map-legend,
+.iconsonly #map-legend {
+width: 153px;
+height: 23px;
+background: url(/site_media/img/map-legend-iconsonly-bg.png) no-repeat;
 }
 
 #home-callouts {
@@ -719,7 +723,8 @@ margin: 0 0 0 20px;
 margin-left: 10px;
 }
 
-#request-map {
+#request-map,
+#view-map {
 height: 360px;
 border: 1px solid #8fb9cc;
 position: relative;
