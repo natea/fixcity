@@ -112,6 +112,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
+    'djangoflash.middleware.FlashMiddleware',
 )
 
 ROOT_URLCONF = 'fixcity.urls'
@@ -160,6 +161,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "fixcity.bmabr.views.user_context",
+    "djangoflash.context_processors.flash",
     )
 
 

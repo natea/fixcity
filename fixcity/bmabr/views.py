@@ -30,6 +30,8 @@ from fixcity.bmabr.models import CommunityBoard
 from fixcity.bmabr.models import RackForm, CommentForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
 from fixcity.bmabr.models import Source, TwitterSource, SeeClickFixSource, EmailSource
+from fixcity.flash_messages import flash
+from fixcity.flash_messages import flash_error
 
 from geopy import geocoders
 
@@ -48,20 +50,6 @@ SRID=4326
 # XXX Need to figure out what order we really want these in.
 DEFAULT_RACK_ORDER = ('-date', '-id')
 
-def flash(astring, request):
-    """add a string to the session's flash store"""
-    request.session.setdefault('_flash', []).append(astring)
-    request.session.modified = True
-
-def iter_flash_messages(request):
-    """yield all the session's flash messages, and remove them from
-    the session. LIFO."""
-    flash_messages = request.session.get('_flash', [])
-    while flash_messages:
-        request.session.modified = True
-        yield flash_messages.pop()
-
-
 def user_context(request):
     # Complicated a bit because AnonymousUser doesn't have some attributes.
     user = request.user
@@ -77,9 +65,6 @@ def user_context(request):
         'user': request.user,
         'user_displayname': displayname,
         'user_email': email,
-        # List-ify the flash messages to be sure the template can
-        # easily test whether it's empty.
-        'flash_messages': list(iter_flash_messages(request)),
     }
 
 def index(request):
@@ -282,7 +267,7 @@ def newrack_form(request):
             flash(message, request)
             return HttpResponseRedirect('/verify/')
         else:
-            flash('Please correct the following errors.', request)
+            flash_error('Please correct the following errors.', request)
     else:
         form = RackForm()
     return render_to_response('newrack.html', { 
@@ -369,7 +354,7 @@ def rack_edit(request,rack_id):
             flash('Your changes have been saved.', request)
             return HttpResponseRedirect('/rack/%s/edit/' % rack.id)
         else:
-            flash('Please correct the following errors.', request)
+            flash_error('Please correct the following errors.', request)
     else: 
         form = RackForm()
 

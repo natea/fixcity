@@ -17,6 +17,7 @@ install_requires=[
       'tweepy',
       'python-bitly',
       'django-basic-apps',
+      'django-flash',
       ]
 
 import sys
