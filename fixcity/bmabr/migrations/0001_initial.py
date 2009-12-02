@@ -31,13 +31,14 @@ class Migration:
         db.send_create_signal('bmabr', ['Source'])
         
         # Adding model 'CommunityBoard'
-        db.create_table(u'gis_community_board', (
-            ('gid', orm['bmabr.CommunityBoard:gid']),
-            ('borocd', orm['bmabr.CommunityBoard:borocd']),
-            ('name', orm['bmabr.CommunityBoard:name']),
-            ('the_geom', orm['bmabr.CommunityBoard:the_geom']),
-        ))
-        db.send_create_signal('bmabr', ['CommunityBoard'])
+        # XXX this is created by the initial sql script
+        # db.create_table(u'gis_community_board', (
+        #     ('gid', orm['bmabr.CommunityBoard:gid']),
+        #     ('borocd', orm['bmabr.CommunityBoard:borocd']),
+        #     ('name', orm['bmabr.CommunityBoard:name']),
+        #     ('the_geom', orm['bmabr.CommunityBoard:the_geom']),
+        # ))
+        # db.send_create_signal('bmabr', ['CommunityBoard'])
         
         # Adding model 'Rack'
         db.create_table('bmabr_rack', (
