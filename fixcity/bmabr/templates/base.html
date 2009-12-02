@@ -3,6 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 {% load google_analytics %}
+{% load flash_messages %}
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>{% block title %} {% endblock %}</title> 
   <!-- Framework CSS -->
@@ -43,9 +44,10 @@
       <div id="lede">
         {% block lede %}{% endblock %}
       </div><!-- /#lede -->
-      {% if flash %}
+      {% get_and_remove_flash_messages as flash_messages %}
+      {% if flash_messages %}
       <div id="flash-message">
-        {% for msg_type, messages in flash.items %}
+        {% for msg_type, messages in flash_messages.items %}
         <ul class="flash {{ msg_type }} pngfix">
           {% for message in messages %}
           <li>{{ message|safe }}</li>
