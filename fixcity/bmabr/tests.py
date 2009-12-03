@@ -6,6 +6,7 @@ from django.contrib.gis.geos.point import Point
 from django.utils import simplejson as json
 from fixcity.bmabr.management.commands import tweeter
 from fixcity.bmabr.views import SRID
+import datetime
 import mock
 import tweepy
 
@@ -101,9 +102,19 @@ class TestTweeter(unittest.TestCase):
     def test_parse(self):
         username = 'fixcity_testing'
         class StubTweet:
+            # for something this trivial, the Mock API is more trouble.
             text = '@%s an address #bikerack a title' % username
+            created_at = datetime.datetime.utcfromtimestamp(0)
+            id = 123
+            class user:
+                screen_name = 'bob'
         fetcher = tweeter.TwitterFetcher(None, username)
-        self.assertEqual(('a title', 'an address'), fetcher.parse(StubTweet))
+        self.assertEqual(fetcher.parse(StubTweet),
+                         {'date': datetime.datetime(1970, 1, 1, 0, 0),
+                          'address': 'an address',
+                          'tweetid': 123,
+                          'user': 'bob',
+                          'title': 'a title'})
 
     def test_newrack_json_twitter(self):
         from fixcity.bmabr.views import newrack_json
@@ -140,11 +151,12 @@ class TestTweeter(unittest.TestCase):
         builder = tweeter.RackBuilder(settings, tweepy_mock)
         # The Mock API works OK but setting attrs is a bit tedious...
         # i wish you could pass a dict as the spec argument.
-        status = mock.Mock(['id', 'text', 'user'])
+        status = mock.Mock(['id', 'text', 'user', 'created_at'])
         status.id = 1
-        status.text = '@%s mention #bikerack 13 thames st, brooklyn, ny' % user
+        status.text = '@%s 13 thames st, brooklyn, ny #bikerack mention ' % user
         status.user = mock.Mock(['screen_name'])
         status.user.screen_name = 'some twitter user'
+        status.created_at = datetime.datetime.utcfromtimestamp(0)
         tweepy_mock.mentions.return_value = [status]
         tweepy_mock.direct_messages.return_value = []
         tweepy_mock.rate_limit_status.return_value = {'remaining_hits': 999}
@@ -152,6 +164,10 @@ class TestTweeter(unittest.TestCase):
         builder.main(False)
         self.assertEqual(mock_new_rack.call_count, 1)
         self.assertEqual(mock_new_rack.call_args,
-                         (('13 thames st, brooklyn, ny', 'mention',
-                           'some twitter user', 1),
-                          {}))
+                         ((),
+                          {'address': '13 thames st, brooklyn, ny',
+                           'date': datetime.datetime(1970, 1, 1, 0, 0),
+                           'title': 'mention',
+                           'tweetid': 1,
+                           'user': 'some twitter user',
+                           }))

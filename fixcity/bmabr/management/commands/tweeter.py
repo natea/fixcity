@@ -27,17 +27,20 @@ class TwitterFetcher(object):
         
     def parse(self, tweet):
         msg = tweet.text.replace('@' + self.username, '')
-        # XXX what's the actual tweet format going to look like?
         try:
             location, title = msg.split('#bikerack', 1)
-            return title.strip(), location.strip()
+            return {'title': title.strip(),
+                    'address': location.strip(),
+                    'date': tweet.created_at,
+                    'user': tweet.user.screen_name,
+                    'tweetid': tweet.id}
         except ValueError:
             sys.stderr.write("couldn't parse tweet %r\n" % msg)
-            return None, None
+            return None
 
     def get_tweets(self, since_id=None):
         """
-        Try to get all our mentions and direct messages.
+        Try to get all our mentions (and maybe direct messages?).
         Subject to Twitter's pagination limits,
         http://apiwiki.twitter.com/Things-Every-Developer-Should-Know#6Therearepaginationlimits
         """
@@ -45,7 +48,7 @@ class TwitterFetcher(object):
         max_pages = 16
         max_per_page = 200
         for tweet_func in (self.twitter_api.mentions,):
-            # XXX not doing direct messages for now.
+            # We're not doing direct messages for now.
             for page in range(1, max_pages + 1):
                 if since_id is not None:
                     more_tweets = tweet_func(count=max_per_page, page=page, since_id=since_id)
@@ -90,15 +93,15 @@ class RackBuilder(object):
 
         all_tweets = twit.get_tweets(last_processed_id)
         for tweet in reversed(all_tweets):
-            title, location = twit.parse(tweet)
+            parsed = twit.parse(tweet)
             statusfile = open(self.status_file_path, 'w')
             # XXX don't want to do this if there's a socket error,
             # but we do if there's any other kind of error.
             pickle.dump({'last_processed_id': tweet.id}, statusfile)
             statusfile.close()
             user = tweet.user.screen_name
-            if title and location:
-                self.new_rack(title, location, user, tweet.id)
+            if parsed:
+                self.new_rack(**parsed)
             else:
                 self.bounce(user, self.general_error_message)
 
@@ -125,7 +128,7 @@ class RackBuilder(object):
             # and notify user if they eventually succeed?
 
 
-    def new_rack(self, title, address, user, tweetid):
+    def new_rack(self, title, address, user, date, tweetid):
         url = self.url
         # XXX UGH, copy-pasted from handle_mailin.py. Refactoring time!
         description = ''
@@ -137,7 +140,7 @@ class RackBuilder(object):
                     twitter_id=tweetid,
                     title=title,
                     description=description,
-                    date=now.isoformat(' '),  # XXX use the tweet's own date?
+                    date=date,
                     address=address,
                     geocoded=0,  # Do server-side geocoding.
                     )
