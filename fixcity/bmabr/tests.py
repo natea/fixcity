@@ -70,11 +70,12 @@ class TestNewRack(unittest.TestCase):
     def test_newrack_with_bad_source_but_no_email(self):
         from fixcity.bmabr.views import _newrack
         from fixcity.bmabr.models import NEED_SOURCE_OR_EMAIL
+        from fixcity.bmabr.models import NEED_LOGGEDIN_OR_EMAIL
         result = _newrack({'source': 999999999}, {})
-        self.assertEqual(result['errors'].get('email'), None)
         self.assertEqual(
             result['errors'].get('source'),
             [u'Select a valid choice. That choice is not one of the available choices.'])
+        self.assertEqual(result['errors'].get('email'), [NEED_LOGGEDIN_OR_EMAIL])
         self.assertEqual(result['errors'].get('__all__'), [NEED_SOURCE_OR_EMAIL])
 
     def test_newrack_working(self):
@@ -131,7 +132,7 @@ class TestTweeter(unittest.TestCase):
         self.failUnless(data.has_key('message'))
         
     
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.new_rack')
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackBuilder.new_rack')
     @mock.patch('tweepy.API')
     def test_main(self, MockTweepyAPI, mock_new_rack):
         tweepy_mock = MockTweepyAPI()
@@ -146,10 +147,11 @@ class TestTweeter(unittest.TestCase):
         status.user.screen_name = 'some twitter user'
         tweepy_mock.mentions.return_value = [status]
         tweepy_mock.direct_messages.return_value = []
+        tweepy_mock.rate_limit_status.return_value = {'remaining_hits': 999}
+
         builder.main(False)
         self.assertEqual(mock_new_rack.call_count, 1)
         self.assertEqual(mock_new_rack.call_args,
-                         (('mention', '13 thames st, brooklyn, ny',
-                           'some twitter user', 1,
-                           'http://localhost:8000/rack/'), {}))
-
+                         (('13 thames st, brooklyn, ny', 'mention',
+                           'some twitter user', 1),
+                          {}))

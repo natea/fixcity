@@ -176,7 +176,7 @@ class SubwayStations(models.Model):
 NEED_SOURCE_OR_EMAIL = "If email address is not provided, another source must be specified"
 
 NEED_PHOTO_TO_VERIFY = "You can't mark a rack as verified unless it has a photo"
-
+NEED_LOGGEDIN_OR_EMAIL = "Email is required if you're not logged in."
 
 class RackForm(ModelForm): 
     class Meta: 
@@ -192,13 +192,16 @@ class RackForm(ModelForm):
         return verified
 
     def clean(self):
+        from django.forms.util import ErrorList
         cleaned_data = self.cleaned_data
         if self.is_bound and self.instance.source:
             return cleaned_data
         if cleaned_data.get('email') or cleaned_data.get('source'):
             return cleaned_data
+        email_errors = self._errors.get('email')
+        if not email_errors and not cleaned_data.get('source'):
+            self._errors['email'] = ErrorList([NEED_LOGGEDIN_OR_EMAIL])
         raise ValidationError(NEED_SOURCE_OR_EMAIL)
-
 
 class CommentForm(ModelForm): 
     class Meta: 
