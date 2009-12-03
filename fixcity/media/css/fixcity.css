@@ -60,7 +60,6 @@ background-repeat: no-repeat;
 height: expression( this.scrollHeight <= 20 ? "20px" : "auto" ); /* sets min-height for IE */
 }
 
-
 #flash-message .info {
 background-image: url(/site_media/img/flash-info.png);
 }
@@ -73,6 +72,12 @@ background-image: url(/site_media/img/flash-check.png);
 #flash-message .error {
 background-image: url(/site_media/img/flash-error.png);
 border-color: #f35824;
+}
+
+.flash h2 {
+font-size: 1.4em;
+margin: 0 0 0.5em;
+color: #333;
 }
 
 .errorlist {
