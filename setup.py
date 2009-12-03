@@ -18,6 +18,7 @@ install_requires=[
       'python-bitly',
       'django-basic-apps',
       'django-flash',
+      'django-flash-templatetag',
       ]
 
 import sys
@@ -40,6 +41,7 @@ setup(name='fixcity',
         'https://svn.openplans.org/eggs/httplib2-0.4.0.zip',
         'https://svn.openplans.org/eggs/python-bitly-0.1.tar.gz',
         'https://source.openplans.org/eggs/django-basic-apps-0.6.tar.gz',
+        'https://source.openplans.org/eggs/django-flash-templatetag-0.1.tar.gz',
         'http://www.aeracode.org/releases/south/south-0.6.2.tar.gz',
         ],
       install_requires=install_requires,

@@ -152,6 +152,7 @@ INSTALLED_APPS = (
     'basic.inlines',
     'tagging',
     'south',
+    'django_flash_templatetag',
 )
 
 
