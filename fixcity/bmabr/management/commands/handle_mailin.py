@@ -665,7 +665,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             print "TD: Bouncing message to %s" % self.email_addr
         body += '\n\n------------ original message follows ---------\n\n'
         # TO DO: use attachments rather than inline.
-        body += self.msg.as_string()
+        body += unicode(self.msg.as_string(), errors='ignore')
         if notify_admin:
             admin_subject = 'FixCity handle_mailin bounce! %s' % notify_admin
             admin_body = 'Bouncing to: %s\n' % self.msg['to']
