@@ -123,6 +123,7 @@ function loadMap() {
     };
 
     function updatePagination(features) {
+        // FIXME: make this update the location bar?
         if (features.length == 0) {
             $("#pagination").hide();
             return;
@@ -151,21 +152,47 @@ function loadMap() {
                 $("#pagination a[rel=next]").click(makeClickHandler(info.page_next.value));
             };
 
-            // Simple pagination - just list all the pages.
+            // Flickr-like pagination
             var link_template = $("#pagination span[class=sectionlink]:first").clone();
             $("#pagination span[class=sectionlink]").remove();
-            for (var i = 1; i <= num_pages; i++) {
-                var pagelink = link_template.clone();
+            var cluster_start = Math.max(1, load_rack_params.page_number - 2);
+            var cluster_end = Math.min(num_pages, cluster_start + 4);
+            cluster_start = Math.max(1, cluster_end - 4);
+            var pagelink;
+            $("span.page_ellipsis").remove();
+            function addPageLink(page_no) {
+                pagelink = link_template.clone();
                 var a = pagelink.find("a");
-                a.click(makeClickHandler(i));
-                if (i == load_rack_params.page_number) {
+                a.click(makeClickHandler(page_no));
+                if (page_no == load_rack_params.page_number) {
                     a.removeAttr("href");
                 } else {
-                    a.attr("href", "#page_number=" + i.toString());
+                    a.attr("href", "#page_number=" + page_no.toString());
                 };
-                a.text(i.toString());
+                a.text(page_no.toString());
                 pagelink.insertBefore("#pagination a[rel=next]");
             };
+            var i;
+            if (cluster_start > 2) {
+                for (i = 1; i <= 2; i++) {
+                    addPageLink(i);
+                };
+            };
+            if (cluster_start > 3) {
+                pagelink.after('<span class="page_ellipsis">...</span>');
+            };
+            for (i = cluster_start; i <= cluster_end; i++) {
+                addPageLink(i);
+            };
+            if (cluster_end < (num_pages - 2)) {
+                pagelink.after('<span class="page_ellipsis">...</span>');
+            };
+            if (cluster_end < (num_pages - 1)) {
+                for (i = num_pages - 1; i <= num_pages; i++) {
+                    addPageLink(i);
+                };
+            };
+
         };
     };
 
