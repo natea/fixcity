@@ -200,6 +200,8 @@ class RackForm(ModelForm):
             return cleaned_data
         email_errors = self._errors.get('email')
         if not email_errors and not cleaned_data.get('source'):
+            # This is the way to stuff an error msg into a specific key,
+            # as per http://docs.djangoproject.com/en/dev/ref/forms/validation/#described-later
             self._errors['email'] = ErrorList([NEED_LOGGEDIN_OR_EMAIL])
         raise ValidationError(NEED_SOURCE_OR_EMAIL)
 
