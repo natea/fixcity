@@ -75,17 +75,6 @@ def index(request):
         },
        context_instance=RequestContext(request)
                               ) 
-def about(request):
-    return render_to_response('about.html',
-       {'request':request},
-       context_instance=RequestContext(request)
-                              )
-
-def faq(request):
-    return render_to_response('faq.html',
-       {'request':request},
-       context_instance=RequestContext(request)
-                              )
 
 @login_required
 def profile(request): 
@@ -474,26 +463,6 @@ def communityboard(request):
             }
            )
 
-
-def contact(request):
-    return render_to_response(
-        'contact.html', {},
-        context_instance=RequestContext(request),
-        )
-
-def verification_kit(request):
-    return render_to_response(
-        'verification-kit.html',
-        {},
-        context_instance=RequestContext(request),
-        )
-
-def placement_guide(request):
-    return render_to_response(
-        'placement-guide.html',
-        {},
-        context_instance=RequestContext(request),
-        )
 
 def activate(request, activation_key,
              template_name='registration/activate.html',
