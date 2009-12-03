@@ -207,9 +207,9 @@ function loadMap() {
 <div id="home-main">
   <div id="home-map"><div id="map-legend" class="pngfix"></div></div>
   <ul id="home-callouts" class="selfclear">
-    <li id="spot-it"><h3><a href="/rack/new/">Spot It.</a></h3><p>Where do you want more bike racks? Think of the spots you know of, or hit the streets and look for appropriate rack locations.</p></li>
-    <li id="map-it"><h3><a href="/rack/new/">Map It.</a></h3><p>Suggest a <a href="/rack/new/">New Rack</a> to put your spot on the map! Upload photos of appropriate locations.</p></li>
-    <li id="check-it"><h3><a href="/verify/">Check It.</a></h3><p>Verify suggested rack locations! Check if spots meet <a href="/placement-guide/">Location Guidelines</a> and community needs to help see racks on the ground sooner.</p></li>
+    <li id="spot-it"><h3><a href="/rack/new/">Spot It.</a></h3><p>Where do you want more bike racks? Examine the area for spots racks can fit in!</p></li>
+    <li id="map-it"><h3><a href="/rack/new/">Map It.</a></h3><p>Suggest a <a href="/rack/new/">New Rack</a> to put your spot on the map! Submit details and photo via email from your phone, twitter, or web.</p></li>
+    <li id="check-it"><h3><a href="/verify/">Check It.</a></h3><p>Verify suggested rack locations! Check if spots meet <a href="/placement-guide/">Location Guidelines</a> to see racks on the ground sooner.</p></li>
   </ul>
   <a id="learnmore-foot" href="/about">Learn more about fixcity.org Bike Racks...</a>
 </div><!-- /#home-main -->
@@ -228,7 +228,7 @@ function loadMap() {
     {% endfor %}
     <li><a id="more-posts" href="/blog/">More posts</a></li>
   </ul>
-  <h2>Recently Added Racks</h2>
+  <h2>Recently Suggested Racks</h2>
   <ul class="home-list">
    {% for rack in recent_racks %}
     <li id="rack_{{rack.id}}"><a href="/rack/{{rack.id}}"><strong>{{rack.title}}</strong>
