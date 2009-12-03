@@ -17,4 +17,7 @@
 	   <li><a href="/rack/{{rack.id}}"> {{rack.address}}</a></li>
      {% endfor %} 
    </ol>
+<div class="password-change">
+<a title="change password" href="{% url auth_password_change %}">Change your password</a>
+</div>
 {% endblock %}

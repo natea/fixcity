@@ -55,6 +55,9 @@ SITE_ID = 1
 # to load the internationalization machinery.
 USE_I18N = True
 
+# change the default login redirect because the default goes to
+# /accounts/profile/ which doesn't exist
+LOGIN_REDIRECT_URL = '/'
 
 # Absolute path that serves RESOURCE media (css, js, etc).
 STATIC_DOC_ROOT = config.get('main', 'STATIC_DOC_ROOT')
