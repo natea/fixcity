@@ -9,7 +9,7 @@ install_requires=[
       'django-registration>=0.7',
       'psycopg2>=2.0.12',
       'PIL==1.1.6',
-      'wsgilog>=0.1',
+      'wsgilog==0.1',  # 0.2 zip file has a setup.py bug
       'httplib2',
       'poster',
       'mock',
