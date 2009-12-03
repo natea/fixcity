@@ -200,9 +200,18 @@ class RackForm(ModelForm):
             return cleaned_data
         email_errors = self._errors.get('email')
         if not email_errors and not cleaned_data.get('source'):
-            # This is the way to stuff an error msg into a specific key,
-            # as per http://docs.djangoproject.com/en/dev/ref/forms/validation/#described-later
+            # Assume this is submitted via the web and the user isn't logged in.
+            # So, provide a helpful error message in the email field.
+            #
+            # This is the canonical way to associate an error msg with
+            # a specific field when depending on other fields, as per
+            # http://docs.djangoproject.com/en/dev/ref/forms/validation/#described-later
             self._errors['email'] = ErrorList([NEED_LOGGEDIN_OR_EMAIL])
+
+        # This more general error is intended to be useful to script
+        # authors integrating third-party rack sources, so they'll
+        # know if they forgot the 'source' field.
+        # It goes in errors.__all__ so it isn't shown on our web UI.
         raise ValidationError(NEED_SOURCE_OR_EMAIL)
 
 class CommentForm(ModelForm): 
