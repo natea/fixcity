@@ -50,10 +50,16 @@ class TwitterFetcher(object):
         for tweet_func in (self.twitter_api.mentions,):
             # We're not doing direct messages for now.
             for page in range(1, max_pages + 1):
-                if since_id is not None:
-                    more_tweets = tweet_func(count=max_per_page, page=page, since_id=since_id)
-                else:
-                    more_tweets = tweet_func(count=max_per_page, page=page)
+                try:
+                    if since_id is not None:
+                        more_tweets = tweet_func(count=max_per_page, page=page, since_id=since_id)
+                    else:
+                        more_tweets = tweet_func(count=max_per_page, page=page)
+                except tweepy.error.TweepError:
+                    # 50x errors from Twitter are not interesting.
+                    # Just give up and hope Twitter's back by the next time
+                    # we run.
+                    more_tweets = []
                 tweets += more_tweets
                 if len(more_tweets) < max_per_page:
                     break
@@ -78,6 +84,9 @@ class RackBuilder(object):
         last_processed_id = None
         if recent_only:
             try:
+                # XXX We should lock the status file in case this
+                # script ever takes so long that it overlaps with the
+                # next run. Or something.
                 statusfile = open(self.status_file_path, 'r')
                 status = pickle.load(statusfile)
                 last_processed_id = status['last_processed_id']
@@ -94,11 +103,15 @@ class RackBuilder(object):
         all_tweets = twit.get_tweets(last_processed_id)
         for tweet in reversed(all_tweets):
             parsed = twit.parse(tweet)
+
             statusfile = open(self.status_file_path, 'w')
-            # XXX don't want to do this if there's a socket error,
-            # but we do if there's any other kind of error.
+            # XXX don't want to do this if there's a socket error, but
+            # we do if there's any other kind of error.  So I should
+            # rework new_rack() to raise specific exceptions rather
+            # than calling sys.exit, and move this after.
             pickle.dump({'last_processed_id': tweet.id}, statusfile)
             statusfile.close()
+
             user = tweet.user.screen_name
             if parsed:
                 self.new_rack(**parsed)
