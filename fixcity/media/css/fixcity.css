@@ -966,6 +966,7 @@ color: #333;
 /* - */
 #pagination {
 text-align: center;
+margin: 1em 0;
 }
 
 #pagination a {
@@ -998,6 +999,24 @@ color: #fff;
 background: #fff;
 color: #44c5f5;	
 }
+
+/* - */
+.user-callouts {
+float: left;
+margin: 0 0 0 70px;
+width: 490px;
+font-size: 1.2em;
+}
+
+* html .user-callouts {
+margin-left: 35px;
+}
+
+.user-callouts h2 {
+font-size: 1.2em;
+margin: 0 0 0.5em;
+}
+
 
 /* OpenLayers styles */
 #OpenLayers\.Control\.PanZoom_5_zoomworld,
