@@ -18,7 +18,6 @@ import tweepy
 
 http = httplib2.Http()
 
-
 class TwitterFetcher(object):
 
     def __init__(self, twitter_api, username):
@@ -84,40 +83,39 @@ class RackBuilder(object):
         last_processed_id = None
         if recent_only:
             try:
-                # XXX We should lock the status file in case this
-                # script ever takes so long that it overlaps with the
-                # next run. Or something.
                 statusfile = open(self.status_file_path, 'r')
                 status = pickle.load(statusfile)
                 last_processed_id = status['last_processed_id']
                 statusfile.close()
             except (IOError, EOFError):
                 pass
-        limit_status = self.twitter_api.rate_limit_status()
-        if limit_status['remaining_hits'] <= 0:
-            raise Exception(
-                "We went over our twitter API rate limit. Resets at: %s"
-                % limit_status['reset_time'])
+
+        try:
+            limit_status = self.twitter_api.rate_limit_status()
+            if limit_status['remaining_hits'] <= 0:
+                raise Exception(
+                    "We went over our twitter API rate limit. Resets at: %s"
+                    % limit_status['reset_time'])
+        except tweepy.error.TweepError:
+            raise Exception("Twitter barfed on rate_limit_status")
         twit = TwitterFetcher(self.twitter_api, self.username)
 
         all_tweets = twit.get_tweets(last_processed_id)
         for tweet in reversed(all_tweets):
             parsed = twit.parse(tweet)
 
-            statusfile = open(self.status_file_path, 'w')
-            # XXX don't want to do this if there's a socket error, but
-            # we do if there's any other kind of error.  So I should
-            # rework new_rack() to raise specific exceptions rather
-            # than calling sys.exit, and move this after.
-            pickle.dump({'last_processed_id': tweet.id}, statusfile)
-            statusfile.close()
-
             user = tweet.user.screen_name
             if parsed:
                 self.new_rack(**parsed)
             else:
                 self.bounce(user, self.general_error_message)
-
+            # XXX We should lock the status file in case this script
+            # ever takes so long that it overlaps with the next
+            # run. Or something.
+            statusfile = open(self.status_file_path, 'w')
+            pickle.dump({'last_processed_id': tweet.id}, statusfile)
+            statusfile.close()
+                    
             # TODO: batch-notification of success to cut down on posts:
             # if success, maintain a queue of recently successful posts,
             # and every N minutes:
@@ -169,7 +167,7 @@ class RackBuilder(object):
         except socket.error:
             _notify_admin('Server down??',
                           'Could not post some tweets, fixcity.org dead?')
-            sys.exit(1)
+            raise
 
         if response.status >= 500:
             # XXX give a URL to a help page w/ more info?
@@ -200,7 +198,10 @@ class RackBuilder(object):
     def bounce(self, user, message, notify_admin='', notify_admin_body=''):
         message = '@%s %s' % (user, message)
         message = message[:140]
-        self.twitter_api.update_status(message) # XXX add in_reply_to_id?
+        try:
+            self.twitter_api.update_status(message) # XXX add in_reply_to_id?
+        except tweepy.error.TweepError:
+            pass
 
         if notify_admin:
             # XXX include the original tweet?
