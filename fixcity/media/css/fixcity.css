@@ -910,6 +910,19 @@ margin: 0;
 margin: 0;
 }
 
+.threewide h2 {
+border-bottom: 1px solid #8fb9cc;	
+margin-top: 0.5em;
+}
+
+.threewide h3 {
+margin-top: 0;
+}
+
+.threewide .highlight {
+color: #44c5f5;
+}
+
 /* - */
 .doublewide .col {
 width: 455px;
