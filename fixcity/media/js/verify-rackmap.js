@@ -173,10 +173,11 @@ function loadMap() {
                 pagelink.insertBefore("#pagination a[rel=next]");
             };
             var i;
+            if (cluster_start >= 2) {
+                addPageLink(1);
+            }
             if (cluster_start > 2) {
-                for (i = 1; i <= 2; i++) {
-                    addPageLink(i);
-                };
+                addPageLink(2);
             };
             if (cluster_start > 3) {
                 pagelink.after('<span class="page_ellipsis">...</span>');
@@ -188,11 +189,11 @@ function loadMap() {
                 pagelink.after('<span class="page_ellipsis">...</span>');
             };
             if (cluster_end < (num_pages - 1)) {
-                for (i = num_pages - 1; i <= num_pages; i++) {
-                    addPageLink(i);
-                };
+                addPageLink(num_pages -1);
             };
-
+            if (cluster_end <= (num_pages - 1)) {
+                addPageLink(num_pages);
+            };
         };
     };
 
@@ -301,7 +302,7 @@ function loadMap() {
         });
         var featureSelected = function(feature) {
 	  $('ul#racklist li').removeClass('selected').filter('#rack_' + feature.fid).addClass('selected');
-					
+
           var popup = new FixcityPopup(null, feature.geometry.getBounds().getCenterLonLat(),
                                        null, ('<div class="rack-info"><a href="/rack/' + feature.fid + '"><img src="' + ((feature.attributes.thumbnail != null) ? feature.attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/rack/' + feature.fid + '">' + feature.attributes.name + '</a></h3><h4>' + feature.attributes.address + '</h4>' + ((feature.attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '</div>'),
                                        {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(-40, 48)},
