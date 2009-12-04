@@ -41,10 +41,20 @@ function loadMap() {
     });
 
     var style = new OpenLayers.Style({
-        pointRadius: "12",
-        externalGraphic: "/site_media/img/rack.png"
-
-    });
+        pointRadius: "8",
+        externalGraphic: "${url}"
+        },
+        {
+        context: {
+            url: function(feature) {
+                if (feature.attributes.verified) {
+                    return "/site_media/img/rack-verified-icon.png";
+                } else {
+                    return "/site_media/img/rack-icon.png";
+                }
+            }
+        }
+        });
 
     var li_template = $("#racklist li:first").clone();
 
