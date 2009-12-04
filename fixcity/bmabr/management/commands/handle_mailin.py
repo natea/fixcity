@@ -242,7 +242,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         message_parts = self.unique_attachment_names(message_parts)
 
         description = self.description = self.body_text(message_parts)
-        attachments = self.attachments(message_parts)
+        photos = self.get_photos(message_parts)
         # We don't bother with microsecond precision because
         # Django datetime fields can't parse it anyway.
         now = datetime.fromtimestamp(int(time.time()))
@@ -325,9 +325,9 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         rack_url = base_url + result['rack_url']
         rack_user = result.get('user')
 
-        if attachments.has_key('photo'):
+        if photos.has_key('photo'):
             datagen, headers = multipart_encode({'photo':
-                                                 attachments['photo']})
+                                                 photos['photo']})
             # httplib2 doesn't like poster's integer headers.
             headers['Content-Length'] = str(headers['Content-Length'])
             body = ''.join([s for s in datagen])
@@ -612,7 +612,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return body_text
 
 
-    def attachments(self, message_parts):
+    def get_photos(self, message_parts):
         """save an attachment as a single photo
         """
         # Get Maxium attachment size
@@ -627,6 +627,10 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 continue
 
             (original, filename, part) = part
+            # Skip html attachments and the like.
+            if not part.get_content_type().startswith('image'):
+                continue
+
             text = part.get_payload(decode=1)
             if not text:
                 continue
@@ -645,7 +649,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             # to import anything from django.
             results[u'photo'] = SimpleUploadedFile.from_dict(
                 {'filename': filename, 'content': text,
-                 'content-type': 'image/jpeg'})
+                 'content-type': part.get_content_type()})
             # XXX what to do if there's more than one attachment?
             # we just ignore 'em.
             break
