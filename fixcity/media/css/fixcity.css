@@ -250,7 +250,7 @@ margin: 0 15px 0 0;
 }
 
 #nav li a#verification-kit {
-background-image: url(/site_media/img/verification-kit-bg.png);
+background-image: url(/site_media/img/tools-tips-bg.png);
 background-repeat: no-repeat;
 }
 
@@ -422,6 +422,43 @@ text-decoration: underline;
 
 #home-sidebar .latest-posts-heading {
 margin-top: 0;
+}
+
+#home-sidebar .sidebar-callouts {
+list-style-type: none;
+margin: 0;
+padding: 0;
+}
+
+#home-sidebar .sidebar-callouts li {
+display: inline;
+margin: 0;
+padding: 0;
+}
+
+#home-sidebar .sidebar-callouts li a {
+display: block;
+color: #7896a8;
+text-decoration: none;
+padding: 0.5em 5px 0.5em 50px;
+border-bottom: 1px solid #edf2f5;
+margin: 0 -5px;
+background-position: 5px 50%;
+background-repeat: no-repeat;
+}
+
+#home-sidebar .sidebar-callouts li a#twitter-callout {
+background-image: url(/site_media/img/twitter-icon.png);
+}
+
+#home-sidebar .sidebar-callouts li a#email-callout {
+background-image: url(/site_media/img/letter-icon.png);
+}
+
+#home-sidebar .sidebar-callouts li a#scf-callout {
+background-image: url(/site_media/img/seeclickfix-icon.png);
+background-position: 50px 100%;
+padding-bottom: 50px;
 }
 
 /* - */
