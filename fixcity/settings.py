@@ -174,7 +174,12 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 
 # Config needed for bootstrapping a spatial db for tests.
-TEST_RUNNER='django.contrib.gis.tests.run_tests'
+# And code coverage reports.
+# NB, Django 1.2 or later should include built-in code coverage support.
+TEST_RUNNER='fixcity.testrunner.test_runner_with_coverage'
+# Which modules to enable for code coverage reports.
+COVERAGE_MODULES = ['fixcity.bmabr.views', 'fixcity.bmabr.models']
+
 try:
     POSTGIS_SQL_PATH = config.get('db', 'POSTGIS_SQL_PATH')
 except:

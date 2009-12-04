@@ -8,8 +8,6 @@ from fixcity.bmabr.management.commands import tweeter
 from fixcity.bmabr.views import SRID
 import datetime
 import mock
-import tweepy
-
 import unittest
 
 

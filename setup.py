@@ -19,6 +19,7 @@ install_requires=[
       'django-basic-apps',
       'django-flash',
       'django_flash_templatetag',
+      'coverage',
       ]
 
 import sys
