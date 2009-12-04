@@ -11,7 +11,7 @@
 {% block content %}
 <form action="/accounts/register/" method="POST">
   <label for="username">Username</label>
-  <div class="required"><input type="text" name="username" id="username" /></div>
+  <div class="required"><input type="text" title="Can only consist of letters and numbers" name="username" id="username" /></div>
   <label for="username">Email</label>
   <div class="required"><input type="text" name="email" value="{{request.REQUEST.email}}" /></div>
   <label for="password1">Password</label>
@@ -30,4 +30,14 @@
     <li>Access to fun and useful features in the future!</li>
   </ul>
 </div>
+{% endblock %}
+
+{% block extra_footer %}
+<script type="text/javascript">
+//<![CDATA[
+jQuery(document).ready(function($) {
+    $('input#username').inlineInfoTextify();
+});
+//]]>
+</script>
 {% endblock %}
