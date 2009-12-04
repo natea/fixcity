@@ -1,3 +1,9 @@
+"""
+GIS-enabled test runner with code coverage support.
+Based on http://www.thoughtspark.org/node/6
+
+"""
+
 from django.conf import settings
 from django.contrib.gis.tests import run_tests as django_test_runner
 import coverage
