@@ -12,14 +12,18 @@
 <form action="/accounts/register/" method="POST">
   <label for="username">Username</label>
   <div class="required"><input type="text" title="Username can only consist of letters and numbers" name="username" id="username" /></div>
+  {{ form.username.errors }}
   <label for="email">Email</label>
   <div class="required"><input type="text" name="email" value="{{request.REQUEST.email}}" /></div>
+  {{ form.email.errors }}
   <label for="password1">Password</label>
   <div class="required"><input type="password" name="password1" id="password1" /></div> 
+  {{ form.password1.errors }}
   <label for="password2">Password (again)</label>
   <div class="required"><input type="password" name="password2" id="password2" /></div>
+  {{ form.password2.errors }}
+  {{ form.non_field_errors }}
   <input class="standalone" type="submit" value="Register" />
-  {{ form.errors }}
   <p><a href="/contact">Contact us</a> if you want to get involved with managing your community's bulk order.</p>
 </form>
 <div class="user-callouts">
