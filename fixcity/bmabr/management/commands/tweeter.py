@@ -97,7 +97,9 @@ class RackBuilder(object):
                     "We went over our twitter API rate limit. Resets at: %s"
                     % limit_status['reset_time'])
         except tweepy.error.TweepError:
-            raise Exception("Twitter barfed on rate_limit_status")
+            # Twitter is feeling sad again.
+            # Let's bail out and hope they're back soon.
+            return
         twit = TwitterFetcher(self.twitter_api, self.username)
 
         all_tweets = twit.get_tweets(last_processed_id)
@@ -167,6 +169,8 @@ class RackBuilder(object):
         except socket.error:
             _notify_admin('Server down??',
                           'Could not post some tweets, fixcity.org dead?')
+            # Important to re-raise here, to prevent storing this tweet's
+            # ID as the last successfully processed one.
             raise
 
         if response.status >= 500:
