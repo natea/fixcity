@@ -39,18 +39,23 @@ function loadMap() {
     });
 
     var style = new OpenLayers.Style({
-        pointRadius: "8",
+        pointRadius: "${radius}",
         externalGraphic: "${url}",
     },
     {
     context: {
-    url: function(feature) {
-    if (feature.attributes.verified) {
-      return "/site_media/img/rack-verified-icon.png";
-    } else {
-      return "/site_media/img/rack-icon.png";
-    }
-    }
+      url: function(feature) {
+        if (feature.cluster.length > 1) {
+          return "/site_media/img/rack-icon.png";
+        } else if (feature.cluster[0].attributes.verified) {
+          return "/site_media/img/rack-verified-icon.png";
+        } else {
+        return "/site_media/img/rack-icon.png";
+        }
+      },
+      radius: function(feature) {
+        return Math.min(feature.attributes.count, 8) + 7;
+      }
     }
     });
 
@@ -145,7 +150,11 @@ function loadMap() {
         racks = new OpenLayers.Layer.Vector("Racks", {
             projection: map.displayProjection,
             strategies: [
-            bbox],
+              // using a custom bbox strategy didn't generate the right results
+              // bbox,
+              new OpenLayers.Strategy.Fixed(),
+              new OpenLayers.Strategy.Cluster()
+            ],
             protocol: new OpenLayers.Protocol.HTTP({
                 url: "./rack/requested.kml",
                 params: {},
@@ -168,10 +177,10 @@ function loadMap() {
           }
         });
         var featureSelected = function(feature) {
-	  $('ul#recent-racks li').removeClass('selected').filter('#rack_' + feature.fid).addClass('selected');
-					
+          $('ul#recent-racks li').removeClass('selected').filter('#rack_' + feature.fid).addClass('selected');
+
           var popup = new FixcityPopup(null, feature.geometry.getBounds().getCenterLonLat(),
-                                       null, ('<div class="rack-info"><a href="/rack/' + feature.fid + '"><img src="' + ((feature.attributes.thumbnail != null) ? feature.attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/rack/' + feature.fid + '">' + feature.attributes.name + '</a></h3><h4>' + feature.attributes.address + '</h4>' + ((feature.attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '</div>'),
+                                       null, ('<div class="rack-info"><a href="/rack/' + feature.fid + '"><img src="' + ((feature.cluster[0].attributes.thumbnail != null) ? feature.cluster[0].attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/rack/' + feature.fid + '">' + feature.cluster[0].attributes.name + '</a></h3><h4>' + feature.cluster[0].attributes.address + '</h4>' + ((feature.cluster[0].attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '</div>'),
                                        {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(-40, 48)},
                                        true, function() { selectControl.unselect(feature); });
           feature.popup = popup;
