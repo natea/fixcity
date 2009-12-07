@@ -1120,23 +1120,23 @@ display: none;
 }
 
 body .olPopup {
-background: transparent url(/site_media/img/map-popup-bg.png) no-repeat !important;
-width: 292px !important;
-height: 78px !important;
-padding: 3px 14px 3px 3px !important;
+/* background: transparent url(/site_media/img/map-popup-bg.png) no-repeat !important; */
+/* width: 292px !important; */
+/* height: 78px !important; */
+/* padding: 3px 14px 3px 3px !important; */
 }
 
 body .olFramedCloudPopupContent {
-padding: 0 0 0 5px !important;
-background: transparent none !important;
-width: 280px !important;
-overflow: visible !important;
+/* padding: 0 0 0 5px !important; */
+/* background: transparent none !important; */
+/* width: 280px !important; */
+/* overflow: visible !important; */
 }
 
 body .olPopupCloseBox {
 background: transparent url(/site_media/img/close.gif) no-repeat scroll 0 0;
-top: 7px !important;
-right: 13px !important;
+/* top: 7px !important; */
+/* right: 13px !important; */
 }
 
 
@@ -1146,7 +1146,7 @@ width: 280px;
 
 /* prevent grey border in Safari */
 .olPopup div div img {
-display: none !important;
+/* display: none !important; */
 }
 
 .olPopup div div.rack-info img {
@@ -1199,4 +1199,3 @@ padding: 1em 0;
 margin: 1em auto;
 text-align: right;
 }
-
