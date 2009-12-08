@@ -46,7 +46,13 @@ function loadMap() {
     context: {
       url: function(feature) {
         if (feature.cluster.length > 1) {
-          return "/site_media/img/rack-icon.png";
+          var n = feature.cluster.length;
+          for (var i = 0; i < n; i++) {
+            if (feature.cluster[i].attributes.verified == null) {
+              return "/site_media/img/rack-icon.png";
+            }
+          }
+          return "/site_media/img/rack-verified-icon.png";
         } else if (feature.cluster[0].attributes.verified) {
           return "/site_media/img/rack-verified-icon.png";
         } else {
