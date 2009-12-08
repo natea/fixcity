@@ -1,5 +1,6 @@
 {% extends "base.html" %} 
 {% load thumbnail %}
+{% load voting_tags %}
 
 {% block title %} FixCity: Rack Detail {% endblock %} 
 
@@ -60,9 +61,22 @@ jQuery(document).ready(function() {loadMap(false);});
     <li><a href="{{object.file.url}}">Statement of support</a></li>
   {% endfor %}
   </ul>
-    
+
+  <!-- Votes on this rack so far, needs styling -->
+  {% score_for_object rack as score %}
+  {{ score.score }} point{{ score.score|pluralize }}
+  after {{ score.num_votes }} vote{{ score.num_votes|pluralize }}
+  
+  
   {% if user.is_authenticated %}
-  <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Edit this Rack</a>
+    <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Edit this Rack</a>
+    {% if not user_suggested_this_rack %}
+      <br /><form method="POST" action="/rack/{{rack.id}}/vote/">
+      <input type="radio" name="vote" value="1"> +1 </input>
+      <input type="radio" name="vote" value="-1"> -1 </input>
+      <input type="submit" value=" Vote on this rack " />
+    {% endif %}
+  </form>
   {% else %}
   <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Log in to Update Rack</a>
   {% endif %}

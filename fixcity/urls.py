@@ -34,7 +34,7 @@ urlpatterns = patterns(
     (r'built/$','fixcity.bmabr.views.built'),   
     (r'^rack/(?P<rack_id>\d+)/$', 'fixcity.bmabr.views.rack'),
     (r'^rack/(?P<rack_id>\d+)/edit/$', 'fixcity.bmabr.views.rack_edit'),
-
+    (r'^rack/(?P<rack_id>\d+)/vote/$', 'fixcity.bmabr.views.rack_vote'),
     (r'^rack/(?P<rack_id>\d+)/support/$', 'fixcity.bmabr.views.support'),
 
 

@@ -20,6 +20,7 @@ install_requires=[
       'django-flash',
       'django_flash_templatetag',
       'coverage',
+      'django-voting==0.1',
       ]
 
 import sys
@@ -44,6 +45,7 @@ setup(name='fixcity',
         'https://source.openplans.org/eggs/django-basic-apps-0.6.tar.gz',
         'https://source.openplans.org/eggs/django_flash_templatetag-0.1.tar.gz',
         'http://www.aeracode.org/releases/south/south-0.6.2.tar.gz',
+        'http://svn.openplans.org/eggs/django-voting-0.1.tar.gz',
         ],
       install_requires=install_requires,
       )

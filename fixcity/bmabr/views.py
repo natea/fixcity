@@ -29,7 +29,7 @@ from fixcity.bmabr.models import Neighborhoods
 from fixcity.bmabr.models import CommunityBoard
 from fixcity.bmabr.models import RackForm, CommentForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
-from fixcity.bmabr.models import Source, TwitterSource, SeeClickFixSource, EmailSource
+from fixcity.bmabr.models import Source, TwitterSource
 from fixcity.flash_messages import flash
 from fixcity.flash_messages import flash_error
 
@@ -330,6 +330,24 @@ def support(request, rack_id):
         return HttpResponse('not allowed')  
 
 @login_required
+def rack_vote(request, rack_id):
+    from voting.models import Vote
+    user = request.user
+    value = request.POST.get('vote')
+    rack = get_object_or_404(Rack, id=rack_id)
+    if rack.user == user.username:
+        flash_error(u"You can't vote on a rack you suggested.", request)
+    elif value:
+        value = int(value)
+        if value > 0:
+            value = 1
+        elif value < 0:
+            value = -1
+        Vote.objects.record_vote(rack, user, value)
+        flash('Your vote has been recorded.', request)
+    return HttpResponseRedirect('/rack/%s/' % rack_id)
+
+@login_required
 def rack_edit(request,rack_id):
     rack = get_object_or_404(Rack, id=rack_id)
     if request.method == 'POST':
@@ -366,12 +384,15 @@ def rack(request,rack_id):
     rack = get_object_or_404(Rack, id=rack_id)
     comment_query = Comment.objects.filter(rack=rack_id)
     statement_query = StatementOfSupport.objects.filter(s_rack=rack_id)
-    return render_to_response('rack.html', { 
+    context = RequestContext(request)
+    return render_to_response(
+        'rack.html', { 
             'rack': rack,            
             'comment_query': comment_query,
             'statement_query': statement_query,
+            'user_suggested_this_rack': rack.user == context['user'].username
             },
-            context_instance=RequestContext(request))
+        context_instance=context)
            
     
 

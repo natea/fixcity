@@ -160,6 +160,7 @@ INSTALLED_APPS = (
     'tagging',
     'south',
     'django_flash_templatetag',
+    'voting',
 )
 
 
