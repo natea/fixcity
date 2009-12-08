@@ -9,7 +9,7 @@ install_requires=[
       'django-registration>=0.7',
       'psycopg2>=2.0.12',
       'PIL==1.1.6',
-      'wsgilog==0.1',  # 0.2 zip file has a setup.py bug
+      'wsgilog>=0.2',
       'httplib2',
       'poster',
       'mock',
@@ -46,6 +46,7 @@ setup(name='fixcity',
         'https://source.openplans.org/eggs/django_flash_templatetag-0.1.tar.gz',
         'http://www.aeracode.org/releases/south/south-0.6.2.tar.gz',
         'http://svn.openplans.org/eggs/django-voting-0.1.tar.gz',
+        'http://svn.openplans.org/eggs/wsgilog-0.2.tar.gz',
         ],
       install_requires=install_requires,
       )
