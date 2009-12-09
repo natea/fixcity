@@ -61,12 +61,6 @@ jQuery(document).ready(function() {loadMap(false);});
     <li><a href="{{object.file.url}}">Statement of support</a></li>
   {% endfor %}
   </ul>
-
-  <!-- Votes on this rack so far, needs styling -->
-  {% score_for_object rack as score %}
-  {{ score.score }} point{{ score.score|pluralize }}
-  after {{ score.num_votes }} vote{{ score.num_votes|pluralize }}
-  
   
   {% if user.is_authenticated %}
     <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Edit this Rack</a>
@@ -80,6 +74,13 @@ jQuery(document).ready(function() {loadMap(false);});
   {% else %}
   <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Log in to Update Rack</a>
   {% endif %}
+
+  <!-- Votes on this rack so far, needs styling -->
+  {% score_for_object rack as score %}
+  {{ score.score }} point{{ score.score|pluralize }}
+  after {{ score.num_votes }} vote{{ score.num_votes|pluralize }}
+  
+  
   </div><!-- /#rackinfo -->
     
 <div class="suggest">
@@ -91,3 +92,4 @@ jQuery(document).ready(function() {loadMap(false);});
 
 {% endblock %} 
 
+import pdb; pdb.set_trace()
