@@ -32,7 +32,7 @@ urlpatterns = patterns(
     (r'submit/$','fixcity.bmabr.views.submit'),
 
     (r'built/$','fixcity.bmabr.views.built'),   
-    (r'^rack/(?P<rack_id>\d+)/$', 'fixcity.bmabr.views.rack'),
+    (r'^rack/(?P<rack_id>\d+)/$', 'fixcity.bmabr.views.rack_view'),
     (r'^rack/(?P<rack_id>\d+)/edit/$', 'fixcity.bmabr.views.rack_edit'),
     (r'^rack/(?P<rack_id>\d+)/vote/$', 'fixcity.bmabr.views.rack_vote'),
     (r'^rack/(?P<rack_id>\d+)/support/$', 'fixcity.bmabr.views.support'),
@@ -55,7 +55,7 @@ urlpatterns = patterns(
     (r'^rack/$', 'fixcity.bmabr.views.rack_index'),
     
 
-    (r'^comment/add/$', 'fixcity.bmabr.views.add_comment'), 
+    #(r'^comment/add/$', 'fixcity.bmabr.views.add_comment'), 
                        
     # different ways of viewing information                   
 
@@ -79,6 +79,7 @@ urlpatterns = patterns(
     (r'^admin/(.*)', admin.site.root),
 
     (r'^blog/', include('basic.blog.urls')),
+
     (r'^comments/', include('django.contrib.comments.urls')),
 )
 

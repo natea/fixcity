@@ -1,6 +1,6 @@
 from django.contrib.gis import admin
 from django.contrib import admin as oldAdmin 
-from fixcity.bmabr.models import Rack, Comment, Neighborhoods, CommunityBoard, SubwayStations
+from fixcity.bmabr.models import Rack, Neighborhoods, CommunityBoard, SubwayStations
 from fixcity.bmabr.models import SeeClickFixSource
 from fixcity.bmabr.models import Source
 from fixcity.bmabr.models import EmailSource
@@ -25,10 +25,6 @@ class SubwayAdmin(admin.GeoModelAdmin):
     list_display = ('name','borough')
     search_fields = ('name','borough')
 admin.site.register(SubwayStations,SubwayAdmin)
-
-class CommentAdmin(admin.GeoModelAdmin): 
-    list_display = ('rack','email')
-admin.site.register(Comment,CommentAdmin)
 
 class RackAdmin(admin.GeoModelAdmin): 
     list_display = ('address','location')

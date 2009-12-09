@@ -120,19 +120,6 @@ class StatementOfSupport(models.Model):
 
 
 
-class Comment(models.Model):
-    text = models.CharField(max_length=300)
-    email = models.EmailField()
-    rack = models.ForeignKey(Rack)
-    
-    class Meta: 
-        ordering = ['rack']
-
-    def __unicode__(self):
-        return self.email
-
-
-
 class Neighborhoods(models.Model):
     gid = models.IntegerField(primary_key=True)
     state = models.CharField(max_length=2)
@@ -214,11 +201,9 @@ class RackForm(ModelForm):
         # It goes in errors.__all__ so it isn't shown on our web UI.
         raise ValidationError(NEED_SOURCE_OR_EMAIL)
 
-class CommentForm(ModelForm): 
-    class Meta: 
-        model = Comment
-        
 
 class SupportForm(ModelForm): 
     class Meta: 
         model = StatementOfSupport
+
+

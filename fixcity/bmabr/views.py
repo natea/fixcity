@@ -2,6 +2,7 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseServerError
+from django.http import HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core.cache import cache
@@ -11,6 +12,11 @@ from django.core.paginator import Paginator
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator as token_generator
+
+from django.contrib import comments  
+#from django.contrib.comments.views.comments import post_comment
+from django.contrib.comments.forms import CommentForm
+
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.http import base36_to_int
@@ -24,10 +30,10 @@ from django.template import Context, loader
 
 from django.views.decorators.cache import cache_page
 
-from fixcity.bmabr.models import Rack, Comment
+from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import Neighborhoods
 from fixcity.bmabr.models import CommunityBoard
-from fixcity.bmabr.models import RackForm, CommentForm, SupportForm
+from fixcity.bmabr.models import RackForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
 from fixcity.bmabr.models import Source, TwitterSource
 from fixcity.flash_messages import flash
@@ -37,6 +43,8 @@ from geopy import geocoders
 
 from django.utils import simplejson as json
 from django.conf import settings
+
+from recaptcha.client import captcha
 
 import logging
 import sys
@@ -380,30 +388,81 @@ def rack_edit(request,rack_id):
            },
           context_instance=RequestContext(request))
 
-def rack(request,rack_id): 
+def rack_view(request,rack_id):
     rack = get_object_or_404(Rack, id=rack_id)
-    comment_query = Comment.objects.filter(rack=rack_id)
     statement_query = StatementOfSupport.objects.filter(s_rack=rack_id)
     context = RequestContext(request)
+    if request.method == 'POST':
+        # Maybe this should be AJAXy rather than a full page load?
+        comment_form = _add_comment(request, rack)
+    else:
+        comment_form = ReCaptchaCommentForm(rack)
     return render_to_response(
         'rack.html', { 
             'rack': rack,            
-            'comment_query': comment_query,
             'statement_query': statement_query,
-            'user_suggested_this_rack': rack.user == context['user'].username
+            'user_suggested_this_rack': rack.user == context['user'].username,
+            'comment_form': comment_form,
             },
         context_instance=context)
            
-    
 
-def add_comment(request): 
-    form = CommentForm(request.POST)
-    rack_id = request.POST['rack']
-    if form.is_valid(): 
-        new_comment = form.save()
-        return HttpResponseRedirect('/rack/%s/#comments'% rack_id )   
-    else: 
-        return HttpResponseRedirect('/error/comment/') 
+def _add_comment(request, rack):
+    # Simplified and hacked comment post function to change various things:
+    #
+    # 0. Skip all the model checking stuff as we assume we're just
+    # working with racks.
+    #
+    # 1. get client IP address into the POST data, to make recaptcha happy.
+    if '__recaptcha_ip' in request.POST:  
+        return HttpResponseBadRequest()
+    data = request.POST.copy()
+    data['__recaptcha_ip'] = request.META['REMOTE_ADDR']
+
+    # 2. Don't use a separate preview form to display errors.
+    # Just validate and leave display up to the calling function.
+    if request.user.is_authenticated():
+        # We must first prepopulate logged-in user data;
+        # copy-pasted from post_comment()
+        if not data.get('name', ''):
+            data["name"] = request.user.get_full_name() or request.user.username
+        if not data.get('email', ''):
+            data["email"] = request.user.email
+
+    form = ReCaptchaCommentForm(rack, data,
+                                need_captcha= not request.user.is_authenticated())
+            
+    if form.is_valid():
+        flash(u"Your comment has been saved", request)
+        comment = form.get_comment_object()
+        comment.save()
+    else:
+        flash_error(u"Please correct errors in your comment", request)
+    return form
+
+
+class ReCaptchaCommentForm(CommentForm):  
+
+    # See http://arcticinteractive.com/2008/10/16/adding-recaptcha-support-django-10-comments/
+
+    def __init__(self, target_object, data=None, initial=None, need_captcha=True):
+        super(ReCaptchaCommentForm, self).__init__(target_object, data, initial)
+        self.need_captcha = need_captcha
+          
+    def clean(self):
+        if self.need_captcha:
+            challenge_field = self.data.get('recaptcha_challenge_field')  
+            response_field = self.data.get('recaptcha_response_field')  
+            client = self.data.get('__recaptcha_ip') # always set by our code  
+                  
+            check_captcha = captcha.submit(
+                challenge_field, response_field,
+                settings.RECAPTCHA_PRIVATE_KEY, client)  
+                  
+            if check_captcha.is_valid is False:  
+                self.errors['recaptcha'] = 'Invalid captcha value'  
+  
+        return self.cleaned_data 
 
 
 def updatephoto(request,rack_id):

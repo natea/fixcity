@@ -1,6 +1,8 @@
 {% extends "base.html" %} 
 {% load thumbnail %}
 {% load voting_tags %}
+{% load comments %}
+{% load recaptcha_tags %}
 
 {% block title %} FixCity: Rack Detail {% endblock %} 
 
@@ -90,6 +92,79 @@ jQuery(document).ready(function() {loadMap(false);});
         {% include "quickcheck.html" %}
 </div><!-- /#suggest -->
 
-{% endblock %} 
 
-import pdb; pdb.set_trace()
+<div class="comments">
+  {% get_comment_count for rack as comment_count %}
+  {% get_comment_list for rack as comment_list %}
+  <ul>{{comment_count}} comments
+
+    {% for comment in comment_list %}
+    <li>{{comment.comment}}
+       <br /> --
+       {% if comment.user_url %}
+         <a href="{{comment.user_url}}">{{comment.user_name}}</a>
+       {% else %}
+         {{comment.user_name}}
+       {% endif %}
+    </li>
+    {% endfor %}
+
+  </ul>
+  <h2>Leave a comment</h2>
+
+  
+    <!-- {% render_comment_form for rack %} -->
+
+    <form action="{{request.path}}" method="POST">
+     <!-- slightly customized comment form: leave out auth'd user info as
+          that will be populated on the back-end after submit -->
+      {% if comment_form.errors %}  
+       <h1>Please correct the error{{ comment_form.errors|pluralize }} below</h1>  
+      {% endif %}  
+
+       {% if not request.user.is_authenticated %}
+
+         <p>
+          <label for="id_name">Name</label>
+          {{ comment_form.name }}
+          {{ comment_form.errors.name }}
+         </p>
+         <p>
+          <label for="id_email">Email</label>
+          {{ comment_form.email }}
+          {{ comment_form.errors.email }}
+         </p>
+         <p>
+          <label for="id_url">URL</label>
+          {{ comment_form.url }}
+          {{ comment_form.errors.url }}
+         </p>
+       {% endif %}
+       <p>
+        <label for="id_comment">Comment</label>
+        {{ comment_form.comment }}
+        {{ comment_form.errors.comment }}
+       </p>
+       <p style="display:none;">
+        <label for="id_honeypot">
+          If you enter anything in this field your comment will be
+          treated as spam</label>
+          {{ comment_form.honeypot }}
+       </p>
+       {{ comment_form.content_type }}
+       {{ comment_form.object_pk }}
+       {{ comment_form.timestamp }}
+       {{ comment_form.security_hash }}
+
+       {% if not request.user.is_authenticated %}
+         {% recaptcha_html %}
+         {% if comment_form.errors.recaptcha %}
+           <div class="error">{{ comment_form.errors.recaptcha }}</div>
+         {% endif %}  
+       {% endif %}
+       <input type="submit" value="Add comment" id="id_submit" />
+     </form>
+
+</div>
+
+{% endblock %} 

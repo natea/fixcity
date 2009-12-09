@@ -21,6 +21,7 @@ install_requires=[
       'django_flash_templatetag',
       'coverage',
       'django-voting==0.1',
+      'recaptcha-client',
       ]
 
 import sys
