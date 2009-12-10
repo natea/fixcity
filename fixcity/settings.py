@@ -97,8 +97,8 @@ TWITTER_STATUS_PATH = config.get('twitter', 'STATUS_FILE_PATH')
 BITLY_USER = config.get('bitly', 'user')
 BITLY_API_KEY = config.get('bitly', 'api_key')
 
-RECAPTCHA_PUBLIC_KEY = '6LeM4wkAAAAAAHLhcwDToWKy5lm0ClI7Lw-iKKvc'  
-RECAPTCHA_PRIVATE_KEY = '6LeM4wkAAAAAAOZBqsxCZAqS5EAshE6cn9JY23qw'
+RECAPTCHA_PUBLIC_KEY = config.get('recaptcha', 'PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY = config.get('recaptcha', 'PRIVATE_KEY')
 
 # email address to mail when there is a failure with an integration service
 SERVICE_FAILURE_EMAIL = config.get('main', 'SERVICE_FAILURE_EMAIL')

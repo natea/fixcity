@@ -36,6 +36,10 @@ api_key =
 USER =
 PASSWORD =
 
+[recaptcha]
+PUBLIC_KEY =
+PRIVATE_KEY =
+
 # We'll store recently seen twitter information here.
 # Set this to a path outside your source tree
 STATUS_FILE_PATH = /tmp/twitter.pickle
