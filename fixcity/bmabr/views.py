@@ -13,7 +13,6 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator as token_generator
 
-#from django.contrib.comments.views.comments import post_comment
 from django.contrib.comments.forms import CommentForm
 
 from django.http import Http404
@@ -30,7 +29,6 @@ from django.template import Context, loader
 from django.views.decorators.cache import cache_page
 
 from fixcity.bmabr.models import Rack
-from fixcity.bmabr.models import Neighborhoods
 from fixcity.bmabr.models import CommunityBoard
 from fixcity.bmabr.models import RackForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
@@ -95,15 +93,6 @@ def profile(request):
        context_instance=RequestContext(request)
                               ) 
 
-def built(request): 
-    rack = Rack.objects.all()
-    rack_extent = rack.extent()
-    return render_to_response('built.html',{ 
-            'rack_extent': rack_extent},
-            context_instance=RequestContext(request)
-            )
-
-
 def _geocode(text):
     # Cache a bit, since that's easier than ensuring that our AJAX
     # code doesn't call it with the same params a bunch of times.
@@ -133,35 +122,6 @@ def reverse_geocode(request):
         result = new_place
         cache.set(key, result, 60 * 10)
     return HttpResponse(result)
-
-def submit_all(request): 
-    ''' 
-    needs major re-working
-    ''' 
-    community_board_query = CommunityBoard.objects.filter() 
-    return render_to_response('submit.html', {
-            'community_board_query': community_board_query,
-            })
-
-
-def submit(request): 
-    community_board_query = CommunityBoard.objects.filter(board=1, boro='brooklyn')
-    for communityboard in community_board_query:         
-        racks_query = Rack.objects.filter(location__contained=communityboard.the_geom)
-        racks_count = Rack.objects.filter(location__contained=communityboard.the_geom).count()
-        cb_metric_percent = racks_count/cb_metric 
-        cb_metric_percent = cb_metric_percent * 100 
-        community_board_query_extent = community_board_query.extent()
-    return render_to_response('submit.html', {
-            'community_board_query': community_board_query,
-            'cb_metric_percent':cb_metric_percent,
-            'racks_query': racks_query,
-            'racks_count': racks_count,
-            'community_board_query_extent': community_board_query_extent,
-            },
-             context_instance=RequestContext(request)
-             )
-
 
 
 def verify(request): 
@@ -520,24 +480,6 @@ def community_board_kml_by_id(request,cb_id):
     community_boards = CommunityBoard.objects.filter(gid=cb_id)
     return render_to_kml("community_board.kml",{'community_boards': community_boards})
 
-def rack_pendding_kml(request): 
-    racks = Rack.objects.filter(status='a')
-    return render_to_kml("placemarkers.kml", {'racks' : racks}) 
-
-
-def rack_built_kml(request): 
-    racks = Rack.objects.filter(status='a')
-    return render_to_kml("placemarkers.kml", {'racks' : racks}) 
-
-
-def rack_by_id_kml(request, rack_id): 
-    racks = Rack.objects.filter(id=rack_id)
-    return render_to_kml("placemarkers.kml",{'racks':racks})
-
-
-def neighborhoods(request): 
-    neighborhood_list = Neighborhoods.objects.all()
-    return render_to_response('neighborhoods.html', {'neighborhood_list': neighborhood_list})
 
 
 def communityboard(request): 
@@ -684,16 +626,3 @@ def server_error(request, template_name='500.html'):
     return HttpResponseServerError(template.render(context),
                                    mimetype="application/xhtml+xml")
 
-def cb1racks(request):
-    cb1 = CommunityBoard.objects.get(board=1, boro='brooklyn')
-    racks = Rack.objects.filter(location__contained=cb1.the_geom)
-    racks = racks.order_by('verified')
-    nracks = len(racks)
-    nverified = len([r for r in racks if r.verified])
-    nunverified = nracks - nverified
-    return render_to_response('cb1racks.html', {'racks': racks,
-                                                'nracks': nracks,
-                                                'nverified': nverified,
-                                                'nunverified': nunverified,
-                                                },
-                              context_instance=RequestContext(request))

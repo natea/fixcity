@@ -11,8 +11,8 @@ urlpatterns = patterns(
     (r'^$', 'fixcity.bmabr.views.index'),
 
     # Account URL overrides.
-    # Note these go first because django just iterates over these patterns and uses
-    # the FIRST match.
+    # Note these go first because django just iterates over these
+    # patterns and uses the FIRST match.
     # XXX I think the auth application provides some generic passwd reset views
     # we could use? see http://www.stonemind.net/blog/2007/04/13/django-registration-for-newbies/
     (r'^accounts/activate/(?P<activation_key>\w+)/$', 'fixcity.bmabr.views.activate'),
@@ -28,10 +28,8 @@ urlpatterns = patterns(
 
     (r'verify/$','fixcity.bmabr.views.verify'),
     (r'verify/communityboard/(?P<cb_id>\d+)/$', 'fixcity.bmabr.views.verify_by_communityboard'),
-    (r'submit/all/$','fixcity.bmabr.views.submit_all'),
-    (r'submit/$','fixcity.bmabr.views.submit'),
 
-    (r'built/$','fixcity.bmabr.views.built'),   
+
     (r'^rack/(?P<rack_id>\d+)/$', 'fixcity.bmabr.views.rack_view'),
     (r'^rack/(?P<rack_id>\d+)/edit/$', 'fixcity.bmabr.views.rack_edit'),
     (r'^rack/(?P<rack_id>\d+)/vote/$', 'fixcity.bmabr.views.rack_vote'),
@@ -42,26 +40,15 @@ urlpatterns = patterns(
 
     (r'rack/all.kml$', 'fixcity.bmabr.views.rack_all_kml'),
     (r'rack/requested.kml$', 'fixcity.bmabr.views.rack_requested_kml'),
-    (r'rack/pendding.kml$', 'fixcity.bmabr.views.rack_pendding_kml'),
-    (r'rack/built.kml$', 'fixcity.bmabr.views.rack_pendding_kml'),
-    (r'rack/(?P<rack_id>\d+).kml', 'fixcity.bmabr.views.rack_by_id_kml'),
     (r'communityboards.kml','fixcity.bmabr.views.community_board_kml'),
     (r'communityboard/(?P<cb_id>\d+).kml','fixcity.bmabr.views.community_board_kml_by_id'),
 
     # different views for adding infomation, rack, comments, photos.
 
-    (r'^rack/new/$', 'fixcity.bmabr.views.newrack_form'), # view for rack request form.
+    (r'^rack/new/$', 'fixcity.bmabr.views.newrack_form'),
     (r'^rack/(?P<rack_id>\d+)/photos/', 'fixcity.bmabr.views.updatephoto'),
     (r'^rack/$', 'fixcity.bmabr.views.rack_index'),
     
-
-    #(r'^comment/add/$', 'fixcity.bmabr.views.add_comment'), 
-                       
-    # different ways of viewing information                   
-
-    (r'^neighborhoods/$', 'fixcity.bmabr.views.neighborhoods'), 
-    (r'^communityboard/$', 'fixcity.bmabr.views.communityboard'),
-
 
     # Static media for dev work.  For deployment, these should be served
     # by a front-end server eg. apache!
@@ -74,8 +61,6 @@ urlpatterns = patterns(
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    (r'^cb1racks/$', 'fixcity.bmabr.views.cb1racks'),
     (r'^admin/(.*)', admin.site.root),
 
     (r'^blog/', include('basic.blog.urls')),
