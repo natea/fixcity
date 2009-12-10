@@ -171,7 +171,19 @@ class SubwayStations(models.Model):
     class Meta:
         db_table = u'gis_subway_stations'
 
+class Borough(models.Model):
+    gid = models.IntegerField(primary_key=True)
+    borocode = models.SmallIntegerField()
+    boroname = models.CharField(max_length=32)
+    shape_leng = models.DecimalField(max_digits=65535, decimal_places=65535)
+    shape_area = models.DecimalField(max_digits=65535, decimal_places=65535)
+    the_geom = models.MultiPolygonField()
+    objects = models.GeoManager()
+    class Meta:
+        db_table = u'gis_boroughs'
 
+    def __unicode__(self):
+        return self.boroname
 
 NEED_SOURCE_OR_EMAIL = "If email address is not provided, another source must be specified"
 
