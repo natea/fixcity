@@ -168,7 +168,6 @@ def verify(request):
         else:
             boro_gid = int(request.GET.get('boro', '0'))
             boro = get_object_or_404(Borough, gid=boro_gid)
-            import pdb; pdb.set_trace();
             racks = Rack.objects.filter(location__contained=boro.the_geom)
         from django.template.loader import render_to_string
         racks_html = render_to_string('racklist.html',
