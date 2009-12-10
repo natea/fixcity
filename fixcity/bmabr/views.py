@@ -13,7 +13,6 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator as token_generator
 
-from django.contrib import comments  
 #from django.contrib.comments.views.comments import post_comment
 from django.contrib.comments.forms import CommentForm
 
@@ -46,13 +45,14 @@ from django.conf import settings
 
 from recaptcha.client import captcha
 
+from voting.models import Vote
+
 import logging
 import sys
 import traceback
 
 cb_metric = 50.00 
 GKEY="ABQIAAAApLR-B_RMiEN2UBRoEWYPlhTmTlZhMVUZVOGFgSe6Omf4DswcaBSLmUPer5a9LF8EEWHK6IrMgA62bg"
-g = geocoders.Google(GKEY)
 SRID=4326
 
 # XXX Need to figure out what order we really want these in.
@@ -111,7 +111,7 @@ def _geocode(text):
     key = ('_geocode', text)
     result = cache.get(key)
     if result is None:
-        result = list(g.geocode(text, exactly_one=False))
+        result = list(geocoders.Google(GKEY).geocode(text, exactly_one=False))
         cache.set(key, result, 60 * 10)
     return result
 
@@ -129,7 +129,7 @@ def reverse_geocode(request):
     key = ('reverse_geocode', point)
     result = cache.get(key)
     if result is None:
-        (new_place,new_point) = g.reverse(point)
+        (new_place,new_point) = geocoders.Google(GKEY).reverse(point)
         result = new_place
         cache.set(key, result, 60 * 10)
     return HttpResponse(result)
@@ -339,7 +339,6 @@ def support(request, rack_id):
 
 @login_required
 def rack_vote(request, rack_id):
-    from voting.models import Vote
     user = request.user
     value = request.POST.get('vote')
     rack = get_object_or_404(Rack, id=rack_id)
@@ -354,6 +353,7 @@ def rack_vote(request, rack_id):
         Vote.objects.record_vote(rack, user, value)
         flash('Your vote has been recorded.', request)
     return HttpResponseRedirect('/rack/%s/' % rack_id)
+
 
 @login_required
 def rack_edit(request,rack_id):
@@ -471,10 +471,12 @@ def updatephoto(request,rack_id):
     rack.save()
     return HttpResponse('ok')
 
+
     
-def rack_all_kml(request): 
+def rack_all_kml(request):
     racks = Rack.objects.all()
-    return render_to_kml("placemarkers.kml", {'racks' : racks}) 
+    return render_to_kml("placemarkers.kml", {'racks' : racks})
+
 
 # Cache hits are likely in a few cases: initial load of page;
 # or clicking pagination links; or zooming in/out.
@@ -501,9 +503,11 @@ def rack_requested_kml(request):
     paginator = Paginator(racks, page_size)
     page_number = min(page_number, paginator.num_pages)
     page = paginator.page(page_number)
+    votes = Vote.objects.get_scores_in_bulk(racks)
     return render_to_kml("placemarkers.kml", {'racks' : racks,
                                               'page': page,
                                               'page_size': page_size,
+                                              'votes': votes,
                                               }) 
 
 

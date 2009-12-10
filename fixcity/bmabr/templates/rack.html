@@ -67,14 +67,13 @@ jQuery(document).ready(function() {loadMap(false);});
   {% if user.is_authenticated %}
     <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Edit this Rack</a>
     {% if not user_suggested_this_rack %}
-      <br /><form method="POST" action="/rack/{{rack.id}}/vote/">
-      <input type="radio" name="vote" value="1"> +1 </input>
-      <input type="radio" name="vote" value="-1"> -1 </input>
-      <input type="submit" value=" Vote on this rack " />
+      <div class="vote"><form method="POST" action="/rack/{{rack.id}}/vote/">
+        <input type="radio" name="vote" value="1"> +1 </input>
+        <input type="submit" value=" Vote on this rack " />
+      </form></div>
     {% endif %}
-  </form>
   {% else %}
-  <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Log in to Update Rack</a>
+    <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Log in to Update Rack</a>
   {% endif %}
 
   <!-- Votes on this rack so far, needs styling -->

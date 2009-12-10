@@ -1,5 +1,8 @@
 {% extends "base.kml" %}
+{% load voting_tags %}
 {% block placemarks %}
+
+{% scores_for_objects page.object_list as vote_dict %}
 
 {% for rack in page.object_list %}
   <Placemark id="{{rack.id}}">
@@ -40,6 +43,9 @@
       {% endif %}
 
       <Data name="date"><value>{{rack.date|date}}</value></Data>
+
+      {%  dict_entry_for_item rack from vote_dict as vote %}
+      <Data name="votes"><value>{{vote|default:0}}</value></Data>
 
     </ExtendedData>      
 

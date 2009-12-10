@@ -22,11 +22,13 @@ install_requires=[
       'coverage',
       'django-voting==0.1',
       'recaptcha-client',
+      'lxml',
       ]
 
 import sys
 if sys.version_info[:2] < (2, 6):
     install_requires.append('ctypes>=1.0.2')
+
 
 setup(name='fixcity',
       version=version,

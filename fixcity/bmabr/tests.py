@@ -3,13 +3,25 @@
 from django.conf import settings
 
 from django.contrib.gis.geos.point import Point
+from django.core.cache import cache        
+
 from django.utils import simplejson as json
+
+from django.test import TestCase
+
 from fixcity.bmabr.management.commands import tweeter
 from fixcity.bmabr.views import SRID
+from fixcity.bmabr.views import _preprocess_rack_form
+
+import lxml.objectify
+
 import datetime
 import mock
 import unittest
 
+def clear_cache():
+    for key in cache._expire_info.keys():
+        cache.delete(key)
 
 class TestSourceFactory(unittest.TestCase):
 
@@ -42,9 +54,49 @@ class TestSourceFactory(unittest.TestCase):
         source = source_factory({'source_type': 'anything else'})
         self.assertEqual(source, None)
 
-        
-class TestNewRack(unittest.TestCase):
 
+        
+class TestUtilFunctions(unittest.TestCase):
+
+    def tearDown(self):
+        clear_cache()
+        super(TestUtilFunctions, self).tearDown()
+        
+    def test_preprocess_rack_form__noop(self):
+        orig_data = {'geocoded': '1'}
+        data = orig_data.copy()
+        _preprocess_rack_form(data)
+        self.assertEqual(data, orig_data)
+
+    @mock.patch('geopy.geocoders.Google.geocode')
+    def test_preprocess_rack_form__address_but_no_matching_user(self,
+                                                                mock_geocode):
+        address = '148 Lafayette St, New York, NY'
+        mock_geocode.return_value = [(address, (20, 40))]
+        data = {'geocoded': '0', 'email': 'foo@bar.com', 'address': address}
+        _preprocess_rack_form(data)
+        self.failIf(data.has_key('user'))
+        self.assertEqual(data['location'],
+                         'POINT (40.0000000000000000 20.0000000000000000)')
+
+    @mock.patch('geopy.geocoders.Google.geocode')
+    def test_preprocess_rack_form__no_location(self, mock_geocode):
+        address = '148 Lafayette St, New York, NY'
+        mock_geocode.return_value = []
+        data = {'geocoded': '0', 'address': address}
+        _preprocess_rack_form(data)
+        self.assertEqual(data['location'], u'')
+
+    def test_preprocess_rack_form__with_user(self):
+        from fixcity.bmabr.views import _preprocess_rack_form
+        data = {'geocoded': '1', 'email': 'foo@bar.com'}
+        from django.contrib.auth.models import User
+        bob = User(username='bob', email='foo@bar.com')
+        bob.save()
+        _preprocess_rack_form(data)
+        self.assertEqual(data['user'], 'bob')
+
+        
     def test_newrack_no_data(self):
         from fixcity.bmabr.views import _newrack
         from fixcity.bmabr.models import NEED_SOURCE_OR_EMAIL
@@ -93,6 +145,16 @@ class TestNewRack(unittest.TestCase):
         self.failUnless(result.get('message'))
         self.failUnless(result.get('rack'))
 
+
+
+class TestActivation(TestCase):
+
+    def test_activate__malformed_key(self):
+        response = self.client.get('/accounts/activate/XYZPDQ/')
+        self.assertEqual(response.status_code, 200)
+        self.failUnless(response.context['key_status'].count('Malformed'))
+
+    # lots more to test in this view!
 
 
 class TestTweeter(unittest.TestCase):
@@ -169,3 +231,52 @@ class TestTweeter(unittest.TestCase):
                            'tweetid': 1,
                            'user': 'some twitter user',
                            }))
+
+
+class TestKMLViews(TestCase):
+
+        
+    def tearDown(self):
+        super(TestKMLViews, self).tearDown()
+        clear_cache()
+                
+    def test_rack_requested_kml__empty(self):
+        kml = self.client.get('/rack/requested.kml').content
+        # This is maybe a bit goofy; we parse the output to test it
+        tree = lxml.objectify.fromstring(kml)
+        placemarks = tree.Document.getchildren()
+        self.assertEqual(len(placemarks), 0)
+
+        
+    def test_rack_requested_kml__one(self):
+        from fixcity.bmabr.models import Rack
+        rack = Rack(address='148 Lafayette St, New York NY',
+                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
+                    )
+        rack.save()
+        kml = self.client.get('/rack/requested.kml').content
+        tree = lxml.objectify.fromstring(kml)
+        placemarks = tree.Document.getchildren()
+        self.assertEqual(len(placemarks), 1)
+        placemark = tree.Document.Placemark
+        self.assertEqual(placemark.name, rack.title)
+        self.assertEqual(placemark.address, rack.address)
+        self.assertEqual(placemark.description, '')
+        
+        self.assertEqual(placemark.Point.coordinates, '20.0,20.0,0')
+
+        # Argh. Searching child elements for specific attribute values
+        # is making my head hurt. xpath should help, but I couldn't
+        # find the right expression. Easier to extract them into a
+        # dict.
+        data = {}
+        for d in placemark.ExtendedData.Data:
+            data[d.attrib['name']] = d.value
+
+        self.assertEqual(data['page_number'], 1)
+        self.assertEqual(data['num_pages'], 1)
+        self.assertEqual(data['source'], 'web')
+        self.assertEqual(data['date'], 'Jan. 1, 1970')
+        self.assertEqual(data['votes'], 0)
+
