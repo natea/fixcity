@@ -7,12 +7,12 @@
     <name>{{rack.title}}</name>
     <address>{{rack.address}}</address>
 
-    <description>{{rack.description|default:""}}</description>	
-    <Snippet>{{rack.description|default:""|truncatewords:12}}</Snippet>	
+    <description>{{rack.description|default:""}}</description>
+    <Snippet>{{rack.description|default:""|truncatewords:12}}</Snippet>
 
     {% autoescape off %}
-    {{rack.location.kml}}    
-    {% endautoescape %}	
+    {{rack.location.kml}}
+    {% endautoescape %}
 
     <ExtendedData>
       {% if rack.photo %}
@@ -41,8 +41,7 @@
 
       <Data name="date"><value>{{rack.date|date}}</value></Data>
 
-    </ExtendedData>      
+    </ExtendedData>
 
   </Placemark>
 {% endfor %}{% endblock %}
-
