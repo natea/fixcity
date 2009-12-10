@@ -45,12 +45,26 @@ class Rack(models.Model):
     # keep track of where the rack was submitted from
     # if not set, that means it was submitted from the web
     source = models.ForeignKey('Source', null=True, blank=True)
-    
+
     objects = models.GeoManager()
 
     def __unicode__(self):
         return self.address
 
+    def get_absolute_url(self):
+        return '/rack/%s' % self.id
+
+    def get_thumbnail_url(self):
+        if self.photo:
+            return self.photo.thumbnail
+        else:
+            return '/site_media/img/default-rack.jpg'
+
+    def get_source(self):
+        if self.source:
+            return self.source.name
+        else:
+            return u'web'
 
 class Source(models.Model):
     """base class representing the source of where a rack was submitted from"""
