@@ -2,12 +2,17 @@ var map, layer, select, select_vector, racks, bounds, selectControl;
 
 if (jQuery.browser.msie) {
     jQuery(window).load(function () {
-        loadMap();
+        onload();
     });
 } else {
     jQuery(document).ready(function () {
-        loadMap();
+        onload();
     });
+}
+
+function onload() {
+    loadMap();
+    updateFilterBehaviors();
 }
 
 var options = {
@@ -344,4 +349,35 @@ function loadMap() {
     });
     map.zoomToExtent(bounds);
 
+}
+
+function updateFilterBehaviors() {
+    var boroSelect = $('#filter-boro');
+    var cbSelect = $('#filter-cb');
+    boroSelect.change(function(e) {
+            e.preventDefault();
+            console.log('change');
+            var boro = $(this).val();
+            $.getJSON('/cbs/' + boro, {}, function(boros) {
+                    cbSelect.empty();
+                    cbSelect.append('<option value="0">All</option>');
+                    var boardNum;
+                    for (var i = 0; i < boros.length; i++) {
+                        boardNum = boros[i];
+                        cbSelect.append('<option value="' + boardNum + '">' + boardNum + '</option>');
+                    }
+                });
+        });
+    $('#filter-form').submit(function(e) {
+            e.preventDefault();
+            var url = $(this).attr("action");
+            var vrfy = $('#filter-form input:radio[name=state]:checked').val()
+                $.get(url,
+                      {boro: boroSelect.val(),
+                       cb: cbSelect.val(),
+                       verified: vrfy},
+                      function(data) {
+                          $('ul#racklist').empty().append(data);
+                      });
+        });
 }

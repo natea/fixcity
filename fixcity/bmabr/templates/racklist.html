@@ -1,0 +1,16 @@
+{% for rack in racks %}
+<li class="selfclear" id="">
+  <a class="rack-thumbnail" href="{{ rack.get_absolute_url }}">
+    <img src="{{ rack.get_thumbnail_url }}" />
+  </a>
+  <div class="rack-info">
+    <h3><a href="{{ rack.get_absolute_url }}">{{rack.title}}</a></h3>
+    {% if rack.verified %}
+    <span class="rack-verified"><em>verified</em></span>
+    {% endif %}
+    <h4>{{ rack.address }}</h4>
+    <p class="rack-meta">suggested via {{ rack.get_source }} {{ rack.date }}</p>
+    <p class="rack-snippet">{{ rack.description }}</p>
+  </div>
+</li>
+{% endfor %}

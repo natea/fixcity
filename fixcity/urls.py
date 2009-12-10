@@ -18,13 +18,12 @@ urlpatterns = patterns(
     (r'^accounts/activate/(?P<activation_key>\w+)/$', 'fixcity.bmabr.views.activate'),
     # Accounts URLs - anything for django-registration that we didn't override.
     (r'^accounts/', include('registration.urls')),
-    
 
     (r'^profile/$', 'fixcity.bmabr.views.profile'),
 
     (r'^geocode/$', 'fixcity.bmabr.views.geocode'),
     (r'^reverse/$', 'fixcity.bmabr.views.reverse_geocode'),
-   
+    (r'^cbs/(?P<boro>\w+)$', 'fixcity.bmabr.views.cbs_for_boro'),
 
     (r'verify/$','fixcity.bmabr.views.verify'),
     (r'verify/communityboard/(?P<cb_id>\d+)/$', 'fixcity.bmabr.views.verify_by_communityboard'),
@@ -45,6 +44,8 @@ urlpatterns = patterns(
     (r'rack/pendding.kml$', 'fixcity.bmabr.views.rack_pendding_kml'),
     (r'rack/built.kml$', 'fixcity.bmabr.views.rack_pendding_kml'),
     (r'rack/(?P<rack_id>\d+).kml', 'fixcity.bmabr.views.rack_by_id_kml'),
+    (r'rack/borough/(?P<borough_id>\d+).kml', 'fixcity.bmabr.views.rack_borough_kml'),
+    (r'rack/board/(?P<board_id>\d+).kml', 'fixcity.bmabr.views.rack_board_kml'),
     (r'communityboards.kml','fixcity.bmabr.views.community_board_kml'),
     (r'communityboard/(?P<cb_id>\d+).kml','fixcity.bmabr.views.community_board_kml_by_id'),
 
@@ -53,13 +54,12 @@ urlpatterns = patterns(
     (r'^rack/new/$', 'fixcity.bmabr.views.newrack_form'), # view for rack request form.
     (r'^rack/(?P<rack_id>\d+)/photos/', 'fixcity.bmabr.views.updatephoto'),
     (r'^rack/$', 'fixcity.bmabr.views.rack_index'),
-    
 
-    (r'^comment/add/$', 'fixcity.bmabr.views.add_comment'), 
-                       
-    # different ways of viewing information                   
+    (r'^comment/add/$', 'fixcity.bmabr.views.add_comment'),
 
-    (r'^neighborhoods/$', 'fixcity.bmabr.views.neighborhoods'), 
+    # different ways of viewing information
+
+    (r'^neighborhoods/$', 'fixcity.bmabr.views.neighborhoods'),
     (r'^communityboard/$', 'fixcity.bmabr.views.communityboard'),
 
 

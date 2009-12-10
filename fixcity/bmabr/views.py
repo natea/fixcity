@@ -24,12 +24,14 @@ from django.template import Context, loader
 
 from django.views.decorators.cache import cache_page
 
+from fixcity.bmabr.models import Borough
 from fixcity.bmabr.models import Rack, Comment
 from fixcity.bmabr.models import Neighborhoods
 from fixcity.bmabr.models import CommunityBoard
 from fixcity.bmabr.models import RackForm, CommentForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
 from fixcity.bmabr.models import Source, TwitterSource, SeeClickFixSource, EmailSource
+from fixcity.bmabr.serializers import serialize_racks
 from fixcity.flash_messages import flash
 from fixcity.flash_messages import flash_error
 
@@ -156,10 +158,27 @@ def submit(request):
 
 
 
-def verify(request): 
-    racks_query = Rack.objects.order_by(*DEFAULT_RACK_ORDER)
-    return render_to_response('verify.html', { 
-            'rack_query': racks_query,
+def verify(request):
+    if request.is_ajax():
+        board_gid = int(request.GET.get('cb', '0'))
+        if board_gid != 0:
+            # racks for a particular community board
+            cb = get_object_or_404(CommunityBoard, gid=board_gid)
+            racks = Rack.objects.filter(location__contained=cb.the_geom)
+        else:
+            boro_gid = int(request.GET.get('boro', '0'))
+            boro = get_object_or_404(Borough, gid=boro_gid)
+            import pdb; pdb.set_trace();
+            racks = Rack.objects.filter(location__contained=boro.the_geom)
+        from django.template.loader import render_to_string
+        racks_html = render_to_string('racklist.html',
+                                      {'racks': racks})
+        return HttpResponse(racks_html)
+    racks = Rack.objects.order_by(*DEFAULT_RACK_ORDER)
+    boards = CommunityBoard.objects.filter(boro='brooklyn')
+    return render_to_response('verify.html', {
+            'racks': racks,
+            'boards': boards,
             },
             context_instance=RequestContext(request))
 
@@ -613,3 +632,19 @@ def cb1racks(request):
                                                 'nunverified': nunverified,
                                                 },
                               context_instance=RequestContext(request))
+
+def cbs_for_boro(request, boro):
+    """return json results for ajax call to fetch boards for a cb"""
+    boros = [b.board for b in CommunityBoard.objects.filter(boro=boro)]
+    boros.sort()
+    return HttpResponse(json.dumps(boros), mimetype='application/json')
+
+def rack_borough_kml(request, borough_id):
+    boro = get_object_or_404(Borough, gid=borough_id)
+    racks = Rack.objects.filter(location__contained=boro.the_geom)
+    return render_to_kml('placemarkers.kml', {'racks': racks})
+
+def rack_board_kml(request, board_id):
+    board = get_object_or_404(CommunityBoard, gid=board_id)
+    racks = Rack.objects.filter(location__contained=board.the_geom)
+    return render_to_kml('placemarkers.kml', {'racks': racks})
