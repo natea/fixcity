@@ -9,12 +9,13 @@ from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
 from fixcity.bmabr.fixcity_bitly import shorten_url
 import httplib2
+import logging
 import pickle
 import socket
-import sys
-import time
 import tweepy
 
+
+logger = logging.getLogger('tweeter')
 
 http = httplib2.Http()
 
@@ -34,7 +35,7 @@ class TwitterFetcher(object):
                     'user': tweet.user.screen_name,
                     'tweetid': tweet.id}
         except ValueError:
-            sys.stderr.write("couldn't parse tweet %r\n" % msg)
+            logger.warn("couldn't parse tweet %r\n" % msg)
             return None
 
     def get_tweets(self, since_id=None):
@@ -78,18 +79,28 @@ class RackBuilder(object):
         self.password = config.TWITTER_PASSWORD
         self.twitter_api = api
         self.status_file_path = config.TWITTER_STATUS_PATH
-    
-    def main(self, recent_only=True):
-        last_processed_id = None
-        if recent_only:
-            try:
-                statusfile = open(self.status_file_path, 'r')
-                status = pickle.load(statusfile)
-                last_processed_id = status['last_processed_id']
-                statusfile.close()
-            except (IOError, EOFError):
-                pass
 
+    def load_last_status(self, recent_only):
+        last_processed_id = None
+        if not recent_only:
+            return last_processed_id
+        try:
+            statusfile = open(self.status_file_path, 'r')
+            status = pickle.load(statusfile)
+            last_processed_id = status['last_processed_id']
+            statusfile.close()
+        except (IOError, EOFError):
+            pass
+        return last_processed_id
+
+    def save_last_status(self, last_processed_id):
+        statusfile = open(self.status_file_path, 'w')
+        pickle.dump({'last_processed_id': last_processed_id}, statusfile)
+        statusfile.close()
+        
+        
+    def main(self, recent_only=True):
+        last_processed_id = self.load_last_status(recent_only)
         try:
             limit_status = self.twitter_api.rate_limit_status()
             if limit_status['remaining_hits'] <= 0:
@@ -114,9 +125,7 @@ class RackBuilder(object):
             # XXX We should lock the status file in case this script
             # ever takes so long that it overlaps with the next
             # run. Or something.
-            statusfile = open(self.status_file_path, 'w')
-            pickle.dump({'last_processed_id': tweet.id}, statusfile)
-            statusfile.close()
+            self.save_last_status(tweet.id)
                     
             # TODO: batch-notification of success to cut down on posts:
             # if success, maintain a queue of recently successful posts,
@@ -145,9 +154,6 @@ class RackBuilder(object):
         url = self.url
         # XXX UGH, copy-pasted from handle_mailin.py. Refactoring time!
         description = ''
-        # We don't bother with microsecond precision because
-        # Django datetime fields can't parse it anyway.
-        now = datetime.fromtimestamp(int(time.time()))
         data = dict(source_type='twitter',
                     twitter_user=user,
                     twitter_id=tweetid,
@@ -182,7 +188,6 @@ class RackBuilder(object):
                 notify_admin='fixcity: twitter: 500 Server error',
                 notify_admin_body=content)
             return
-
         result = json.loads(content)
         if result.has_key('errors'):
             err_msg = self.general_error_message
@@ -224,7 +229,7 @@ def _notify_admin(subject, body):
     from_addr = 'racks@fixcity.org'
     send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
     # person receiving cron messages will get stdout
-    print body
+    logger.info(body)
 
 def adapt_errors(adict):
     # XXX TODO
@@ -245,4 +250,3 @@ class Command(BaseCommand):
         api = api_factory(settings)
         builder = RackBuilder(settings, api)
         builder.main(recent_only=True)
-
