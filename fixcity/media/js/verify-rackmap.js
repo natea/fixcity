@@ -73,7 +73,7 @@ function loadMap() {
         }
       },
       radius: function(feature) {
-        return Math.min(feature.attributes.count, 8) + 5;
+        return Math.min(feature.attributes.count*2, 8) + 5;
       }
     }
     });
