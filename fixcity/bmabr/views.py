@@ -141,8 +141,8 @@ def submit_all(request):
 def submit(request): 
     community_board_query = CommunityBoard.objects.filter(board=1, boro='brooklyn')
     for communityboard in community_board_query:         
-        racks_query = Rack.objects.filter(location__contained=communityboard.the_geom)
-        racks_count = Rack.objects.filter(location__contained=communityboard.the_geom).count()
+        racks_query = Rack.objects.filter(location__within=communityboard.the_geom)
+        racks_count = Rack.objects.filter(location__within=communityboard.the_geom).count()
         cb_metric_percent = racks_count/cb_metric 
         cb_metric_percent = cb_metric_percent * 100 
         community_board_query_extent = community_board_query.extent()
@@ -164,11 +164,11 @@ def verify(request):
         if board_gid != 0:
             # racks for a particular community board
             cb = get_object_or_404(CommunityBoard, gid=board_gid)
-            racks = Rack.objects.filter(location__contained=cb.the_geom)
+            racks = Rack.objects.filter(location__within=cb.the_geom)
         else:
             boro_gid = int(request.GET.get('boro', '0'))
             boro = get_object_or_404(Borough, gid=boro_gid)
-            racks = Rack.objects.filter(location__contained=boro.the_geom)
+            racks = Rack.objects.filter(location__within=boro.the_geom)
         from django.template.loader import render_to_string
         racks_html = render_to_string('racklist.html',
                                       {'racks': racks})
@@ -432,7 +432,7 @@ def rack_requested_kml(request):
         bbox = [float(n) for n in bbox.split(',')]
         assert len(bbox) == 4
         geom = Polygon.from_bbox(bbox)
-        racks = Rack.objects.filter(location__contained=geom)
+        racks = Rack.objects.filter(location__within=geom)
     else:
         racks = Rack.objects.all()
     racks = racks.order_by(*DEFAULT_RACK_ORDER)
@@ -620,7 +620,7 @@ def server_error(request, template_name='500.html'):
 
 def cb1racks(request):
     cb1 = CommunityBoard.objects.get(board=1, boro='brooklyn')
-    racks = Rack.objects.filter(location__contained=cb1.the_geom)
+    racks = Rack.objects.filter(location__within=cb1.the_geom)
     racks = racks.order_by('verified')
     nracks = len(racks)
     nverified = len([r for r in racks if r.verified])
@@ -640,10 +640,10 @@ def cbs_for_boro(request, boro):
 
 def rack_borough_kml(request, borough_id):
     boro = get_object_or_404(Borough, gid=borough_id)
-    racks = Rack.objects.filter(location__contained=boro.the_geom)
+    racks = Rack.objects.filter(location__within=boro.the_geom)
     return render_to_kml('placemarkers.kml', {'racks': racks})
 
 def rack_board_kml(request, board_id):
     board = get_object_or_404(CommunityBoard, gid=board_id)
-    racks = Rack.objects.filter(location__contained=board.the_geom)
+    racks = Rack.objects.filter(location__within=board.the_geom)
     return render_to_kml('placemarkers.kml', {'racks': racks})
