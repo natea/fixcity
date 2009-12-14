@@ -186,6 +186,10 @@ COVERAGE_MODULES = ['fixcity.bmabr.views', 'fixcity.bmabr.models',
                     'fixcity.bmabr.management.commands.tweeter',
                     'fixcity.bmabr.management.commands.handle_mailin',
                     'fixcity.bmabr.management.commands.seeclickfix',
+                    'fixcity.bmabr.fixcity_bitly',
+                    'fixcity.flash_messages',
+                    'fixcity.bmabr.templatetags.recaptcha_tags',
+                    'fixcity.bmabr.templatetags.google_analytics',
                     ]
 
 try:
