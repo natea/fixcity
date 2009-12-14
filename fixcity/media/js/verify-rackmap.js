@@ -2,15 +2,15 @@ var map, layer, select, select_vector, racks, bounds, selectControl;
 
 if (jQuery.browser.msie) {
     jQuery(window).load(function () {
-        onload();
+        _onload();
     });
 } else {
     jQuery(document).ready(function () {
-        onload();
+        _onload();
     });
 }
 
-function onload() {
+function _onload() {
     loadMap();
     updateFilterBehaviors();
 }
