@@ -23,7 +23,11 @@ body {
 font: small "Helvetica Neue", helvetica, verdana, sans-serif;
 background: #fff;
 color: #333; 
-text-align:center; /* silly IE 5.5 */
+padding: 0 0 6em;
+}
+
+* html body {
+padding: 0;
 }
 
 a:link, a:visited {
@@ -149,9 +153,7 @@ text-align: left; /* silly IE 5.5 */
 }
 
 #header {
-background: #5c8699;
 padding: 0.5em 0;
-margin: 0 0 20px;
 }
 
 #header .wrap {
@@ -181,10 +183,19 @@ padding: 0.2em 0.5em;
 text-decoration: underline;
 }
 
+#login {
+color: #e7eff3;
+}
+
 #login a {
-color: #99e4ff;
-text-transform: uppercase;
+color: #ff8c66;
 text-decoration: none;
+margin: 0 0.3em;
+}
+
+#login .logstate {
+text-transform: uppercase;
+margin: 0 0 0 0.3em;
 }
 
 #login a:hover {
@@ -192,41 +203,27 @@ text-decoration: underline;
 }
 
 #logo {
-width: 380px;
-height: 110px;
+width: 290px;
+height: 100px;
 float: left;
+text-align: left;
 overflow: hidden;
 text-indent: -9999em;
 background: url(/site_media/img/beta-logo.gif) no-repeat;
 }
 
-#nav ul {
+ul#nav {
 float: left;
-margin: 15px 0 0 70px;
+margin: 15px -10px 0 36px;
+text-align: left;
 }
 
-* html nav ul {
-margin-left: 35px;
+* html ul#nav {
+margin-left: 18px;
 }
 
 #nav li {
 float: left;
-margin: 0 15px 0 0;
-}
-
-#nav li:first-child {
-margin: 0 25px 0 0;
-}
-
-#nav li.first-child {
-margin: 0 25px 0 0;
-}
-
-#nav li:last-child {
-margin: 0;
-}
-
-#nav li.last-child {
 margin: 0;
 }
 
@@ -234,33 +231,34 @@ margin: 0;
 display: block;
 overflow: hidden;
 text-indent: -9999em;
-width: 135px;
-height: 101px;
+height: 50px;
 }
 
 #nav li a#add-rack {
+width: 237px;
 background-image: url(/site_media/img/add-rack-bg.png);
 background-repeat: no-repeat;
 }
 
 #nav li a#verify-rack {
-background-image: url(/site_media/img/verify-rack-bg.png);
+width: 194px;
+background-image: url(/site_media/img/view-racks-bg.png);
 background-repeat: no-repeat;
-margin: 0 15px 0 0;
 }
 
 #nav li a#verification-kit {
+width: 185px;
 background-image: url(/site_media/img/tools-tips-bg.png);
 background-repeat: no-repeat;
 }
 
 #nav li a:hover,
 #nav li a.current {
-background-position: 0 -101px;
+background-position: 0 -50px;
 }
 
 #lede {
-margin: 20px 0 15px;
+margin: 0;
 padding: 0 0 5px;
 border-bottom: 1px solid #8fb9cc;
 }
@@ -272,6 +270,11 @@ font-size: 1.75em;
 font-weight: normal;
 padding: 0 1em 0 0;
 margin: 0;
+}
+
+#content {
+padding: 15px 0 0;
+background: url(/site_media/img/content-bg.png) 50% -2px no-repeat;
 }
 
 /* - */
@@ -447,15 +450,15 @@ background-position: 5px 50%;
 background-repeat: no-repeat;
 }
 
-#home-sidebar .sidebar-callouts li a#twitter-callout {
+#home-sidebar .sidebar-callouts li a.twitter-callout {
 background-image: url(/site_media/img/twitter-icon.png);
 }
 
-#home-sidebar .sidebar-callouts li a#email-callout {
+#home-sidebar .sidebar-callouts li a.email-callout {
 background-image: url(/site_media/img/letter-icon.png);
 }
 
-#home-sidebar .sidebar-callouts li a#scf-callout {
+#home-sidebar .sidebar-callouts li a.scf-callout {
 background-image: url(/site_media/img/seeclickfix-icon.png);
 background-position: 50px 100%;
 padding-bottom: 50px;
@@ -572,7 +575,6 @@ float: left;
 
 #content form label,
 #content #rackinfo dt {
-background: #fff;
 display: block;
 font-size: 1.2em;
 font-weight: bold;
@@ -1192,11 +1194,71 @@ font-size: 0.7em;
 }
 
 /* - */
-
-#footer .wrap {
-border-top: 1px solid #8fb9cc;
+#footer {
+background: #5c8699;
+position: fixed;
+bottom: 0;
+left: 0;
+width: 100%;
 padding: 1em 0;
-margin: 1em auto;
-text-align: right;
 }
 
+* html #footer {
+position: static;
+}
+
+#footer .wrap {
+margin: 0 auto;
+position: relative;
+}
+
+#footer-callout {
+background: #fff;
+position: absolute;
+right: 0;
+top: -1.5em;
+width: 316px;
+padding: 10px;
+border: 1px solid #8fb9cc;
+-moz-border-radius: 3px;
+-webkit-border-radius: 3px;
+border-radius: 3px;
+}
+
+#footer-callout strong.leftwise {
+float: left;
+color: #5c8699;
+font-size: 14px;
+font-weight: normal;
+padding: 8px 0 0;
+margin: 0 5px 0 0;
+}
+
+#footer-callout a.email-callout {
+float: left;
+width: 32px;
+height: 30px;
+background: url(/site_media/img/footer-letter-icon.png) no-repeat;
+overflow: hidden;
+text-indent: -9999em;
+margin: 0 5px 0 0;
+}
+
+#footer-callout a.twitter-callout {
+float: left;
+width: 37px;
+height: 30px;
+background: url(/site_media/img/footer-twitter-icon.png) no-repeat;
+overflow: hidden;
+text-indent: -9999em;
+margin: 0 5px 0 0;
+}
+
+#footer-callout a.scf-callout {
+float: left;
+width: 79px;
+height: 30px;
+background: url(/site_media/img/footer-seeclickfix-icon.png) no-repeat;
+overflow: hidden;
+text-indent: -9999em;
+}
