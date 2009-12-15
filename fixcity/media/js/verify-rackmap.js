@@ -198,16 +198,33 @@ function updateFilterBehaviors() {
                     }
                 });
         });
+    var fetchNewDataFn = function(page) {
+        var url = $('#filter-form').attr('action');
+        params = {verified: $('#filter-form input:radio[name=state]:checked').val(),
+                  boro: boroSelect.val(),
+                  cb: cbSelect.val()
+                  };
+        if (page) {
+            params.page = page;
+        }
+        $.get(url,
+              params,
+              function(data) {
+                  $('#racks').empty().append(data);
+              });
+    };
+
     $('#filter-form').submit(function(e) {
             e.preventDefault();
-            var url = $(this).attr("action");
-            var vrfy = $('#filter-form input:radio[name=state]:checked').val()
-                $.get(url,
-                      {boro: boroSelect.val(),
-                       cb: cbSelect.val(),
-                       verified: vrfy},
-                      function(data) {
-                          $('ul#racklist').empty().append(data);
-                      });
+            var page = $('#pagination .sectionlink a:not([href])').text();
+            fetchNewDataFn(page);
+        });
+    $('#pagination a').live('click', function(e) {
+            e.preventDefault();
+            var href = $(this).attr('href');
+            if (!href)
+                return;
+            var page = href.substring(1);
+            fetchNewDataFn(page);
         });
 }

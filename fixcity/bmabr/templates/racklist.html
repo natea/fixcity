@@ -20,7 +20,7 @@
 {% if page.has_other_pages %}
 <p id="pagination">
   {% if page.has_previous %}
-  <a class="prevlink" rel="prev" href="#">Previous</a>
+  <a class="prevlink" rel="prev" href="#{{ page.prev_page_number }}">Previous</a>
   {% endif %}
   {% for page_no in paginator.page_range %}
     <span class="sectionlink">
@@ -32,7 +32,7 @@
     </span>
   {% endfor %}
   {% if page.has_next %}
-  <a class="nextlink" rel="next" href="#">Next</a>
+  <a class="nextlink" rel="next" href="#{{ page.next_page_number }}">Next</a>
   {% endif %}
 </p>
 {% endif %}
