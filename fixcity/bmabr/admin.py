@@ -28,8 +28,8 @@ class NeighborhoodsAdmin(admin.GeoModelAdmin):
     list_display = ('name','county')
 
 class CommunityBoardAdmin(admin.GeoModelAdmin):
-    list_display = ('boro','board','gid')
-    ordering = ('boro',)
+    list_display = ('borough','board','gid')
+    ordering = ('borough','board')
 
 class BoroughAdmin(admin.GeoModelAdmin):
     list_display = ('boroname',)

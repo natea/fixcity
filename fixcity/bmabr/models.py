@@ -8,16 +8,16 @@ class CommunityBoard(models.Model):
     gid = models.IntegerField(primary_key=True)
     borocd = models.IntegerField()
     board = models.IntegerField()
-    boro = models.CharField(max_length=50)
+    borough = models.ForeignKey('Borough')
     the_geom = models.MultiPolygonField()
     objects = models.GeoManager()
 
     class Meta:
         db_table = u'gis_community_board'
-        ordering = ['boro', 'board']
+        ordering = ['board']
 
     def __unicode__(self):
-        return "%s Community Board %s " % (self.boro.title(), self.board)
+        return "%s Community Board %s " % (self.borough.boroname, self.board)
 
 
 
