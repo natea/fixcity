@@ -171,7 +171,6 @@ function updateFilterBehaviors() {
     var cbSelect = $('#filter-cb');
     boroSelect.change(function(e) {
             e.preventDefault();
-            console.log('change');
             var boro = $(this).val();
             $.getJSON('/cbs/' + boro, {}, function(boros) {
                     cbSelect.empty();
