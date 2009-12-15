@@ -17,8 +17,7 @@ class CommunityBoard(models.Model):
         ordering = ['boro', 'board']
 
     def __unicode__(self):
-        return "%s Community Board %s " % (self.boro.title(), self.board)
-
+        return "%s Community Board %s" % (self.boro.title(), self.board)
 
 
 
@@ -118,45 +117,6 @@ class StatementOfSupport(models.Model):
     def __unicode__(self):
         return self.email
 
-
-
-class Neighborhoods(models.Model):
-    gid = models.IntegerField(primary_key=True)
-    state = models.CharField(max_length=2)
-    county = models.CharField(max_length=43)
-    city = models.CharField(max_length=64)
-    name = models.CharField(max_length=64)
-    regionid = models.IntegerField()
-    the_geom = models.MultiPolygonField() 
-    objects = models.GeoManager()
-
-    class Meta:
-        db_table = u'gis_neighborhoods'
-        
-    def __unicode__(self):
-        return self.name
-
-
-class SubwayStations(models.Model):
-    gid = models.IntegerField(primary_key=True)
-    objectid = models.TextField() # This field type is a guess.
-    id = models.IntegerField()
-    name = models.CharField(max_length=31)
-    alt_name = models.CharField(max_length=38)
-    cross_st = models.CharField(max_length=27)
-    long_name = models.CharField(max_length=60)
-    label = models.CharField(max_length=50)
-    borough = models.CharField(max_length=15)
-    nghbhd = models.CharField(max_length=30)
-    routes = models.CharField(max_length=20)
-    transfers = models.CharField(max_length=25)
-    color = models.CharField(max_length=30)
-    express = models.CharField(max_length=10)
-    closed = models.CharField(max_length=10)
-    the_geom = models.PointField()
-    objects = models.GeoManager()
-    class Meta:
-        db_table = u'gis_subway_stations'
 
 
 
