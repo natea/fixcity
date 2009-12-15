@@ -456,6 +456,22 @@ def rack_requested_kml(request):
         racks = Rack.objects.filter(location__within=geom)
     else:
         racks = Rack.objects.all()
+    cb = request.GET.get('cb')
+    boro = request.GET.get('boro')
+    board = None
+    borough = None
+    if cb is not None:
+        try:
+            board = CommunityBoard.objects.get(pk=int(cb))
+            racks = racks.filter(location__within=board.the_geom)
+        except (CommunityBoard.DoesNotExist, ValueError):
+            board = None
+    if board is None and boro is not None:
+        try:
+            borough = Borough.objects.get(pk=int(boro))
+            racks = racks.filter(location__within=borough.the_geom)
+        except (CommunityBoard.DoesNotExist, ValueError):
+            pass
     racks = racks.order_by(*DEFAULT_RACK_ORDER)
     paginator = Paginator(racks, page_size)
     page_number = min(page_number, paginator.num_pages)
@@ -463,7 +479,7 @@ def rack_requested_kml(request):
     return render_to_kml("placemarkers.kml", {'racks' : racks,
                                               'page': page,
                                               'page_size': page_size,
-                                              }) 
+                                              })
 
 
 def community_board_kml(request): 
