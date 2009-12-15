@@ -142,8 +142,9 @@ def submit_all(request):
 
 
 def submit(request): 
-    community_board_query = CommunityBoard.objects.filter(board=1, boro='brooklyn')
-    for communityboard in community_board_query:         
+    brooklyn = Borough.objects.get(gid=4)
+    community_board_query = CommunityBoard.objects.filter(board=1, borough=brooklyn)
+    for communityboard in community_board_query:
         racks_query = Rack.objects.filter(location__within=communityboard.the_geom)
         racks_count = Rack.objects.filter(location__within=communityboard.the_geom).count()
         cb_metric_percent = racks_count/cb_metric 
@@ -199,7 +200,8 @@ def verify(request):
         return HttpResponse(racks_html)
     racks = Rack.objects.order_by(*DEFAULT_RACK_ORDER)
     page, paginator = make_paginator(racks, cur_page_num, per_page)
-    boards = CommunityBoard.objects.filter(boro='brooklyn')
+    brooklyn = Borough.objects.get(gid=4)
+    boards = CommunityBoard.objects.filter(borough=brooklyn)
     return render_to_response('verify.html', {
             'paginator': paginator,
             'page': page,
@@ -468,13 +470,13 @@ def rack_requested_kml(request):
     borough = None
     if cb is not None:
         try:
-            board = CommunityBoard.objects.get(pk=int(cb))
+            board = CommunityBoard.objects.get(gid=int(cb))
             racks = racks.filter(location__within=board.the_geom)
         except (CommunityBoard.DoesNotExist, ValueError):
             board = None
     if board is None and boro is not None:
         try:
-            borough = Borough.objects.get(pk=int(boro))
+            borough = Borough.objects.get(gid=int(boro))
             racks = racks.filter(location__within=borough.the_geom)
         except (CommunityBoard.DoesNotExist, ValueError):
             pass
@@ -662,7 +664,8 @@ def server_error(request, template_name='500.html'):
                                    mimetype="application/xhtml+xml")
 
 def cb1racks(request):
-    cb1 = CommunityBoard.objects.get(board=1, boro='brooklyn')
+    brooklyn = Borough.objects.get(gid=4)
+    cb1 = CommunityBoard.objects.get(board=1, borough=brooklyn)
     racks = Rack.objects.filter(location__within=cb1.the_geom)
     racks = racks.order_by('verified')
     nracks = len(racks)
@@ -677,16 +680,29 @@ def cb1racks(request):
 
 def cbs_for_boro(request, boro):
     """return json results for ajax call to fetch boards for a cb"""
-    boros = [b.board for b in CommunityBoard.objects.filter(boro=boro)]
+    try:
+        boro = int(boro)
+    except ValueError:
+        raise Http404
+    borough = get_object_or_404(Borough, gid=boro)
+    boros = [b.board for b in CommunityBoard.objects.filter(borough=borough)]
     boros.sort()
     return HttpResponse(json.dumps(boros), mimetype='application/json')
 
 def rack_borough_kml(request, borough_id):
+    try:
+        borough_id = int(borough_id)
+    except ValueError:
+        raise Http404
     boro = get_object_or_404(Borough, gid=borough_id)
     racks = Rack.objects.filter(location__within=boro.the_geom)
     return render_to_kml('placemarkers.kml', {'racks': racks})
 
 def rack_board_kml(request, board_id):
+    try:
+        board_id = int(board_id)
+    except ValueError:
+        raise Http404
     board = get_object_or_404(CommunityBoard, gid=board_id)
     racks = Rack.objects.filter(location__within=board.the_geom)
     return render_to_kml('placemarkers.kml', {'racks': racks})
