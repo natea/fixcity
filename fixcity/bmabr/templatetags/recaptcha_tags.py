@@ -6,4 +6,6 @@ register = template.Library()
  
 @register.simple_tag  
 def recaptcha_html():  
-    return captcha.displayhtml(settings.RECAPTCHA_PUBLIC_KEY)
+    html = u"<script>var RecaptchaOptions = {theme : 'white'};</script>"
+    html += captcha.displayhtml(settings.RECAPTCHA_PUBLIC_KEY)
+    return html

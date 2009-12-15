@@ -862,6 +862,35 @@ width: 10em;
 }
 
 /* - */
+#comments-list {
+margin: 0;
+padding: 0;
+list-style-type: none;
+}
+
+.comment {
+border-top: 1px solid #5c8699;
+margin: 0;
+padding: 0.75em 0;
+}
+
+#comments-list .comment-author {
+margin: 0;
+color: #333;
+font-size: 1.2em;
+}
+
+#add-comment {
+margin-top: 0;
+border-top: 1px solid #5c8699;
+padding-top: 0.535em;
+}
+
+#recaptcha_widget_div div {
+padding: 0;
+}
+
+/* - */
 #bigmovie {
 width: 620px;
 height: 345px;
