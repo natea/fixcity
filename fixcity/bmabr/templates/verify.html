@@ -57,39 +57,11 @@
 </div>
 
 <div id="racks">
-<!--  <div id="quick-sort">
-  	<form action="#">
-  	  <div class="selfclear"><label for="communityboard">Community Board</label><select id="communityboard" name="communityboard"><option value="cb1">Community Board 1</option></select></div>
-  	  <div class="selfclear"><label for="sortorder">Filter by</label><select id="sortorder" name="sortorder"><option value="verified">Verified</option></select></div>
-    </form>
-  </div>--><!-- /#quick-sort -->
-    <ul id="racklist">
 
-      {% comment %}
-           <li class="selfclear" id="" style="display: none;">
-             <a class="rack-thumbnail" href="#"><img /></a>
-             <div class="rack-info">
-               <h3><a href="#"> </a></h3>
-               <span class="rack-verified"><em>verified</em></span>
-               <h4> </h4>
-               <p class="rack-meta"> </p>
-               <p class="rack-snippet"> </p>
-             </div>
-            </li>
-      {% endcomment %}
-
-      {% include "racklist.html" %}
-
-    </ul><!-- #/racklist -->
-
-    <p id="pagination" style="display: none;">
-        <a class="prevlink" rel="prev" href="#">Previous</a>
-
-        <span class="sectionlink"><a rel="section" href="#">X</a>&nbsp;</span>
-
-        <a class="nextlink" rel="next" href="#">Next</a>
-
-    </p>
+{% comment %}
+all code is in racklist.html to reuse for ajax view
+{% endcomment %}
+{% include "racklist.html" %}
 
 </div><!-- /#racks -->
 <div id="verify-map-wrap">

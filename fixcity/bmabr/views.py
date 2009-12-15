@@ -4,8 +4,11 @@ from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseServerError
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
+from django.core.paginator import EmptyPage
+from django.core.paginator import InvalidPage
 from django.core.paginator import Paginator
 
 from django.contrib.auth.forms import SetPasswordForm
@@ -156,9 +159,21 @@ def submit(request):
              context_instance=RequestContext(request)
              )
 
-
+def make_paginator(objs, start_page, per_page):
+    """create a paginator and page object from a list"""
+    paginator = Paginator(objs, per_page)
+    try:
+        page = paginator.page(start_page)
+    except (EmptyPage, InvalidPage):
+        page = paginator.page(paginator.num_pages)
+    return (page, paginator)
 
 def verify(request):
+    try:
+        cur_page_num = int(request.GET.get('page', '1'))
+    except ValueError:
+        cur_page_num = 1
+    per_page = 7
     if request.is_ajax():
         board_gid = int(request.GET.get('cb', '0'))
         if board_gid != 0:
@@ -169,14 +184,20 @@ def verify(request):
             boro_gid = int(request.GET.get('boro', '0'))
             boro = get_object_or_404(Borough, gid=boro_gid)
             racks = Rack.objects.filter(location__within=boro.the_geom)
-        from django.template.loader import render_to_string
+        page, paginator = make_paginator(racks, cur_page_num, per_page)
         racks_html = render_to_string('racklist.html',
-                                      {'racks': racks})
+                                      {'paginator': paginator,
+                                       'page': page,
+                                       'cur_page_num': cur_page_num,
+                                       })
         return HttpResponse(racks_html)
     racks = Rack.objects.order_by(*DEFAULT_RACK_ORDER)
+    page, paginator = make_paginator(racks, cur_page_num, per_page)
     boards = CommunityBoard.objects.filter(boro='brooklyn')
     return render_to_response('verify.html', {
-            'racks': racks,
+            'paginator': paginator,
+            'page': page,
+            'cur_page_num': cur_page_num,
             'boards': boards,
             },
             context_instance=RequestContext(request))
