@@ -20,6 +20,7 @@ def clear_cache():
     for key in cache._expire_info.keys():
         cache.delete(key)
 
+
 class TestSourceFactory(unittest.TestCase):
 
     def test_existing_source(self):
@@ -151,6 +152,26 @@ class TestUtilFunctions(unittest.TestCase):
         self.failUnless(result.get('message'))
         self.failUnless(result.get('rack'))
 
+
+class TestIndex(TestCase):
+
+    def test_index(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+
+
+class TestProfile(TestCase):
+
+    def test_profile(self):
+        response = self.client.get('/profile/')
+        self.assertEqual(response.status_code, 302)
+        from django.contrib.auth.models import User
+        user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
+                                        'funkentelechy')
+        self.client.login(username='bernie', password='funkentelechy')
+        response = self.client.get('/profile/')
+        self.assertEqual(response.status_code, 200)
+        
 
 class TestActivation(TestCase):
 
