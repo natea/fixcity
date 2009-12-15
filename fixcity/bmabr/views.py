@@ -175,13 +175,19 @@ def verify(request):
         cur_page_num = 1
     per_page = 7
     if request.is_ajax():
-        board_gid = int(request.GET.get('cb', '0'))
+        try:
+            board_gid = int(request.GET.get('cb', '0'))
+        except ValueError:
+            board_gid = 0
         if board_gid != 0:
             # racks for a particular community board
             cb = get_object_or_404(CommunityBoard, gid=board_gid)
             racks = Rack.objects.filter(location__within=cb.the_geom)
         else:
-            boro_gid = int(request.GET.get('boro', '0'))
+            try:
+                boro_gid = int(request.GET.get('boro', '0'))
+            except ValueError:
+                boro_gid = 0
             boro = get_object_or_404(Borough, gid=boro_gid)
             racks = Rack.objects.filter(location__within=boro.the_geom)
         page, paginator = make_paginator(racks, cur_page_num, per_page)
