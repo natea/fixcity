@@ -13,9 +13,6 @@ import datetime
 import mock
 import unittest
 
-# Stupid monkeypatch to enable Mock to patch open().  It doesn't like
-# patching __builtins__ for some reason.
-#tweeter.open = __builtins__.open
 
 def clear_cache():
     for key in cache._expire_info.keys():
