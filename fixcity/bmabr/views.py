@@ -1,4 +1,5 @@
 # Create your views here.
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseServerError
@@ -187,7 +188,11 @@ def _newrack(data, files):
 
 def source_factory(data):
     """Given something like a request.POST, decide which kind of Source
-    to create, if any."""
+    to create, if any.
+
+    Returns a tuple of (Source, created) where created is a boolean:
+    True if the source was created anew, False if it already existed.
+    """
     if data.get('source'):
         source = Source.objects.filter(id=data['source']).all()
         assert len(source) == 1, \
@@ -195,7 +200,7 @@ def source_factory(data):
         source = source[0]
         # Try to get a more specific subclass instance.
         source = source.get_child_source() or source
-        return source
+        return (source, False)
 
     source = None
     source_type = data.get('source_type')
@@ -207,11 +212,11 @@ def source_factory(data):
         pass
     # XXX handle SeeClickFixSource here
     if source:
-        # We need to save it to get the ID.
-        # As long as we have transactions enabled, this will roll back
-        # if the rack fails to validate. XXX TEST THAT
+        # We need to save it to get the ID.  This means we'll need to
+        # roll back the transaction if there are later validation
+        # problems in the Rack.
         source.save()
-    return source
+    return (source, source is not None)
 
 
 def newrack_form(request):
@@ -240,7 +245,7 @@ def rack_index(request):
         # The /verify/ page serves as our main list of racks currently.
         return HttpResponseRedirect('/verify/')
 
-
+@transaction.commit_manually
 def newrack_json(request):
     if request.method != 'POST':
         return HttpResponseNotAllowed(['POST'])
@@ -251,7 +256,7 @@ def newrack_json(request):
     post.clear()  # it doesn't have anything in useful form..
     post.update(args)
     _preprocess_rack_form(post)
-    source = source_factory(post)
+    source, is_new_source = source_factory(post)
     if source:
         post['source'] = source.id
     rackresult = _newrack(post, files={})
@@ -269,6 +274,7 @@ def newrack_json(request):
         logger = logging.getLogger('')
         logger.error("Errors in newrack_json: %s.\nInput data was: %s" %
                      (str(errors), request.raw_post_data))
+        transaction.rollback()
     else:
         status = 200
         rack = rackresult['rack']
@@ -280,6 +286,7 @@ def newrack_json(request):
                   'email': rack.email,
                   # XXX what about other Sources?
                   }
+        transaction.commit()
     return HttpResponse(json.dumps(output), mimetype='application/json',
                         status=status)
 
@@ -638,4 +645,3 @@ def server_error(request, template_name='500.html'):
     context = Context({'exc_type': exc_type, 'exc_value': exc_value})
     return HttpResponseServerError(template.render(context),
                                    mimetype="application/xhtml+xml")
-

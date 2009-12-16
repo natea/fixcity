@@ -3,15 +3,15 @@ from django.conf import settings
 
 from django.contrib.gis.geos.point import Point
 from django.core.cache import cache        
-
+from django.test import TransactionTestCase, TestCase
 from django.utils import simplejson as json
 
 from fixcity.bmabr.management.commands import tweeter
+from fixcity.bmabr.models import Source
 from fixcity.bmabr.views import SRID
 
 import datetime
 import mock
-import unittest
 
 
 def clear_cache():
@@ -19,7 +19,7 @@ def clear_cache():
         cache.delete(key)
 
 
-class TestTweeter(unittest.TestCase):
+class TestTweeter(TestCase):
 
     username = 'fixcity_testing'
 
@@ -48,6 +48,7 @@ class TestTweeter(unittest.TestCase):
         
     def test_newrack_json_twitter(self):
         from fixcity.bmabr.views import newrack_json
+        self.assertEqual(len(Source.objects.all()), 0)
 
         class MockRequest:
 
@@ -71,6 +72,7 @@ class TestTweeter(unittest.TestCase):
         self.failUnless(type(data.get('rack')) == int)
         self.failUnless(data.has_key('user'))
         self.failUnless(data.has_key('message'))
+        self.assertEqual(len(Source.objects.all()), 1)
         
     @mock.patch('tweepy.API.mentions')
     def test_get_tweets__server_error(self, mock_mentions):
@@ -302,3 +304,36 @@ class TestTweeter(unittest.TestCase):
         c = Command()
         c.handle()
         self.assertEqual(mock_main.call_count, 1)
+
+
+class TestTweeterTransactions(TransactionTestCase):
+
+    def test_foo(self):
+        pass
+
+    @mock.patch('logging.Logger.error')
+    def test_newrack__source_gets_rolled_back(self, mock_error):
+        from fixcity.bmabr.views import newrack_json
+
+        self.assertEqual(len(Source.objects.all()), 0)
+
+        class MockRequest:
+
+            method = 'POST'
+            POST = {}
+            # Leave out some stuff, we want this to fail.
+            raw_post_data = json.dumps(dict(
+                description='foo description',
+                date='2009-11-18 15:14',
+                geocoded=1,  # Skip server-side geocoding.
+                source_type='twitter',
+                twitter_user='TwitterJoe',
+                twitter_id=456,
+                ))
+
+        response = newrack_json(MockRequest)
+        data = json.loads(response._get_content())
+        self.failUnless(data.has_key('errors'))
+        # Here's the rub: We should not have left a dangling source
+        # lying around.
+        self.assertEqual(len(Source.objects.all()), 0)

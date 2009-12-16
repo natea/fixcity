@@ -37,28 +37,31 @@ class TestSourceFactory(unittest.TestCase):
         existing = Source()
         existing.name = 'misc source'
         existing.save()
-        dupe = source_factory({'source': existing.id})
+        dupe, is_new = source_factory({'source': existing.id})
         self.assertEqual(dupe, existing)
+        self.failIf(is_new)
 
         # It should work also with subclasses of Source...
         twit = TwitterSource(status_id=12345, name='twitter')
         twit.save()
-        self.assertEqual(twit, source_factory({'source': twit.id}))
-        
+        self.assertEqual((twit, False), source_factory({'source': twit.id}))
+
 
     def test_twitter_source(self):
         from fixcity.bmabr.views import source_factory
-        twit = source_factory({'source_type': 'twitter',
-                               'twitter_user': 'bob',
-                               'twitter_id': 123})
+        twit, is_new = source_factory({'source_type': 'twitter',
+                                       'twitter_user': 'bob',
+                                       'twitter_id': 123})
+        self.assert_(is_new)
         self.assertEqual(twit.user, 'bob')
         self.assertEqual(twit.status_id, 123)
         self.assertEqual(twit.get_absolute_url(), 'http://twitter.com/bob/123')
 
     def test_unknown_source(self):
         from fixcity.bmabr.views import source_factory
-        source = source_factory({'source_type': 'anything else'})
+        source, is_new = source_factory({'source_type': 'anything else'})
         self.assertEqual(source, None)
+        self.failIf(is_new)
 
 
 class TestUtilFunctions(unittest.TestCase):
