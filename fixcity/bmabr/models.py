@@ -138,6 +138,19 @@ class RackForm(ModelForm):
                 raise ValidationError(NEED_PHOTO_TO_VERIFY)
         return verified
 
+    def clean_photo(self):
+        photo = self.cleaned_data.get('photo')
+        if not photo:
+            return photo
+        from fixcity.exif_utils import rotate_image_by_exif
+        from PIL import Image
+        img = Image.open(photo)
+        rotated = rotate_image_by_exif(img)
+        if not (rotated is img):
+            photo.seek(0)
+            rotated.save(photo)
+        return photo
+    
     def clean(self):
         from django.forms.util import ErrorList
         cleaned_data = self.cleaned_data

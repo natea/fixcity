@@ -1,4 +1,5 @@
 from django.contrib.gis.geos.point import Point
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.forms import ValidationError
 from django.test import TestCase
 from fixcity.bmabr.views import SRID
@@ -51,6 +52,28 @@ class TestRackForm(TestCase):
         self.assertEqual(form.errors.get('verified'),
                          ["You can't mark a rack as verified unless it has a photo"])
 
+    def test_rack_form_clean_photo(self):
+        data = self.data.copy()
+        # Jump through a few hoops to simulate a real upload.
+        import os.path
+        HERE = os.path.abspath(os.path.dirname(__file__))
+        path = os.path.join(HERE, 'files', 'test_exif.jpg')
+        content = open(path).read()
+        photofile = TemporaryUploadedFile('test_exif.jpg', 'image/jpeg',
+                                          len(content), None)
+        photofile.write(content)
+        photofile.seek(0)
+        # Okay, now we have something like a file upload.
+        data['photo'] = photofile
+        form = RackForm(data, {'photo': photofile})
+        self.assert_(form.is_valid())
+        from fixcity.exif_utils import get_exif_info
+        from PIL import Image
+        # Make sure it doesn't have a bad rotation.        
+        self.assertEqual({},
+                         get_exif_info(Image.open(photofile.temporary_file_path())))
+        
+    
     def test_rack_form_clean(self):
         data = self.data.copy()
         form = RackForm(data, {})
