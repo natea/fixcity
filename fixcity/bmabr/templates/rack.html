@@ -81,37 +81,18 @@ jQuery(document).ready(function() {loadMap(false);});
   {{ score.score }} point{{ score.score|pluralize }}
   after {{ score.num_votes }} vote{{ score.num_votes|pluralize }}
   
-  
-  </div><!-- /#rackinfo -->
-    
-<div class="suggest">
-	<div id="request-map" class="iconsonly">
-	  <div id="map-legend" class="pngfix"></div>
-	</div>
-        {% include "quickcheck.html" %}
-</div><!-- /#suggest -->
-
-
-<div class="comments">
-  {% get_comment_count for rack as comment_count %}
-  {% get_comment_list for rack as comment_list %}
-  <ul>{{comment_count}} comments
-
-    {% for comment in comment_list %}
-    <li>{{comment.comment}}
-       <br /> --
-       {% if comment.user_url %}
-         <a href="{{comment.user_url}}">{{comment.user_name}}</a>
-       {% else %}
-         {{comment.user_name}}
-       {% endif %}
-    </li>
-    {% endfor %}
-
-  </ul>
-  <h2>Leave a comment</h2>
-
-  
+    {% get_comment_count for rack as comment_count %}
+    {% get_comment_list for rack as comment_list %}
+    <h2>{{comment_count}} comments on this rack</h2>
+    <ul id="comments-list">
+      {% for comment in comment_list %}
+      <li class="comment">
+        <h3 class="comment-author">{% if comment.user_url %}<a href="{{comment.user_url}}">{{comment.user_name}}</a>{% else %}{{comment.user_name}}{% endif %}</h3>
+        <div class="comment-copy">{{comment.comment}}</div>
+      </li>
+      {% endfor %}
+    </ul>
+    <h2 id="add-comment">Leave a comment</h2>
     <!-- {% render_comment_form for rack %} -->
 
     <form action="{{request.path}}" method="POST">
@@ -123,33 +104,30 @@ jQuery(document).ready(function() {loadMap(false);});
 
        {% if not request.user.is_authenticated %}
 
-         <p>
           <label for="id_name">Name</label>
           {{ comment_form.name }}
           {{ comment_form.errors.name }}
-         </p>
-         <p>
+
           <label for="id_email">Email</label>
           {{ comment_form.email }}
           {{ comment_form.errors.email }}
-         </p>
-         <p>
+
           <label for="id_url">URL</label>
           {{ comment_form.url }}
           {{ comment_form.errors.url }}
-         </p>
+
        {% endif %}
-       <p>
+
         <label for="id_comment">Comment</label>
         {{ comment_form.comment }}
         {{ comment_form.errors.comment }}
-       </p>
-       <p style="display:none;">
+
+       <div style="display:none;">
         <label for="id_honeypot">
           If you enter anything in this field your comment will be
           treated as spam</label>
           {{ comment_form.honeypot }}
-       </p>
+       </div>
        {{ comment_form.content_type }}
        {{ comment_form.object_pk }}
        {{ comment_form.timestamp }}
@@ -163,7 +141,13 @@ jQuery(document).ready(function() {loadMap(false);});
        {% endif %}
        <input type="submit" value="Add comment" id="id_submit" />
      </form>
-
-</div>
+  </div><!-- /#rackinfo -->
+    
+<div class="suggest">
+	<div id="request-map" class="iconsonly">
+	  <div id="map-legend" class="pngfix"></div>
+	</div>
+        {% include "quickcheck.html" %}
+</div><!-- /#suggest -->
 
 {% endblock %} 
