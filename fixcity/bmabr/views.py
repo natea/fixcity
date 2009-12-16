@@ -173,8 +173,7 @@ def verify(request):
     per_page = 7
     page, paginator = make_paginator(racks, cur_page_num, per_page)
     template_params = {'paginator': paginator,
-                       'page': page,
-                       'cur_page_num': cur_page_num,
+                       'page_obj': page,
                        }
     # and return the appropriate template based on on request type
     if request.is_ajax():

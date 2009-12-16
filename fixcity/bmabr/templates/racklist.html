@@ -1,5 +1,5 @@
 <ul id="racklist">
-  {% for rack in page.object_list %}
+  {% for rack in page_obj.object_list %}
   <li class="selfclear" id="">
     <a class="rack-thumbnail" href="{{ rack.get_absolute_url }}">
       <img src="{{ rack.get_thumbnail_url }}" />
@@ -17,22 +17,5 @@
   {% endfor %}
 </ul>
 
-{% if page.has_other_pages %}
-<p id="pagination">
-  {% if page.has_previous %}
-  <a class="prevlink" rel="prev" href="#{{ page.prev_page_number }}">Previous</a>
-  {% endif %}
-  {% for page_no in paginator.page_range %}
-    <span class="sectionlink">
-      <a rel="section"
-      {% ifnotequal page_no cur_page_num %}
-        href="#{{ page_no }}"
-      {% endifnotequal %}
-      >{{ page_no }}</a>
-    </span>
-  {% endfor %}
-  {% if page.has_next %}
-  <a class="nextlink" rel="next" href="#{{ page.next_page_number }}">Next</a>
-  {% endif %}
-</p>
-{% endif %}
+{% load pagination_tags %}
+{% paginate 2 %}

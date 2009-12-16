@@ -119,6 +119,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.transaction.TransactionMiddleware',
     'djangoflash.middleware.FlashMiddleware',
+    'pagination.middleware.PaginationMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
 )
@@ -164,6 +165,7 @@ INSTALLED_APPS = (
     'south',
     'django_flash_templatetag',
     'voting',
+    'pagination',
 )
 
 
@@ -172,6 +174,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
+    "django.core.context_processors.request",
     "fixcity.bmabr.views.user_context",
     "djangoflash.context_processors.flash",
     )
