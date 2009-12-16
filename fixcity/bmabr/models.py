@@ -125,7 +125,7 @@ NEED_SOURCE_OR_EMAIL = "If email address is not provided, another source must be
 NEED_PHOTO_TO_VERIFY = "You can't mark a rack as verified unless it has a photo"
 NEED_LOGGEDIN_OR_EMAIL = "Email is required if you're not logged in."
 
-class RackForm(ModelForm): 
+class RackForm(ModelForm):
     class Meta: 
         model = Rack
 
