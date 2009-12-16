@@ -135,8 +135,8 @@ class Borough(models.Model):
     gid = models.IntegerField(primary_key=True)
     borocode = models.SmallIntegerField()
     boroname = models.CharField(max_length=32)
-    shape_leng = models.DecimalField(max_digits=65535, decimal_places=65535)
-    shape_area = models.DecimalField(max_digits=65535, decimal_places=65535)
+    shape_leng = models.DecimalField(max_digits=1000, decimal_places=1000)
+    shape_area = models.DecimalField(max_digits=1000, decimal_places=1000)
     the_geom = models.MultiPolygonField()
     objects = models.GeoManager()
     class Meta:
