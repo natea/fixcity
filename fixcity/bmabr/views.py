@@ -5,8 +5,11 @@ from django.http import HttpResponseServerError
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.template.loader import render_to_string
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
+from django.core.paginator import EmptyPage
+from django.core.paginator import InvalidPage
 from django.core.paginator import Paginator
 
 from django.contrib.auth.forms import SetPasswordForm
@@ -28,6 +31,7 @@ from django.template import Context, loader
 
 from django.views.decorators.cache import cache_page
 
+from fixcity.bmabr.models import Borough
 from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import CommunityBoard
 from fixcity.bmabr.models import RackForm, SupportForm
@@ -123,13 +127,64 @@ def reverse_geocode(request):
         cache.set(key, result, 60 * 10)
     return HttpResponse(result)
 
+def make_paginator(objs, start_page, per_page):
+    """create a paginator and page object from a list"""
+    paginator = Paginator(objs, per_page)
+    try:
+        page = paginator.page(start_page)
+    except (EmptyPage, InvalidPage):
+        page = paginator.page(paginator.num_pages)
+    return (page, paginator)
 
-def verify(request): 
-    racks_query = Rack.objects.order_by(*DEFAULT_RACK_ORDER)
-    return render_to_response('verify.html', { 
-            'rack_query': racks_query,
-            },
-            context_instance=RequestContext(request))
+def verify(request):
+    # determine the appropriate racks query
+    racks = Rack.objects.all()
+    try:
+        board_gid = int(request.GET.get('cb', '0'))
+    except ValueError:
+        board_gid = 0
+    if board_gid != 0:
+        # racks for a particular community board
+        cb = get_object_or_404(CommunityBoard, gid=board_gid)
+        racks = racks.filter(location__within=cb.the_geom)
+    else:
+        try:
+            boro_gid = int(request.GET.get('boro', '0'))
+            if boro_gid != 0:
+                boro = get_object_or_404(Borough, gid=boro_gid)
+            else:
+                boro = Borough.brooklyn()
+        except ValueError:
+            boro = Borough.brooklyn()
+        racks = racks.filter(location__within=boro.the_geom)
+    vrfy = request.GET.get('verified')
+    if vrfy is not None:
+        if vrfy == 'verified':
+            racks = racks.filter(verified=True)
+        elif vrfy == 'unverified':
+            racks = racks.filter(verified=False)
+    racks = racks.order_by(*DEFAULT_RACK_ORDER)
+    # set up pagination information
+    try:
+        cur_page_num = int(request.GET.get('page', '1'))
+    except ValueError:
+        cur_page_num = 1
+    per_page = 7
+    page, paginator = make_paginator(racks, cur_page_num, per_page)
+    template_params = {'paginator': paginator,
+                       'page': page,
+                       'cur_page_num': cur_page_num,
+                       }
+    # and return the appropriate template based on on request type
+    if request.is_ajax():
+        racks_html = render_to_string('racklist.html', template_params)
+        return HttpResponse(racks_html)
+    else:
+        boards = CommunityBoard.objects.filter(borough=Borough.brooklyn())
+        template_params['boards'] = boards
+        return render_to_response('verify.html',
+                                  template_params,
+                                  context_instance=RequestContext(request))
 
 def verify_by_communityboard(request,cb_id): 
     rack_query = Rack.objects.filter(communityboard=cb_id)    
@@ -467,9 +522,31 @@ def rack_requested_kml(request):
         bbox = [float(n) for n in bbox.split(',')]
         assert len(bbox) == 4
         geom = Polygon.from_bbox(bbox)
-        racks = Rack.objects.filter(location__contained=geom)
+        racks = Rack.objects.filter(location__within=geom)
     else:
         racks = Rack.objects.all()
+    cb = request.GET.get('cb')
+    boro = request.GET.get('boro')
+    verified = request.GET.get('verified')
+    board = None
+    borough = None
+    if cb is not None:
+        try:
+            board = CommunityBoard.objects.get(gid=int(cb))
+            racks = racks.filter(location__within=board.the_geom)
+        except (CommunityBoard.DoesNotExist, ValueError):
+            board = None
+    if board is None and boro is not None:
+        try:
+            borough = Borough.objects.get(gid=int(boro))
+            racks = racks.filter(location__within=borough.the_geom)
+        except (CommunityBoard.DoesNotExist, ValueError):
+            pass
+    if verified is not None:
+        if verified == 'verified':
+            racks = racks.filter(verified=True)
+        elif verified == 'unverified':
+            racks = racks.filter(verified=False)
     racks = racks.order_by(*DEFAULT_RACK_ORDER)
     paginator = Paginator(racks, page_size)
     page_number = min(page_number, paginator.num_pages)
@@ -479,7 +556,7 @@ def rack_requested_kml(request):
                                               'page': page,
                                               'page_size': page_size,
                                               'votes': votes,
-                                              }) 
+                                              })
 
 
 def community_board_kml(request): 
@@ -637,3 +714,14 @@ def server_error(request, template_name='500.html'):
     return HttpResponseServerError(template.render(context),
                                    mimetype="application/xhtml+xml")
 
+def cbs_for_boro(request, boro):
+    """return json results for ajax call to fetch boards for a cb"""
+    try:
+        boro = int(boro)
+    except ValueError:
+        raise Http404
+    borough = get_object_or_404(Borough, gid=boro)
+    board_tuple = [(b.board, b.gid)
+                   for b in CommunityBoard.objects.filter(borough=borough)]
+    board_tuple.sort()
+    return HttpResponse(json.dumps(board_tuple), mimetype='application/json')

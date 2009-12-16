@@ -8,17 +8,16 @@ class CommunityBoard(models.Model):
     gid = models.IntegerField(primary_key=True)
     borocd = models.IntegerField()
     board = models.IntegerField()
-    boro = models.CharField(max_length=50)
+    borough = models.ForeignKey('Borough')
     the_geom = models.MultiPolygonField()
     objects = models.GeoManager()
 
     class Meta:
         db_table = u'gis_community_board'
-        ordering = ['boro', 'board']
+        ordering = ['board']
 
     def __unicode__(self):
-        return "%s Community Board %s" % (self.boro.title(), self.board)
-
+        return "%s Community Board %s " % (self.borough.boroname, self.board)
 
 
 class Rack(models.Model): 
@@ -44,12 +43,26 @@ class Rack(models.Model):
     # keep track of where the rack was submitted from
     # if not set, that means it was submitted from the web
     source = models.ForeignKey('Source', null=True, blank=True)
-    
+
     objects = models.GeoManager()
 
     def __unicode__(self):
         return self.address
 
+    def get_absolute_url(self):
+        return '/rack/%s' % self.id
+
+    def get_thumbnail_url(self):
+        if self.photo:
+            return self.photo.thumbnail
+        else:
+            return '/site_media/img/default-rack.jpg'
+
+    def get_source(self):
+        if self.source:
+            return self.source.name
+        else:
+            return u'web'
 
 class Source(models.Model):
     """base class representing the source of where a rack was submitted from"""
@@ -118,7 +131,24 @@ class StatementOfSupport(models.Model):
         return self.email
 
 
+class Borough(models.Model):
+    gid = models.IntegerField(primary_key=True)
+    borocode = models.SmallIntegerField()
+    boroname = models.CharField(max_length=32)
+    shape_leng = models.DecimalField(max_digits=65535, decimal_places=65535)
+    shape_area = models.DecimalField(max_digits=65535, decimal_places=65535)
+    the_geom = models.MultiPolygonField()
+    objects = models.GeoManager()
+    class Meta:
+        db_table = u'gis_boroughs'
 
+    def __unicode__(self):
+        return self.boroname
+
+    @classmethod
+    def brooklyn(cls):
+        """ convenience method to return the brooklyn borough """
+        return cls.objects.get(gid=4)
 
 NEED_SOURCE_OR_EMAIL = "If email address is not provided, another source must be specified"
 
