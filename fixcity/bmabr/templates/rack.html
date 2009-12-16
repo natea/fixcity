@@ -88,6 +88,10 @@ jQuery(document).ready(function() {loadMap(false);});
       {% for comment in comment_list %}
       <li class="comment">
         <h3 class="comment-author">{% if comment.user_url %}<a href="{{comment.user_url}}">{{comment.user_name}}</a>{% else %}{{comment.user_name}}{% endif %}</h3>
+        <div class="comment-date">
+          {{comment.submit_date|date:"D d M Y"}}
+          at {{comment.submit_date|date:"g:i A"|lower}}
+        </div>
         <div class="comment-copy">{{comment.comment}}</div>
       </li>
       {% endfor %}
