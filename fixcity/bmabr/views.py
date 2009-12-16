@@ -53,7 +53,7 @@ import logging
 import sys
 import traceback
 
-cb_metric = 50.00 
+cb_metric = 50.00
 GKEY="ABQIAAAApLR-B_RMiEN2UBRoEWYPlhTmTlZhMVUZVOGFgSe6Omf4DswcaBSLmUPer5a9LF8EEWHK6IrMgA62bg"
 SRID=4326
 
@@ -71,7 +71,7 @@ def user_context(request):
     else:
         displayname = first or last or user.username
     return {
-        'request': request, 
+        'request': request,
         'user': request.user,
         'user_displayname': displayname,
         'user_email': email,
@@ -84,10 +84,10 @@ def index(request):
         'recent_racks': racks_query,
         },
        context_instance=RequestContext(request)
-                              ) 
+                              )
 
 @login_required
-def profile(request): 
+def profile(request):
     user = request.user
     racks = Rack.objects.filter(user=user.username)
     return render_to_response('profile.html',
@@ -95,7 +95,7 @@ def profile(request):
        'racks': racks
         },
        context_instance=RequestContext(request)
-                              ) 
+                              )
 
 def _geocode(text):
     # Cache a bit, since that's easier than ensuring that our AJAX
@@ -115,8 +115,8 @@ def geocode(request):
     response.write(json.dumps(results))
     return response
 
-def reverse_geocode(request): 
-    lat = request.REQUEST['lat'] 
+def reverse_geocode(request):
+    lat = request.REQUEST['lat']
     lon = request.REQUEST['lon']
     point = (lat, lon)
     key = ('reverse_geocode', point)
@@ -186,9 +186,9 @@ def verify(request):
                                   template_params,
                                   context_instance=RequestContext(request))
 
-def verify_by_communityboard(request,cb_id): 
-    rack_query = Rack.objects.filter(communityboard=cb_id)    
-    return render_to_response('verify_communityboard.html', { 
+def verify_by_communityboard(request,cb_id):
+    rack_query = Rack.objects.filter(communityboard=cb_id)
+    return render_to_response('verify_communityboard.html', {
             'rack_query':rack_query
             },
             context_instance=RequestContext(request))
@@ -213,7 +213,7 @@ def _preprocess_rack_form(postdata):
                 postdata[u'location'] = u''
             else:
                 postdata[u'location'] = str(Point(lon, lat, srid=SRID))
-            
+
     # Handle a registered user submitting without logging in...
     # eg. via email.
     user = postdata.get('user', '').strip()
@@ -222,7 +222,7 @@ def _preprocess_rack_form(postdata):
         users = User.objects.filter(email=email).all()
         if len(users) == 1:
             postdata['user'] = users[0].username
-        
+
 
 def _newrack(data, files):
     """Thin wrapper around RackForm, returning a dict with some
@@ -282,7 +282,7 @@ def newrack_form(request):
             flash_error('Please correct the following errors.', request)
     else:
         form = RackForm()
-    return render_to_response('newrack.html', { 
+    return render_to_response('newrack.html', {
             'form': form,
            },
            context_instance=RequestContext(request))
@@ -340,17 +340,17 @@ def newrack_json(request):
 
 
 
-def support(request, rack_id): 
+def support(request, rack_id):
     """Add a statement of support."""
     if request.method == "POST":
         form_support = SupportForm(request.POST,request.FILES)
-        if form_support.is_valid(): 
+        if form_support.is_valid():
             new_support = form_support.save()
-            return HttpResponseRedirect('/rack/%s/' % rack_id)              
-        else: 
-            return HttpResponse('something went wrong')              
-    else:         
-        return HttpResponse('not allowed')  
+            return HttpResponseRedirect('/rack/%s/' % rack_id)
+        else:
+            return HttpResponse('something went wrong')
+    else:
+        return HttpResponse('not allowed')
 
 @login_required
 def rack_vote(request, rack_id):
@@ -385,7 +385,7 @@ def rack_edit(request,rack_id):
             return HttpResponseRedirect('/rack/%s/edit/' % rack.id)
         else:
             flash_error('Please correct the following errors.', request)
-    else: 
+    else:
         form = RackForm()
 
     # Who created this rack?
@@ -396,7 +396,7 @@ def rack_edit(request,rack_id):
         # Instead show a username, or a truncated address if submitted
         # anonymously.
         creator = rack.user or "anonymous" # (%s@...)" % (rack.email.split('@', 1)[0]))
-    return render_to_response('update_rack.html', 
+    return render_to_response('update_rack.html',
           {"rack": rack,
            "form": form ,
            "creator": creator,
@@ -414,8 +414,8 @@ def rack_view(request, rack_id):
         comment_form = ReCaptchaCommentForm(rack)
     user_likes_this_rack = Vote.objects.get_for_user(rack, request.user) > 0
     return render_to_response(
-        'rack.html', { 
-            'rack': rack,            
+        'rack.html', {
+            'rack': rack,
             'statement_query': statement_query,
             'user_suggested_this_rack': rack.user == context['user'].username,
             'user_likes_this_rack': user_likes_this_rack,
@@ -431,7 +431,7 @@ def _add_comment(request, rack):
     # working with racks.
     #
     # 1. get client IP address into the POST data, to make recaptcha happy.
-    if '__recaptcha_ip' in request.POST:  
+    if '__recaptcha_ip' in request.POST:
         return HttpResponseBadRequest()
     data = request.POST.copy()
     data['__recaptcha_ip'] = request.META['REMOTE_ADDR']
@@ -448,7 +448,7 @@ def _add_comment(request, rack):
 
     form = ReCaptchaCommentForm(rack, data,
                                 need_captcha= not request.user.is_authenticated())
-            
+
     if form.is_valid():
         flash(u"Your comment has been saved", request)
         comment = form.get_comment_object()
@@ -469,38 +469,38 @@ def votes(request, rack_id):
     return response
 
 
-class ReCaptchaCommentForm(CommentForm):  
+class ReCaptchaCommentForm(CommentForm):
 
     # See http://arcticinteractive.com/2008/10/16/adding-recaptcha-support-django-10-comments/
 
     def __init__(self, target_object, data=None, initial=None, need_captcha=True):
         super(ReCaptchaCommentForm, self).__init__(target_object, data, initial)
         self.need_captcha = need_captcha
-          
+
     def clean(self):
         if self.need_captcha:
-            challenge_field = self.data.get('recaptcha_challenge_field')  
-            response_field = self.data.get('recaptcha_response_field')  
-            client = self.data.get('__recaptcha_ip') # always set by our code  
-                  
+            challenge_field = self.data.get('recaptcha_challenge_field')
+            response_field = self.data.get('recaptcha_response_field')
+            client = self.data.get('__recaptcha_ip') # always set by our code
+
             check_captcha = captcha.submit(
                 challenge_field, response_field,
-                settings.RECAPTCHA_PRIVATE_KEY, client)  
-                  
-            if check_captcha.is_valid is False:  
-                self.errors['recaptcha'] = 'Invalid captcha value'  
-  
-        return self.cleaned_data 
+                settings.RECAPTCHA_PRIVATE_KEY, client)
+
+            if check_captcha.is_valid is False:
+                self.errors['recaptcha'] = 'Invalid captcha value'
+
+        return self.cleaned_data
 
 
 def updatephoto(request,rack_id):
-    rack = Rack.objects.get(id=rack_id) 
+    rack = Rack.objects.get(id=rack_id)
     rack.photo = request.FILES['photo']
     rack.save()
     return HttpResponse('ok')
 
 
-    
+
 def rack_all_kml(request):
     racks = Rack.objects.all()
     return render_to_kml("placemarkers.kml", {'racks' : racks})
@@ -561,21 +561,21 @@ def rack_requested_kml(request):
                                               })
 
 
-def community_board_kml(request): 
+def community_board_kml(request):
     community_boards = CommunityBoard.objects.all()
     return render_to_kml("community_board.kml",{'community_boards': community_boards})
- 
 
-def community_board_kml_by_id(request,cb_id): 
+
+def community_board_kml_by_id(request,cb_id):
     community_boards = CommunityBoard.objects.filter(gid=cb_id)
     return render_to_kml("community_board.kml",{'community_boards': community_boards})
 
 
 
-def communityboard(request): 
-    communityboard_list = CommunityBoard.objects.all()      
-    return render_to_response('communityboard.html', { 
-            "communityboard_list": communityboard_list  
+def communityboard(request):
+    communityboard_list = CommunityBoard.objects.all()
+    return render_to_response('communityboard.html', {
+            "communityboard_list": communityboard_list
             }
            )
 
@@ -595,7 +595,7 @@ def activate(request, activation_key,
     from registration.models import RegistrationProfile
     # -- Begin copy-pasted code from django-registration.
     activation_key = activation_key.lower() # Normalize before trying anything with it.
-    
+
     account = RegistrationProfile.objects.activate_user(activation_key)
     if extra_context is None:
         extra_context = {}
@@ -615,7 +615,7 @@ def activate(request, activation_key,
         else:
             reg_profile = RegistrationProfile.objects.filter(
                 activation_key=activation_key)
-            if reg_profile: 
+            if reg_profile:
                 reg_profile = reg_profile[0]
                 if reg_profile.activation_key_expired():
                     context_instance['key_status'] = 'Activation key expired'
@@ -683,7 +683,7 @@ class QuotaUploadHandler(FileUploadHandler):
     def __init__(self, request=None):
         super(QuotaUploadHandler, self).__init__(request)
         self.total_upload = 0
-    
+
     def receive_data_chunk(self, raw_data, start):
         self.total_upload += len(raw_data)
         if self.total_upload >= self.QUOTA:
@@ -691,7 +691,7 @@ class QuotaUploadHandler(FileUploadHandler):
                                      % self.QUOTA_MB)
         # Delegate to the next handler.
         return raw_data
-            
+
     def file_complete(self, file_size):
         return None
 

@@ -1,6 +1,6 @@
 from django.contrib.gis.db import models
 from django.forms import ModelForm, ValidationError
-from sorl.thumbnail.fields import ImageWithThumbnailsField 
+from sorl.thumbnail.fields import ImageWithThumbnailsField
 
 RACK_IMAGE_LOCATION = 'images/racks/'
 
@@ -20,7 +20,7 @@ class CommunityBoard(models.Model):
         return "%s Community Board %s " % (self.borough.boroname, self.board)
 
 
-class Rack(models.Model): 
+class Rack(models.Model):
     address = models.CharField(max_length=200)
     title = models.CharField(max_length=140)
     date = models.DateTimeField()
@@ -30,8 +30,8 @@ class Rack(models.Model):
                               upload_to=RACK_IMAGE_LOCATION,
                               thumbnail={'size': (100, 100)},
                               extra_thumbnails = {
-                                   'large': {'size': (400,400)}, 
-                                },    
+                                   'large': {'size': (400,400)},
+                                },
                               blank=True, null=True)
     # We might make this a foreign key to a User eventually, but for now
     # it's optional.
@@ -69,7 +69,7 @@ class Source(models.Model):
 
     # this uses multi-table inheritance, see
     # http://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance
-    
+
     # string based name used to identify where a source came from,
     # eg. 'twitter', 'email', etc.
     name = models.CharField(max_length=20)
@@ -119,12 +119,12 @@ class SeeClickFixSource(Source):
         return self.get_absolute_url().decode('utf-8')
 
 
-class StatementOfSupport(models.Model): 
+class StatementOfSupport(models.Model):
     file = models.FileField(upload_to='documents/', blank=True, null=True)
     email = models.EmailField()
     s_rack = models.ForeignKey(Rack)
 
-    class Meta: 
+    class Meta:
         ordering = ['s_rack']
 
     def __unicode__(self):
@@ -156,7 +156,7 @@ NEED_PHOTO_TO_VERIFY = "You can't mark a rack as verified unless it has a photo"
 NEED_LOGGEDIN_OR_EMAIL = "Email is required if you're not logged in."
 
 class RackForm(ModelForm):
-    class Meta: 
+    class Meta:
         model = Rack
 
     def clean_verified(self):
@@ -180,7 +180,7 @@ class RackForm(ModelForm):
             photo.seek(0)
             rotated.save(photo)
         return photo
-    
+
     def clean(self):
         from django.forms.util import ErrorList
         cleaned_data = self.cleaned_data
@@ -205,8 +205,6 @@ class RackForm(ModelForm):
         raise ValidationError(NEED_SOURCE_OR_EMAIL)
 
 
-class SupportForm(ModelForm): 
-    class Meta: 
+class SupportForm(ModelForm):
+    class Meta:
         model = StatementOfSupport
-
-
