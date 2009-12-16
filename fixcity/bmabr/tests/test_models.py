@@ -8,11 +8,12 @@ import datetime
 
 class TestCommunityBoard(TestCase):
 
-    def test_create_cb(self):
-        from fixcity.bmabr.models import CommunityBoard
+    def test_create_cb_and_borough(self):
+        from fixcity.bmabr.models import CommunityBoard, Borough
+        borough = Borough(borocode=1, boroname='Staten Island')
         cb = CommunityBoard(
             gid=1,
-            borocd=99, board=123, boro='Staten Island')
+            borocd=99, board=123, borough=borough)
         self.assertEqual(unicode(cb), u'Staten Island Community Board 123')
                             
 

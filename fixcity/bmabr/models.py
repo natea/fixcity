@@ -17,7 +17,7 @@ class CommunityBoard(models.Model):
         ordering = ['board']
 
     def __unicode__(self):
-        return "%s Community Board %s " % (self.borough.boroname, self.board)
+        return "%s Community Board %s" % (self.borough.boroname, self.board)
 
 
 class Rack(models.Model):
