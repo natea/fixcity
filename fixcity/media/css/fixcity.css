@@ -259,22 +259,21 @@ background-position: 0 -50px;
 
 #lede {
 margin: 0;
-padding: 0 0 5px;
-border-bottom: 1px solid #8fb9cc;
+padding: 0 0 15px;
 }
 
 #lede h1 {
 display: inline;
-color: #5c8699;
+color: #333;
 font-size: 1.75em;
 font-weight: normal;
 padding: 0 1em 0 0;
 margin: 0;
 }
 
-#content {
-padding: 15px 0 0;
-background: url(/site_media/img/content-bg.png) 50% -2px no-repeat;
+#main {
+padding: 10px 0 0;
+background: url(/site_media/img/main-bg.png) 50% -2px no-repeat;
 }
 
 /* - */
