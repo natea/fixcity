@@ -475,6 +475,7 @@ def rack_requested_kml(request):
         racks = Rack.objects.all()
     cb = request.GET.get('cb')
     boro = request.GET.get('boro')
+    verified = request.GET.get('verified')
     board = None
     borough = None
     if cb is not None:
@@ -489,6 +490,11 @@ def rack_requested_kml(request):
             racks = racks.filter(location__within=borough.the_geom)
         except (CommunityBoard.DoesNotExist, ValueError):
             pass
+    if verified is not None:
+        if verified == 'verified':
+            racks = racks.filter(verified=True)
+        elif verified == 'unverified':
+            racks = racks.filter(verified=False)
     racks = racks.order_by(*DEFAULT_RACK_ORDER)
     paginator = Paginator(racks, page_size)
     page_number = min(page_number, paginator.num_pages)
