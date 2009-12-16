@@ -18,13 +18,12 @@ urlpatterns = patterns(
     (r'^accounts/activate/(?P<activation_key>\w+)/$', 'fixcity.bmabr.views.activate'),
     # Accounts URLs - anything for django-registration that we didn't override.
     (r'^accounts/', include('registration.urls')),
-    
 
     (r'^profile/$', 'fixcity.bmabr.views.profile'),
 
     (r'^geocode/$', 'fixcity.bmabr.views.geocode'),
     (r'^reverse/$', 'fixcity.bmabr.views.reverse_geocode'),
-   
+    (r'^cbs/(?P<boro>\w+)$', 'fixcity.bmabr.views.cbs_for_boro'),
 
     (r'verify/$','fixcity.bmabr.views.verify'),
     (r'verify/communityboard/(?P<cb_id>\d+)/$', 'fixcity.bmabr.views.verify_by_communityboard'),
@@ -49,7 +48,6 @@ urlpatterns = patterns(
     (r'^rack/(?P<rack_id>\d+)/votes/', 'fixcity.bmabr.views.votes'),
     (r'^rack/(?P<rack_id>\d+)/photos/', 'fixcity.bmabr.views.updatephoto'),
     (r'^rack/$', 'fixcity.bmabr.views.rack_index'),
-    
 
     # Static media for dev work.  For deployment, these should be served
     # by a front-end server eg. apache!
