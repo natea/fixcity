@@ -170,45 +170,54 @@ def make_paginator(objs, start_page, per_page):
     return (page, paginator)
 
 def verify(request):
+    # determine the appropriate racks query
+    racks = Rack.objects.all()
+    try:
+        board_gid = int(request.GET.get('cb', '0'))
+    except ValueError:
+        board_gid = 0
+    if board_gid != 0:
+        # racks for a particular community board
+        cb = get_object_or_404(CommunityBoard, gid=board_gid)
+        racks = racks.filter(location__within=cb.the_geom)
+    else:
+        try:
+            boro_gid = int(request.GET.get('boro', '0'))
+            if boro_gid != 0:
+                boro = get_object_or_404(Borough, gid=boro_gid)
+            else:
+                boro = Borough.brooklyn()
+        except ValueError:
+            boro = Borough.brooklyn()
+        racks = racks.filter(location__within=boro.the_geom)
+    vrfy = request.GET.get('verified')
+    if vrfy is not None:
+        if vrfy == 'verified':
+            racks = racks.filter(verified=True)
+        elif vrfy == 'unverified':
+            racks = racks.filter(verified=False)
+    racks = racks.order_by(*DEFAULT_RACK_ORDER)
+    # set up pagination information
     try:
         cur_page_num = int(request.GET.get('page', '1'))
     except ValueError:
         cur_page_num = 1
     per_page = 7
-    if request.is_ajax():
-        try:
-            board_gid = int(request.GET.get('cb', '0'))
-        except ValueError:
-            board_gid = 0
-        if board_gid != 0:
-            # racks for a particular community board
-            cb = get_object_or_404(CommunityBoard, gid=board_gid)
-            racks = Rack.objects.filter(location__within=cb.the_geom)
-        else:
-            try:
-                boro_gid = int(request.GET.get('boro', '0'))
-            except ValueError:
-                boro_gid = 0
-            boro = get_object_or_404(Borough, gid=boro_gid)
-            racks = Rack.objects.filter(location__within=boro.the_geom)
-        page, paginator = make_paginator(racks, cur_page_num, per_page)
-        racks_html = render_to_string('racklist.html',
-                                      {'paginator': paginator,
-                                       'page': page,
-                                       'cur_page_num': cur_page_num,
-                                       })
-        return HttpResponse(racks_html)
-    racks = Rack.objects.order_by(*DEFAULT_RACK_ORDER)
     page, paginator = make_paginator(racks, cur_page_num, per_page)
-    brooklyn = Borough.brooklyn()
-    boards = CommunityBoard.objects.filter(borough=brooklyn)
-    return render_to_response('verify.html', {
-            'paginator': paginator,
-            'page': page,
-            'cur_page_num': cur_page_num,
-            'boards': boards,
-            },
-            context_instance=RequestContext(request))
+    template_params = {'paginator': paginator,
+                       'page': page,
+                       'cur_page_num': cur_page_num,
+                       }
+    # and return the appropriate template based on on request type
+    if request.is_ajax():
+        racks_html = render_to_string('racklist.html', template_params)
+        return HttpResponse(racks_html)
+    else:
+        boards = CommunityBoard.objects.filter(borough=Borough.brooklyn())
+        template_params['boards'] = boards
+        return render_to_response('verify.html',
+                                  template_params,
+                                  context_instance=RequestContext(request))
 
 def verify_by_communityboard(request,cb_id): 
     rack_query = Rack.objects.filter(communityboard=cb_id)    
