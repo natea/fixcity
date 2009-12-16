@@ -8,7 +8,7 @@ class Migration:
     def forwards(self, orm):
         """Fix all uploaded images."""
         from PIL import Image
-        from fixcity.bmabr.utils import rotate_image_by_exif
+        from fixcity.exif_utils import rotate_image_by_exif
         from django.conf import settings
         import os.path
         import glob

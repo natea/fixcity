@@ -403,7 +403,7 @@ def rack_edit(request,rack_id):
            },
           context_instance=RequestContext(request))
 
-def rack_view(request,rack_id):
+def rack_view(request, rack_id):
     rack = get_object_or_404(Rack, id=rack_id)
     statement_query = StatementOfSupport.objects.filter(s_rack=rack_id)
     context = RequestContext(request)
@@ -412,15 +412,17 @@ def rack_view(request,rack_id):
         comment_form = _add_comment(request, rack)
     else:
         comment_form = ReCaptchaCommentForm(rack)
+    user_likes_this_rack = Vote.objects.get_for_user(rack, request.user) > 0
     return render_to_response(
         'rack.html', { 
             'rack': rack,            
             'statement_query': statement_query,
             'user_suggested_this_rack': rack.user == context['user'].username,
+            'user_likes_this_rack': user_likes_this_rack,
             'comment_form': comment_form,
             },
         context_instance=context)
-           
+
 
 def _add_comment(request, rack):
     # Simplified and hacked comment post function to change various things:
