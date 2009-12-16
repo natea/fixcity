@@ -199,6 +199,11 @@ class Borough(models.Model):
     def __unicode__(self):
         return self.boroname
 
+    @classmethod
+    def brooklyn(cls):
+        """ convenience method to return the brooklyn borough """
+        return cls.objects.get(gid=4)
+
 NEED_SOURCE_OR_EMAIL = "If email address is not provided, another source must be specified"
 
 NEED_PHOTO_TO_VERIFY = "You can't mark a rack as verified unless it has a photo"

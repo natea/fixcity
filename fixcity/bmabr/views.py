@@ -142,7 +142,7 @@ def submit_all(request):
 
 
 def submit(request): 
-    brooklyn = Borough.objects.get(gid=4)
+    brooklyn = Borough.brooklyn()
     community_board_query = CommunityBoard.objects.filter(board=1, borough=brooklyn)
     for communityboard in community_board_query:
         racks_query = Rack.objects.filter(location__within=communityboard.the_geom)
@@ -200,7 +200,7 @@ def verify(request):
         return HttpResponse(racks_html)
     racks = Rack.objects.order_by(*DEFAULT_RACK_ORDER)
     page, paginator = make_paginator(racks, cur_page_num, per_page)
-    brooklyn = Borough.objects.get(gid=4)
+    brooklyn = Borough.brooklyn()
     boards = CommunityBoard.objects.filter(borough=brooklyn)
     return render_to_response('verify.html', {
             'paginator': paginator,
@@ -664,7 +664,7 @@ def server_error(request, template_name='500.html'):
                                    mimetype="application/xhtml+xml")
 
 def cb1racks(request):
-    brooklyn = Borough.objects.get(gid=4)
+    brooklyn = Borough.brooklyn()
     cb1 = CommunityBoard.objects.get(board=1, borough=brooklyn)
     racks = Rack.objects.filter(location__within=cb1.the_geom)
     racks = racks.order_by('verified')
