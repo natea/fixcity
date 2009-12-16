@@ -5,11 +5,11 @@ from fixcity.bmabr.models import *
 class Migration:
 
     def forwards(self, orm):
-        manhattan = Borough.objects.get(gid=1)
-        bronx = Borough.objects.get(gid=2)
-        statenisland = Borough.objects.get(gid=3)
-        brooklyn = Borough.objects.get(gid=4)
-        queens = Borough.objects.get(gid=5)
+        manhattan = orm.Borough.objects.get(gid=1)
+        bronx = orm.Borough.objects.get(gid=2)
+        statenisland = orm.Borough.objects.get(gid=3)
+        brooklyn = orm.Borough.objects.get(gid=4)
+        queens = orm.Borough.objects.get(gid=5)
 
         board_boro_map = {'manhattan': manhattan,
                           'bronx': bronx,
@@ -17,7 +17,7 @@ class Migration:
                           'brooklyn': brooklyn,
                           'queens': queens,
                           }
-        for board in CommunityBoard.objects.all():
+        for board in orm.CommunityBoard.objects.all():
             board.borough = board_boro_map[board.boro]
             board.save()
 
