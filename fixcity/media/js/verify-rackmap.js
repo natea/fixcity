@@ -175,10 +175,12 @@ function updateFilterBehaviors() {
             $.getJSON('/cbs/' + boro, {}, function(boros) {
                     cbSelect.empty();
                     cbSelect.append('<option value="0">All</option>');
-                    var boardNum;
+                    var boardArray, boardNum, boardGid;
                     for (var i = 0; i < boros.length; i++) {
-                        boardNum = boros[i];
-                        cbSelect.append('<option value="' + boardNum + '">' + boardNum + '</option>');
+                        boardArray = boros[i];
+                        boardNum = boardArray[0];
+                        boardGid = boardArray[1];
+                        cbSelect.append('<option value="' + boardGid + '">' + boardNum + '</option>');
                     }
                 });
         });

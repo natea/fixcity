@@ -700,9 +700,10 @@ def cbs_for_boro(request, boro):
     except ValueError:
         raise Http404
     borough = get_object_or_404(Borough, gid=boro)
-    boros = [b.board for b in CommunityBoard.objects.filter(borough=borough)]
-    boros.sort()
-    return HttpResponse(json.dumps(boros), mimetype='application/json')
+    board_tuple = [(b.board, b.gid)
+                   for b in CommunityBoard.objects.filter(borough=borough)]
+    board_tuple.sort()
+    return HttpResponse(json.dumps(board_tuple), mimetype='application/json')
 
 def rack_borough_kml(request, borough_id):
     try:
