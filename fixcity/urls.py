@@ -46,6 +46,7 @@ urlpatterns = patterns(
     # different views for adding infomation, rack, comments, photos.
 
     (r'^rack/new/$', 'fixcity.bmabr.views.newrack_form'),
+    (r'^rack/(?P<rack_id>\d+)/votes/', 'fixcity.bmabr.views.votes'),
     (r'^rack/(?P<rack_id>\d+)/photos/', 'fixcity.bmabr.views.updatephoto'),
     (r'^rack/$', 'fixcity.bmabr.views.rack_index'),
     

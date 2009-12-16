@@ -400,6 +400,17 @@ def _add_comment(request, rack):
         flash_error(u"Please correct errors in your comment", request)
     return form
 
+@login_required
+def votes(request, rack_id):
+    # AJAX back-end for getting / incrementing votes on a rack.
+    rack = get_object_or_404(Rack, id=rack_id)
+    if request.method == 'POST':
+        Vote.objects.record_vote(rack, request.user, 1)
+    votes = Vote.objects.get_score(rack)
+    response = HttpResponse(content_type='application/json')
+    response.write(json.dumps({'votes': votes['score']}))
+    return response
+
 
 class ReCaptchaCommentForm(CommentForm):  
 

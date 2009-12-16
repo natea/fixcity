@@ -1,8 +1,9 @@
 # XXX I feel kinda icky importing settings during test
 from django.conf import settings
-
+from django.contrib.auth.models import User
 from django.test import TestCase
 
+from fixcity.bmabr.models import Rack
 from fixcity.bmabr.views import SRID
 from fixcity.bmabr.views import _preprocess_rack_form
 
@@ -97,7 +98,6 @@ class TestUtilFunctions(unittest.TestCase):
     def test_preprocess_rack_form__with_user(self):
         from fixcity.bmabr.views import _preprocess_rack_form
         data = {'geocoded': '1', 'email': 'foo@bar.com'}
-        from django.contrib.auth.models import User
         bob = User(username='bob', email='foo@bar.com')
         bob.save()
         _preprocess_rack_form(data)
@@ -165,7 +165,6 @@ class TestProfile(TestCase):
     def test_profile(self):
         response = self.client.get('/profile/')
         self.assertEqual(response.status_code, 302)
-        from django.contrib.auth.models import User
         user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
                                         'funkentelechy')
         self.client.login(username='bernie', password='funkentelechy')
@@ -200,7 +199,6 @@ class TestKMLViews(TestCase):
 
         
     def test_rack_requested_kml__one(self):
-        from fixcity.bmabr.models import Rack
         rack = Rack(address='148 Lafayette St, New York NY',
                     title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
@@ -230,4 +228,37 @@ class TestKMLViews(TestCase):
         self.assertEqual(data['source'], 'web')
         self.assertEqual(data['date'], 'Jan. 1, 1970')
         self.assertEqual(data['votes'], 0)
+
+
+class TestVotes(TestCase):
+
+    def test_get(self):
+        rack = Rack(address='148 Lafayette St, New York NY',
+                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
+                    )
+        rack.save()
+        user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
+                                        'funkentelechy')
+        self.client.login(username='bernie', password='funkentelechy')
+        response = self.client.get('/rack/%d/votes/' % rack.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, '{"votes": 0}')
+
+
+    def test_post(self):
+        rack = Rack(address='148 Lafayette St, New York NY',
+                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
+                    )
+        rack.save()
+        response = self.client.post('/rack/%d/votes/' % rack.id)
+        self.assertEqual(response.status_code, 302)
+        user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
+                                        'funkentelechy')
+        self.client.login(username='bernie', password='funkentelechy')
+        response = self.client.post('/rack/%d/votes/' % rack.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, '{"votes": 1}')
+
 

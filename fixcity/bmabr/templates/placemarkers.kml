@@ -44,8 +44,8 @@
 
       <Data name="date"><value>{{rack.date|date}}</value></Data>
 
-      {%  dict_entry_for_item rack from vote_dict as vote %}
-      <Data name="votes"><value>{{vote|default:0}}</value></Data>
+      {% dict_entry_for_item rack from vote_dict as vote %}
+      <Data name="votes"><value>{{vote.score|default:0}}</value></Data>
 
     </ExtendedData>      
 
