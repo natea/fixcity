@@ -21,6 +21,13 @@ def clear_cache():
     for key in cache._expire_info.keys():
         cache.delete(key)
 
+class UserTestCaseBase(TestCase):
+
+    def _make_user(self):
+        user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
+                                        'funkentelechy')
+        self.client.login(username='bernie', password='funkentelechy')
+        return user
 
 class TestSourceFactory(unittest.TestCase):
 
@@ -160,14 +167,12 @@ class TestIndex(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class TestProfile(TestCase):
+class TestProfile(UserTestCaseBase):
 
     def test_profile(self):
         response = self.client.get('/profile/')
         self.assertEqual(response.status_code, 302)
-        user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
-                                        'funkentelechy')
-        self.client.login(username='bernie', password='funkentelechy')
+        user = self._make_user()
         response = self.client.get('/profile/')
         self.assertEqual(response.status_code, 200)
         
@@ -230,7 +235,34 @@ class TestKMLViews(TestCase):
         self.assertEqual(data['votes'], 0)
 
 
-class TestVotes(TestCase):
+class TestRackView(UserTestCaseBase):
+
+    def test_rack_view_anonymous(self):
+        rack = Rack(address='148 Lafayette St, New York NY',
+                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
+                    user='somebody',
+                    )
+        rack.save()
+        response = self.client.get('/rack/%d/' % rack.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['user_likes_this_rack'], False)
+        self.assertEqual(response.context['user_suggested_this_rack'], False)
+
+    def test_rack_view_logged_in(self):
+        user = self._make_user()
+        rack = Rack(address='148 Lafayette St, New York NY',
+                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
+                    user=user.username,
+                    )
+        rack.save()
+        response = self.client.get('/rack/%d/' % rack.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['user_likes_this_rack'], False)
+        self.assertEqual(response.context['user_suggested_this_rack'], True)
+
+class TestVotes(UserTestCaseBase):
 
     def test_get(self):
         rack = Rack(address='148 Lafayette St, New York NY',
@@ -238,9 +270,7 @@ class TestVotes(TestCase):
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         rack.save()
-        user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
-                                        'funkentelechy')
-        self.client.login(username='bernie', password='funkentelechy')
+        user = self._make_user()
         response = self.client.get('/rack/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"votes": 0}')
@@ -254,11 +284,7 @@ class TestVotes(TestCase):
         rack.save()
         response = self.client.post('/rack/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 302)
-        user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
-                                        'funkentelechy')
-        self.client.login(username='bernie', password='funkentelechy')
+        user = self._make_user()
         response = self.client.post('/rack/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"votes": 1}')
-
-
