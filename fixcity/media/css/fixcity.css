@@ -476,8 +476,12 @@ list-style-type: none;
 
 #racklist li {
 margin: 0 -10px;
-padding: 15px;
+padding: 1.5em 15px 1em;
 border-bottom: 1px solid #edf2f5;
+}
+
+#racklist li:first-child {
+padding: 1em 15px 1em;
 }
 
 #racklist li.selected {
@@ -517,24 +521,10 @@ display: inline;
 line-height: 130%;
 }
 
-#racklist .rack-verified {
-color: #a5c665;
-padding: 0 0 0 29px;
-text-transform: uppercase;
-background: url(/site_media/img/tick.png) 10px 50% no-repeat;
-}
-
-#racklist .rack-verified em {
-font-style: normal;
-font-size: 0.7em;
-}
-
 #racklist .rack-info h4 {
 font-size: 1em;
-line-height: 130%;
-font-weight: bold;
-color: #e69900;
-margin: 0;
+color: #333;
+margin: -0.5em 0 0;
 }
 
 #racklist .rack-meta {
@@ -547,6 +537,63 @@ font-size: 0.7em;
 margin: 0;
 font-size: 0.95em;
 }
+
+#racklist .rack-icons {
+}
+
+#racklist .edit {
+float: right;
+text-decoration: none;
+text-transform: uppercase;
+padding: 5px 20px 5px 0;
+background: url(/site_media/img/edit-icon.png) 100% 50% no-repeat;
+}
+
+#racklist .edit:hover {
+text-decoration: underline;
+}
+
+
+#racklist .rack-comments, #racklist .rack-likes {
+float: left;
+padding: 5px 5px 5px 20px;
+margin: 0 5px 0 0;
+font-weight: bold;
+color: #333;
+text-decoration: none;
+}
+
+#racklist a.rack-comments:hover, #racklist a.rack-likes:hover {
+text-decoration: underline;
+}
+
+#racklist .rack-comments {
+background: url(/site_media/img/comment-icon.png) 0 50% no-repeat;
+}
+
+#racklist .rack-comments-active {
+background: url(/site_media/img/comment-icon-add.png) 0 50% no-repeat;
+}
+
+#racklist .rack-likes {
+background: url(/site_media/img/like-icon-inactive.png) 0 50% no-repeat;
+}
+
+#racklist .rack-likes-active {
+background: url(/site_media/img/like-icon-active.png) 0 50% no-repeat;
+}
+
+#racklist .rack-verified {
+float: left;
+padding: 5px 0;
+width: 16px;
+height: 16px;
+text-indent: -9999em;
+overflow: hidden;
+background: url(/site_media/img/tick.png) 0 5px no-repeat;
+}
+
+/* - */
 
 #verify-map-wrap {
 float: left;
@@ -603,6 +650,10 @@ color: #44c5f5;
 #sublede .rack-meta .comments {
 background: url(/site_media/img/comment-icon.png) 100% 50% no-repeat;
 margin: 0 10px 0 0;
+}
+
+#sublede .rack-meta .comments-active {
+background: url(/site_media/img/comment-icon-add.png) 100% 50% no-repeat;
 }
 
 #sublede .rack-meta .likes {
@@ -794,6 +845,31 @@ float: left;
 padding: 0.44em 0.5em;
 }
 
+/* - */
+#content #filter-form {
+float: none;
+width: auto;
+}
+
+#filter-form fieldset {
+border-color: #8fb9cc;
+margin: 0;
+padding: 1em;
+}
+
+#content #filter-form label {
+display: inline;
+font-weight: normal;
+margin: 0 0.5em 0 0;
+padding: 0 0.5em;
+}
+
+#filter-form select {
+margin: 0 1em 0 0;
+border: 1px solid #5c8699;
+}
+
+/* - */
 #support-statements {
 margin: 0;
 padding: 0;

@@ -23,37 +23,28 @@
 <div class="verify-map-filters selfclear">
   <form id="filter-form" method="post" action=".">
     <fieldset>
-      <legend>Find rack suggestions</legend>
-      <div>
-        <label for="filter-boro">Borough</label>
+      <h2>Find rack suggestions</h2>
         <select id="filter-boro" name="boro">
-          <option value="4">Brooklyn</option>
-          <option value="2">Bronx</option>
-          <option value="1">Manhattan</option>
-          <option value="5">Queens</option>
-          <option value="3">Staten Island</option>
+          <optgroup label="NYC BOROUGH">
+            <option value="4">Brooklyn</option>
+            <option value="2">Bronx</option>
+            <option value="1">Manhattan</option>
+            <option value="5">Queens</option>
+            <option value="3">Staten Island</option>
+          </optgroup>
         </select>
-      </div>
-      <div>
-        <label for="filter-cb">Community Board</label>
         <select id="filter-cb" name="cb">
-          <option value="0">All</option>
-          {% for board in boards%}
-          <option value="{{ board.gid }}">{{ board.board }}</option>
-          {% endfor %}
+          <optgroup label="COMMUNITY BOARD">
+            <option value="0">All</option>
+            {% for board in boards%}
+            <option value="{{ board.gid }}">{{ board.board }}</option>
+            {% endfor %}
+          </optgroup>
         </select>
-      </div>
-      <div>
-        <label for="filter-radio-all">All</label>
-        <input id="filter-radio-all" type="radio" name="state" value="all" checked="true" />
-        <label for="filter-radio-verified">Verified</label>
-        <input id="filter-radio-verified" type="radio" name="state" value="verified" />
-        <label for="filter-radio-unverified">Unverified</label>
-        <input id="filter-radio-unverified" type="radio" name="state" value="unverified" />
-      </div>
-      <div>
+        <input id="filter-radio-verified" type="radio" name="state" value="verified" /><label for="filter-radio-verified">Verified</label>
+        <input id="filter-radio-unverified" type="radio" name="state" value="unverified" /><label for="filter-radio-unverified">Unverified</label>
+        <input id="filter-radio-all" type="radio" name="state" value="all" checked="true" /><label for="filter-radio-all">All</label>
         <input id="filter-submit" type="submit" value="Update" />
-      </div>
     </fieldset>
   </form>
 </div>

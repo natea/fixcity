@@ -1,3 +1,5 @@
+{% load voting_tags %}
+{% load comments %}
 <ul id="racklist">
   {% for rack in page_obj.object_list %}
   <li class="selfclear" id="">
@@ -5,13 +7,24 @@
       <img src="{{ rack.get_thumbnail_url }}" />
     </a>
     <div class="rack-info">
-      <h3><a href="{{ rack.get_absolute_url }}">{{rack.title}}</a></h3>
-      {% if rack.verified %}
-      <span class="rack-verified"><em>verified</em></span>
-      {% endif %}
       <h4>{{ rack.address }}</h4>
+      <h3><a href="{{ rack.get_absolute_url }}">{{rack.title}}</a></h3>
       <p class="rack-meta">suggested via {{ rack.get_source }} {{ rack.date|date }}</p>
-      <p class="rack-snippet">{{ rack.description }}</p>
+      <div class="rack-icons selfclear">
+        {% get_comment_count for rack as comment_count %}
+        {% get_comment_list for rack as comment_list %}
+        {% score_for_object rack as score %}
+        {% if user.is_authenticated %}<a class="edit" href="/rack/{{rack.id}}/edit/">Edit</a>{% endif %}
+        <a class="rack-comments {% if user.is_authenticated %} rack-comments-active{% endif %}" href="/rack/{{rack.id}}/#add-comment" title="Add a comment!">{{ comment_count }}</a>
+        {% if user.is_authenticated %}
+          {% if not user_suggested_this_rack %}
+          <a class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" href="#" title="Like this rack!">{{ score.score }}</a>
+          {% else %}
+           <span class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" >{{ score.score }}</span>
+          {% endif %}
+        {% endif %}
+        {% if rack.verified %}<span class="rack-verified">verified</span>{% endif %}
+      </div>
     </div>
   </li>
   {% endfor %}
