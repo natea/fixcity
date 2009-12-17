@@ -196,7 +196,7 @@ function loadMap() {
           //                             true, function() { selectControl.unselect(feature); });
           var cluster = feature.cluster;
           var firstFeature = cluster[0];
-          var featureHtml = ('<div class="rack-info"><a href="/rack/' + firstFeature.fid + '"><img src="' + ((firstFeature.attributes.thumbnail != null) ? firstFeature.attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/rack/' + firstFeature.fid + '">' + firstFeature.attributes.name + '</a></h3><h4>' + firstFeature.attributes.address + '</h4>' + ((firstFeature.attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '<h5>' + firstFeature.attributes.votes.value + ' votes</h5></div>');
+          var featureHtml = ('<div class="rack-info"><a href="/rack/' + firstFeature.fid + '"><img src="' + ((firstFeature.attributes.thumbnail != null) ? firstFeature.attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/rack/' + firstFeature.fid + '">' + firstFeature.attributes.name + '</a></h3><h4>' + firstFeature.attributes.address + '</h4>' + '<h5>' + firstFeature.attributes.votes.value + ' votes</h5>' + ((firstFeature.attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '</div>');
           var popup = new OpenLayers.Popup.FramedCloud(
               null,
               feature.geometry.getBounds().getCenterLonLat(),
@@ -223,8 +223,9 @@ function loadMap() {
               $(content).find('h3 a').text(f.attributes.name);
               $(content).find('h4').text(f.attributes.address);
               $(content).find('h5').remove();
+              $(content).find('h4').after('<h5>' + f.attributes.votes.value + ' votes</h5>');
               if (f.attributes.verified != null) {
-                $(content).find('h4').after('<h5><em>verified</em></h5>');
+                $(content).find('h5').after('<h5><em>verified</em></h5>');
               }
             };
             prev.click(function(e) {

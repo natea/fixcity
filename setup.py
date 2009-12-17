@@ -19,6 +19,7 @@ install_requires=[
       'django-basic-apps',
       'django-flash',
       'django_flash_templatetag',
+      'django_pagination',
       'coverage',
       'django-voting==0.1',
       'recaptcha-client',
