@@ -27,6 +27,14 @@ if (jQuery.browser.msie) {
 } else {
 jQuery(document).ready(function() {loadMap(false);});
 }
+
+$(document).ready(function() {
+  $(".rack-meta a.likes").click(function () { 
+    var target = this;
+    $.ajax({type: "POST", url: "/rack/{{rack.id}}/votes/", dataType: "json", success: function(response){ $(target).children("strong").text(response.votes); if ($(target).is('.likes-active')) {$(target).removeClass("likes-active");} else {$(target).addClass("likes-active");};}});
+    return false;
+  });
+});
 //]]>
 </script>
 {% endblock %}
@@ -34,17 +42,25 @@ jQuery(document).ready(function() {loadMap(false);});
 {% block menu %} 
 {% endblock %} 
 
-{% block lede %}
-<h1>View Rack</h1> <a href="/rack/new/">Suggest a new Rack</a>
-{% endblock %}
+{% block lede %}{% endblock %}
 
 {% block content %}
 {% get_comment_count for rack as comment_count %}
 {% get_comment_list for rack as comment_list %}
 {% score_for_object rack as score %}
 <div id="sublede" class="selfclear">
-  <div class="rack-meta"><a class="comments" href="#add-comment" title="Add a comment!"><strong>{{ comment_count }}</strong> comment{{ comment_count|pluralize }}</a> <a class="likes{% if user_likes_this_rack %}-active{% endif %}" href="#tba-like" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a></div>
-  <h2 class="rack-address">{{rack.address}}</h2><a class="edit" href="/rack/{{rack.id}}/edit/">Edit this Rack</a>{% if user.is_authenticated %}<a href="/rack/{{rack.id}}/edit/">Edit this Rack</a>{% endif %}
+  <div class="rack-meta">
+    <a class="comments" href="#add-comment" title="Add a comment!"><strong>{{ comment_count }}</strong> comment{{ comment_count|pluralize }}</a>
+  {% if user.is_authenticated %}
+    {% if not user_suggested_this_rack %}
+    <a class="likes{% if user_likes_this_rack %} likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a>
+    {% else %}
+     <span class="likes{% if user_likes_this_rack %} likes-active{% endif %}" ><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</span>
+    {% endif %}
+  {% endif %}
+
+  </div>
+  <h2 class="rack-address">{{rack.address}}</h2><a href="/rack/{{rack.id}}/edit/">{% if user.is_authenticated %}Edit this Rack{% else %}Log in to edit{% endif %}</a>
 </div>
 <div id="rackinfo">
     <h3 class="rack-title">{{rack.title}}</h3>
@@ -62,23 +78,6 @@ jQuery(document).ready(function() {loadMap(false);});
     <li><a href="{{object.file.url}}">Statement of support</a></li>
   {% endfor %}
   </ul>
-  
-  {% if user.is_authenticated %}
-    {% if not user_suggested_this_rack %}
-      <div class="vote"><form method="POST" action="/rack/{{rack.id}}/vote/">
-        <input type="radio" name="vote" value="1"> +1 </input>
-        <input type="submit" value=" Vote on this rack " />
-      </form></div>
-    {% endif %}
-  {% else %}
-    <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Log in to Update Rack</a>
-  {% endif %}
-
-  <!-- Votes on this rack so far, needs styling -->
-  
-  {{ score.score }} point{{ score.score|pluralize }}
-  after {{ score.num_votes }} vote{{ score.num_votes|pluralize }}
-  
 
     <h2>{{comment_count}} comments on this rack</h2>
     <ul id="comments-list">
@@ -148,7 +147,6 @@ jQuery(document).ready(function() {loadMap(false);});
 	<div id="request-map" class="iconsonly">
 	  <div id="map-legend" class="pngfix"></div>
 	</div>
-        {% include "quickcheck.html" %}
 </div><!-- /#suggest -->
 
 {% endblock %} 
