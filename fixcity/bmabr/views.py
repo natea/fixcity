@@ -548,16 +548,23 @@ def rack_requested_kml(request):
                                               })
 
 
-def community_board_kml(request):
-    community_boards = CommunityBoard.objects.all()
-    return render_to_kml("community_board.kml",{'community_boards': community_boards})
+def community_board_kml(request, cb_id):
+    try:
+        cb_id = int(cb_id)
+    except ValueError:
+        raise Http404
+    community_board = get_object_or_404(CommunityBoard, gid=cb_id)
+    return render_to_kml("community_board.kml",
+                         {'communityboard': community_board})
 
-
-def community_board_kml_by_id(request,cb_id):
-    community_boards = CommunityBoard.objects.filter(gid=cb_id)
-    return render_to_kml("community_board.kml",{'community_boards': community_boards})
-
-
+def borough_kml(request, boro_id):
+    try:
+        boro_id = int(boro_id)
+    except ValueError:
+        raise Http404
+    borough = get_object_or_404(Borough, gid=boro_id)
+    return render_to_kml('borough.kml',
+                         {'borough': borough})
 
 def communityboard(request):
     communityboard_list = CommunityBoard.objects.all()
