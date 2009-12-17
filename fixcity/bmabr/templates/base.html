@@ -31,7 +31,7 @@
   <!-- maybe a better fit for {% block menu %}{% endblock %} -->
       <ul id="nav">
         <li>{% block addrack %}<a id="add-rack" href="{% url fixcity.bmabr.views.newrack_form %}">Add a Rack</a>{% endblock %}</li>
-        <li>{% block verifyrack %}<a id="verify-rack" href="{% url fixcity.bmabr.views.verify %}">Verify a Rack</a>{% endblock %}</li>
+        <li>{% block verifyrack %}<a id="verify-rack" href="{% url fixcity.bmabr.views.racks_index %}">Verify a Rack</a>{% endblock %}</li>
         <li>{% block verificationkit %}<a id="verification-kit" href="/tools-and-tips/">Tools and tips</a>{% endblock %}</li>
       </ul>
 	  </div><!-- /.wrap -->

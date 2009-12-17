@@ -25,15 +25,14 @@ urlpatterns = patterns(
     (r'^reverse/$', 'fixcity.bmabr.views.reverse_geocode'),
     (r'^cbs/(?P<boro>\w+)$', 'fixcity.bmabr.views.cbs_for_boro'),
 
-    (r'racks/$','fixcity.bmabr.views.verify'),
-    (r'racks/communityboard/(?P<cb_id>\d+)/$', 'fixcity.bmabr.views.verify_by_communityboard'),
+    (r'racks/$','fixcity.bmabr.views.racks_index'),
+    (r'racks/communityboard/(?P<cb_id>\d+)/$', 'fixcity.bmabr.views.racks_by_communityboard'),
 
 
     (r'^rack/(?P<rack_id>\d+)/$', 'fixcity.bmabr.views.rack_view'),
     (r'^rack/(?P<rack_id>\d+)/edit/$', 'fixcity.bmabr.views.rack_edit'),
-    (r'^rack/(?P<rack_id>\d+)/vote/$', 'fixcity.bmabr.views.rack_vote'),
     (r'^rack/(?P<rack_id>\d+)/support/$', 'fixcity.bmabr.views.support'),
-
+    (r'^rack/(?P<rack_id>\d+)/votes/$', 'fixcity.bmabr.views.votes'),
 
      # KML URLs
 
@@ -45,9 +44,8 @@ urlpatterns = patterns(
     # different views for adding infomation, rack, comments, photos.
 
     (r'^rack/new/$', 'fixcity.bmabr.views.newrack_form'),
-    (r'^rack/(?P<rack_id>\d+)/votes/', 'fixcity.bmabr.views.votes'),
-    (r'^rack/(?P<rack_id>\d+)/photos/', 'fixcity.bmabr.views.updatephoto'),
-    (r'^rack/$', 'fixcity.bmabr.views.rack_index'),
+    (r'^rack/(?P<rack_id>\d+)/photos/$', 'fixcity.bmabr.views.updatephoto'),
+    (r'^rack/$', 'fixcity.bmabr.views.newrack_json'),
 
     # Static media for dev work.  For deployment, these should be served
     # by a front-end server eg. apache!

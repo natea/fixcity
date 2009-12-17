@@ -138,7 +138,7 @@ def make_paginator(objs, start_page, per_page):
         page = paginator.page(paginator.num_pages)
     return (page, paginator)
 
-def verify(request):
+def racks_index(request):
     # determine the appropriate racks query
     racks = Rack.objects.all()
     try:
@@ -187,7 +187,7 @@ def verify(request):
                                   template_params,
                                   context_instance=RequestContext(request))
 
-def verify_by_communityboard(request,cb_id):
+def racks_by_communityboard(request, cb_id):
     rack_query = Rack.objects.filter(communityboard=cb_id)
     return render_to_response('verify_communityboard.html', {
             'rack_query':rack_query
@@ -293,13 +293,6 @@ def newrack_form(request):
            context_instance=RequestContext(request))
 
 
-def rack_index(request):
-    if request.method == 'POST':
-        return newrack_json(request)
-    else:
-        # The /verify/ page serves as our main list of racks currently.
-        return HttpResponseRedirect(urlresolvers.reverse(verify))
-
 @transaction.commit_manually
 def newrack_json(request):
     if request.method != 'POST':
@@ -358,23 +351,6 @@ def support(request, rack_id):
             return HttpResponse('something went wrong')
     else:
         return HttpResponse('not allowed')
-
-@login_required
-def rack_vote(request, rack_id):
-    user = request.user
-    value = request.POST.get('vote')
-    rack = get_object_or_404(Rack, id=rack_id)
-    if rack.user == user.username:
-        flash_error(u"You can't vote on a rack you suggested.", request)
-    elif value:
-        value = int(value)
-        if value > 0:
-            value = 1
-        elif value < 0:
-            value = -1
-        Vote.objects.record_vote(rack, user, value)
-        flash('Your vote has been recorded.', request)
-    return HttpResponseRedirect(urlresolvers.reverse(rack_view, rack_id=rack_id))
 
 
 @login_required
@@ -467,9 +443,13 @@ def _add_comment(request, rack):
 @login_required
 def votes(request, rack_id):
     # AJAX back-end for getting / incrementing votes on a rack.
+    user = request.user
     rack = get_object_or_404(Rack, id=rack_id)
     if request.method == 'POST':
-        Vote.objects.record_vote(rack, request.user, 1)
+        if rack.user == user.username:
+            flash_error(u"You can't vote on a rack you suggested.", request)
+        else:
+            Vote.objects.record_vote(rack, request.user, 1)
     votes = Vote.objects.get_score(rack)
     response = HttpResponse(content_type='application/json')
     response.write(json.dumps({'votes': votes['score']}))
