@@ -43,7 +43,6 @@ $(document).ready(function() {
 {% endblock %} 
 
 {% block lede %}
-<h1>View Rack</h1> <a href="/rack/new/">Suggest a new Rack</a>
 {% endblock %}
 
 {% block content %}
@@ -62,7 +61,7 @@ $(document).ready(function() {
   {% endif %}
 
   </div>
-  <h2 class="rack-address">{{rack.address}}</h2>{% if user.is_authenticated %}<a href="/rack/{{rack.id}}/edit/">Edit this Rack</a>{% endif %}
+  <h2 class="rack-address">{{rack.address}}</h2><a href="/rack/{{rack.id}}/edit/">{% if user.is_authenticated %}Edit this Rack{% else %}Log in to edit{% endif %}</a>
 </div>
 <div id="rackinfo">
     <h3 class="rack-title">{{rack.title}}</h3>
@@ -80,10 +79,6 @@ $(document).ready(function() {
     <li><a href="{{object.file.url}}">Statement of support</a></li>
   {% endfor %}
   </ul>
-  
-  {% if not user.is_authenticated %}
-    <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Log in to Update Rack</a>
-  {% endif %}
 
     <h2>{{comment_count}} comments on this rack</h2>
     <ul id="comments-list">

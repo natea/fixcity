@@ -948,6 +948,10 @@ padding-top: 0.535em;
 padding: 0;
 }
 
+#id_comment {
+margin: 0 0 1em;
+}
+
 /* - */
 #bigmovie {
 width: 620px;
