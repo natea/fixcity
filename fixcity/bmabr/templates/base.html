@@ -25,13 +25,13 @@
 <body>
   <div id="header" class="selfclear">
     <div class="wrap">
-      <span id="login">{% if user.is_authenticated %}<a href="/profile/">{{user_displayname}}</a> | <a class="logstate" href="/accounts/logout/?next={{request.path}}">Log Out</a>
-	{% else %}<a href="/accounts/register/?next={{request.path}}">Register</a> | <a class="logstate" href="/accounts/login/?next={{request.path}}">Log In</a>{% endif %}</span>
-	<a id="logo" href="/">Fixcity.org Bike Racks</a>
+      <span id="login">{% if user.is_authenticated %}<a href="{%url fixcity.bmabr.views.profile %}">{{user_displayname}}</a> | <a class="logstate" href="{% url django.contrib.auth.views.logout %}?next={{request.path}}">Log Out</a>
+	{% else %}<a href="{% url registration.views.register %}?next={{request.path}}">Register</a> | <a class="logstate" href="{% url django.contrib.auth.views.login %}?next={{request.path}}">Log In</a>{% endif %}</span>
+	<a id="logo" href="{% url fixcity.bmabr.views.index %}">Fixcity.org Bike Racks</a>
   <!-- maybe a better fit for {% block menu %}{% endblock %} -->
       <ul id="nav">
-        <li>{% block addrack %}<a id="add-rack" href="/rack/new/">Add a Rack</a>{% endblock %}</li>
-        <li>{% block verifyrack %}<a id="verify-rack" href="/verify/">Verify a Rack</a>{% endblock %}</li>
+        <li>{% block addrack %}<a id="add-rack" href="{% url fixcity.bmabr.views.newrack_form %}">Add a Rack</a>{% endblock %}</li>
+        <li>{% block verifyrack %}<a id="verify-rack" href="{% url fixcity.bmabr.views.verify %}">Verify a Rack</a>{% endblock %}</li>
         <li>{% block verificationkit %}<a id="verification-kit" href="/tools-and-tips/">Tools and tips</a>{% endblock %}</li>
       </ul>
 	  </div><!-- /.wrap -->
@@ -61,9 +61,9 @@
   <div id="footer" class="selfclear">
     <div class="wrap">
       <ul id="footer-nav">
-        <li><a href="/about">About</a></li>
-        <li><a href="/faq">FAQ</a></li>
-        <li><a href="/contact">Contact</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/faq/">FAQ</a></li>
+        <li><a href="/contact/">Contact</a></li>
       </ul>
       <div id="footer-callout" class="selfclear">
         <strong class="leftwise">Suggest a rack via:</strong> <a class="email-callout pngfix" href="/tools-and-tips/">email</a> <a class="twitter-callout pngfix" href="http://bit.ly/76pXSi">twitter</a> <a class="scf-callout pngfix" href="/tools-and-tips/">SeeClickFix</a>

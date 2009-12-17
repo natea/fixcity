@@ -12,6 +12,7 @@ from django.core.files.uploadhandler import FileUploadHandler
 from django.core.paginator import EmptyPage
 from django.core.paginator import InvalidPage
 from django.core.paginator import Paginator
+from django.core import urlresolvers
 
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
@@ -281,7 +282,7 @@ def newrack_form(request):
         if not result['errors']:
             message = '''<h2>Thank you for your suggestion!</h2><p>Racks can take six months or more for the DOT to install, but we\'ll be in touch about its progress.</p><a href="/rack/new/">Add another rack</a> or continue to see other suggestions.'''
             flash(message, request)
-            return HttpResponseRedirect('/verify/')
+            return HttpResponseRedirect(urlresolvers.reverse(verify))
         else:
             flash_error('Please correct the following errors.', request)
     else:
@@ -297,7 +298,7 @@ def rack_index(request):
         return newrack_json(request)
     else:
         # The /verify/ page serves as our main list of racks currently.
-        return HttpResponseRedirect('/verify/')
+        return HttpResponseRedirect(urlresolvers.reverse(verify))
 
 @transaction.commit_manually
 def newrack_json(request):
@@ -352,7 +353,7 @@ def support(request, rack_id):
         form_support = SupportForm(request.POST,request.FILES)
         if form_support.is_valid():
             new_support = form_support.save()
-            return HttpResponseRedirect('/rack/%s/' % rack_id)
+            return HttpResponseRedirect(urlresolvers.reverse(rack_view, rack_id=rack_id))
         else:
             return HttpResponse('something went wrong')
     else:
@@ -373,7 +374,7 @@ def rack_vote(request, rack_id):
             value = -1
         Vote.objects.record_vote(rack, user, value)
         flash('Your vote has been recorded.', request)
-    return HttpResponseRedirect('/rack/%s/' % rack_id)
+    return HttpResponseRedirect(urlresolvers.reverse(rack_view, rack_id=rack_id))
 
 
 @login_required
@@ -388,7 +389,7 @@ def rack_edit(request,rack_id):
         if form.is_valid():
             x = form.save()
             flash('Your changes have been saved.', request)
-            return HttpResponseRedirect('/rack/%s/edit/' % rack.id)
+            return HttpResponseRedirect(urlresolvers.reverse(rack_edit, rack_id=rack.id))
         else:
             flash_error('Please correct the following errors.', request)
     else:
@@ -659,7 +660,7 @@ def activate(request, activation_key,
                                         password=request.POST['new_password1'])
                     if user:
                         login(request, user)
-                        return HttpResponseRedirect('/')
+                        return HttpResponseRedirect(urlresolvers.reverse(index))
 
     # Post-activation: Modify anonymous racks.
     context_instance['activation_key'] = activation_key

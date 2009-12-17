@@ -25,8 +25,8 @@ urlpatterns = patterns(
     (r'^reverse/$', 'fixcity.bmabr.views.reverse_geocode'),
     (r'^cbs/(?P<boro>\w+)$', 'fixcity.bmabr.views.cbs_for_boro'),
 
-    (r'verify/$','fixcity.bmabr.views.verify'),
-    (r'verify/communityboard/(?P<cb_id>\d+)/$', 'fixcity.bmabr.views.verify_by_communityboard'),
+    (r'racks/$','fixcity.bmabr.views.verify'),
+    (r'racks/communityboard/(?P<cb_id>\d+)/$', 'fixcity.bmabr.views.verify_by_communityboard'),
 
 
     (r'^rack/(?P<rack_id>\d+)/$', 'fixcity.bmabr.views.rack_view'),
