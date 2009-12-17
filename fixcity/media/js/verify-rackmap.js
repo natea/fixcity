@@ -135,7 +135,7 @@ function loadMap() {
 
     style = new OpenLayers.Style({
         pointRadius: "${radius}",
-        externalGraphic: "${url}",
+        externalGraphic: "${url}"
     },
     {
     context: {

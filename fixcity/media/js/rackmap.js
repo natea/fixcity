@@ -62,8 +62,8 @@ function loadMap(draggable) {
 	feature.move(map.getCenter());
 	dropHandler(feature, null, false);
     }
-  }
-  
+  };
+
   var point_control = new OpenLayers.Control.DragFeature(
   address_point, {
     onComplete: dropHandler
