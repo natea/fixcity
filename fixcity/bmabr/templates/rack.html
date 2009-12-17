@@ -39,25 +39,24 @@ jQuery(document).ready(function() {loadMap(false);});
 {% endblock %}
 
 {% block content %}
+{% get_comment_count for rack as comment_count %}
+{% get_comment_list for rack as comment_list %}
+{% score_for_object rack as score %}
+<div id="sublede" class="selfclear">
+  <div class="rack-meta"><a class="comments" href="#add-comment" title="Add a comment!"><strong>{{ comment_count }}</strong> comment{{ comment_count|pluralize }}</a> <a class="likes{% if user_likes_this_rack %}-active{% endif %}" href="#tba-like" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a></div>
+  <h2 class="rack-address">{{rack.address}}</h2><a class="edit" href="/rack/{{rack.id}}/edit/">Edit this Rack</a>{% if user.is_authenticated %}<a href="/rack/{{rack.id}}/edit/">Edit this Rack</a>{% endif %}
+</div>
 <div id="rackinfo">
-  <dl>
-    <dt>Street Address</dt>
-    <dd>{{rack.address}}</dd>
-    <dt>Establishment</dt>
-    <dd>{{rack.title}}</dd>
-    <dt>Description</dt>
-    <dd>{{rack.description}}</dd>
-    <dt>Photo</dt>
-    <dd>
+    <h3 class="rack-title">{{rack.title}}</h3>
+    <div class="rack-description">{{rack.description}}</div>
     {% if rack.photo %}
     <img src="{{rack.photo.extra_thumbnails.large}}" />
     {% else %}
       <div class="error error-photo">
-        <h2> No photos about this request </h2>
+        <p>No photos about this request </p>
       </div>
    {% endif %}
-    </dd>
-  </dl>
+
   <ul id="support-statements">
   {% for object in statement_query %}
     <li><a href="{{object.file.url}}">Statement of support</a></li>
@@ -65,7 +64,6 @@ jQuery(document).ready(function() {loadMap(false);});
   </ul>
   
   {% if user.is_authenticated %}
-    <a class="fakebigbutton" href="/rack/{{rack.id}}/edit/">Edit this Rack</a>
     {% if not user_suggested_this_rack %}
       <div class="vote"><form method="POST" action="/rack/{{rack.id}}/vote/">
         <input type="radio" name="vote" value="1"> +1 </input>
@@ -77,12 +75,11 @@ jQuery(document).ready(function() {loadMap(false);});
   {% endif %}
 
   <!-- Votes on this rack so far, needs styling -->
-  {% score_for_object rack as score %}
+  
   {{ score.score }} point{{ score.score|pluralize }}
   after {{ score.num_votes }} vote{{ score.num_votes|pluralize }}
   
-    {% get_comment_count for rack as comment_count %}
-    {% get_comment_list for rack as comment_list %}
+
     <h2>{{comment_count}} comments on this rack</h2>
     <ul id="comments-list">
       {% for comment in comment_list %}

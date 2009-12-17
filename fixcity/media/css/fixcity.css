@@ -561,6 +561,66 @@ border: 1px solid #8fb9cc;
 position: relative;
 }
 
+/* - */
+#sublede {
+margin: -10px 0 15px;
+}
+
+#sublede .rack-address {
+font-size: 1.4em;
+display: inline;
+padding: 0 1em 0 0;
+}
+
+#sublede .edit {
+padding: 5px 0 5px 20px;
+background: url(/site_media/img/edit-icon.png) 0 50% no-repeat;
+}
+
+#sublede .rack-meta {
+float: right;
+}
+
+#sublede .rack-meta .comments,
+#sublede .rack-meta .likes,
+#sublede .rack-meta .likes-active {
+padding: 5px 20px 5px 0;
+color: #333;
+text-decoration: none;
+}
+
+#sublede .rack-meta .comments:hover,
+#sublede .rack-meta .likes:hover,
+#sublede .rack-meta .likes-active:hover {
+text-decoration: underline;
+}
+
+#sublede .rack-meta .comments strong,
+#sublede .rack-meta .likes strong,
+#sublede .rack-meta .likes-active strong {
+color: #44c5f5;
+}
+
+
+#sublede .rack-meta .comments {
+background: url(/site_media/img/comment-icon.png) 100% 50% no-repeat;
+margin: 0 10px 0 0;
+}
+
+#sublede .rack-meta .likes {
+background: url(/site_media/img/like-icon-inactive.png) 100% 50% no-repeat;
+}
+
+#sublede .rack-meta .likes-active {
+background: url(/site_media/img/like-icon-active.png) 100% 50% no-repeat;
+}
+
+#rackinfo .rack-title {
+color: #333;
+margin: 0 0 0.5em;
+font-size: 1em;
+font-weight: bold;
+}
 
 
 /* - */
