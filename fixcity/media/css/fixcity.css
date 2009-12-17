@@ -258,8 +258,7 @@ background-position: 0 -50px;
 }
 
 #lede {
-margin: 0;
-padding: 0 0 15px;
+margin:  0 0 15px;
 }
 
 #lede h1 {
@@ -562,7 +561,7 @@ position: relative;
 
 /* - */
 #sublede {
-margin: -10px 0 15px;
+margin: 0 0 15px;
 }
 
 #sublede .rack-address {

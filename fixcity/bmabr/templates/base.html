@@ -1,16 +1,16 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 {% load google_analytics %}
 {% load flash_messages %}
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>{% block title %} {% endblock %}</title>
   <link rel="SHORTCUT ICON" href="/site_media/rack-favicon.ico" />
   <link rel="icon" type="image/gif" href="/site_media/rack-favicon.gif" />
   <link rel="icon" type="image/png" href="/site_media/rack-favicon.png" />
   <!-- Framework CSS -->
- 	<link href="/site_media/css/tripoli.simple.css" type="text/css" rel="stylesheet" /> 
+  <link href="/site_media/css/tripoli.simple.css" type="text/css" rel="stylesheet" /> 
   <!--[if IE]><link rel="stylesheet" type="text/css" href="/site_media/css/tripoli.simple.ie.css"><![endif]-->
   <link href="/site_media/css/fixcity.css" type="text/css" rel="stylesheet" />
   <link href="/site_media/css/boxy.css" type="text/css" rel="stylesheet" />
@@ -26,20 +26,21 @@
   <div id="header" class="selfclear">
     <div class="wrap">
       <span id="login">{% if user.is_authenticated %}<a href="{%url fixcity.bmabr.views.profile %}">{{user_displayname}}</a> | <a class="logstate" href="{% url django.contrib.auth.views.logout %}?next={{request.path}}">Log Out</a>
-	{% else %}<a href="{% url registration.views.register %}?next={{request.path}}">Register</a> | <a class="logstate" href="{% url django.contrib.auth.views.login %}?next={{request.path}}">Log In</a>{% endif %}</span>
-	<a id="logo" href="{% url fixcity.bmabr.views.index %}">Fixcity.org Bike Racks</a>
+  {% else %}<a href="{% url registration.views.register %}?next={{request.path}}">Register</a> | <a class="logstate" href="{% url django.contrib.auth.views.login %}?next={{request.path}}">Log In</a>{% endif %}</span>
+  <a id="logo" href="{% url fixcity.bmabr.views.index %}">Fixcity.org Bike Racks</a>
   <!-- maybe a better fit for {% block menu %}{% endblock %} -->
       <ul id="nav">
         <li>{% block addrack %}<a id="add-rack" href="{% url fixcity.bmabr.views.newrack_form %}">Add a Rack</a>{% endblock %}</li>
         <li>{% block verifyrack %}<a id="verify-rack" href="{% url fixcity.bmabr.views.racks_index %}">Verify a Rack</a>{% endblock %}</li>
         <li>{% block verificationkit %}<a id="verification-kit" href="/tools-and-tips/">Tools and tips</a>{% endblock %}</li>
       </ul>
-	  </div><!-- /.wrap -->
+    </div><!-- /.wrap -->
   </div><!-- /#header -->
   <div id="main" class="selfclear">
     <div class="wrap">
       <div id="lede">
-        {% block lede %}{% endblock %}
+        {% block lede %}
+        {% endblock %}
       </div><!-- /#lede -->
       {% get_and_remove_flash_messages as flash_messages %}
       {% if flash_messages %}
