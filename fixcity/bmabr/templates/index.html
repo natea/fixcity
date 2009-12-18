@@ -5,7 +5,7 @@
 <script type="text/javascript" src="/site_media/openlayers/OpenLayers.js"></script>
 
 <script type="text/javascript">
-
+//<![CDATA[
 var map, layer, select, select_vector, racks, bounds, selectControl;
 
 var options = {
@@ -266,6 +266,7 @@ function loadMap() {
   } else {
   jQuery(document).ready(function() {loadMap();});
   }
+//]]>
 </script>
 {% endblock %}
 
@@ -287,9 +288,9 @@ function loadMap() {
 </div><!-- /#home-main -->
 <div id="home-sidebar">
   <ul class="sidebar-callouts">
-    <li><a class="twitter-callout" class="pngfix" href="http://bit.ly/76pXSi">Twitter users can submit racks using this easy syntax</a></li>
-    <li><a class="email-callout" class="pngfix" href="/tools-and-tips/">Smartphone users can make suggestions by snapping a photo and emailing.</a></li>
-    <li><a class="scf-callout" class="pngfix" href="/tools-and-tips/">Bike rack requests submitted to See Click Fix will be incorporated into FixCity when tagged with the term "bike rack".</a></li>
+    <li><a class="twitter-callout" href="http://bit.ly/76pXSi">Twitter users can submit racks using this easy syntax</a></li>
+    <li><a class="email-callout" href="/tools-and-tips/">Smartphone users can make suggestions by snapping a photo and emailing.</a></li>
+    <li><a class="scf-callout" href="/tools-and-tips/">Bike rack requests submitted to See Click Fix will be incorporated into FixCity when tagged with the term "bike rack".</a></li>
   </ul>
   <h2 class="latest-posts-heading">Latest News</h2>
   {% load blog %}

@@ -107,8 +107,14 @@ display: inline-block; /*silly IE 7 */
 display: block;
 }
 
-* html .selfclear {
+* hmtl .selfclear {
 height: 1px;
+}
+
+/* Alpha transparency for IE6 */
+* html .pngfix {
+zoom: 1;
+behavior: expression((this.runtimeStyle.behavior="none")&&(this.pngSet?this.pngSet=true:(this.nodeName == "IMG" && this.src.toLowerCase().indexOf('.png')>-1 ?  (this.runtimeStyle.backgroundImage = "none", this.runtimeStyle.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + this.src + "', sizingMethod='image')", this.src = "/site_media/img/transparent.gif") : (this.origBg = this.origBg ? this.origBg :  this.currentStyle.backgroundImage.toString().replace('url("','').replace('")',''), this.runtimeStyle.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + this.origBg + "', sizingMethod='" + (this.currentStyle.backgroundRepeat=='no-repeat' ? 'crop' : 'scale') +"')", this.runtimeStyle.backgroundImage = "none")),this.pngSet=true));
 }
 
 .leftwise {
@@ -279,20 +285,6 @@ background: url(/site_media/img/main-bg.png) 50% -2px no-repeat;
 width: 700px;
 float: left;
 margin: 0 20px 0 0;
-}
-
-#home-promo {
-min-height: 190px;
-padding: 0 0 0 240px;
-background: url(/site_media/img/bike-rack-240x190.png) 0 50% no-repeat;
-}
-
-#home-promo a {
-text-decoration: none;
-}
-
-#home-promo a:hover {
-text-decoration: underline;
 }
 
 #home-map {
@@ -788,7 +780,7 @@ color: #5c8699;
 color: #5c8699;
 }
 
-.expandonce {
+span.expandonce {
 display: block;
 padding: 0 0 0 20px;
 margin: 1em 0 0;
@@ -798,7 +790,7 @@ font-weight: bold;
 color: #00b0f1;
 }
 
-.expandonce:hover {
+span.expandonce:hover {
 cursor: pointer;
 text-decoration: underline;
 }
@@ -1379,6 +1371,10 @@ padding: 1em 0;
 
 * html #footer {
 position: static;
+}
+
+*+html #footer {
+
 }
 
 #footer .wrap {
