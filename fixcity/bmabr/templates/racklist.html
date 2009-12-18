@@ -28,9 +28,9 @@
         {% vote_by_user request.user on rack as user_likes_this_rack %}
           {% if not user_suggested_this_rack %}
           <a class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong></a>
-          {% else %}
-           <span class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" >{{ score.score }}</span>
           {% endif %}
+        {% else %}
+        <span class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" >{{ score.score }}</span>
         {% endif %}
         {% if rack.verified %}<span class="rack-verified">verified</span>{% endif %}
       </div>
