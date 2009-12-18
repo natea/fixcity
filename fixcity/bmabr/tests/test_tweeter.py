@@ -34,7 +34,7 @@ class TestTweeter(TestCase):
     def test_parse(self):
         fetcher = tweeter.TwitterFetcher(None, self.username)
         self.assertEqual(fetcher.parse(self.StubTweet),
-                         {'date': datetime.datetime(1970, 1, 1, 0, 0),
+                         {'date': '1970-01-01 00:00:00',
                           'address': 'an address',
                           'tweetid': 123,
                           'user': 'bob',
@@ -169,7 +169,7 @@ class TestTweeter(TestCase):
         self.assertEqual(mock_new_rack.call_args,
                          ((),
                           {'address': '13 thames st, brooklyn, ny',
-                           'date': datetime.datetime(1970, 1, 1, 0, 0),
+                           'date': '1970-01-01 00:00:00',
                            'title': 'mention',
                            'tweetid': 1,
                            'user': 'some twitter user',

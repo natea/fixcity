@@ -31,7 +31,7 @@ class TwitterFetcher(object):
             location, title = msg.split('#bikerack', 1)
             return {'title': title.strip(),
                     'address': location.strip(),
-                    'date': tweet.created_at,
+                    'date': tweet.created_at.isoformat(' '),
                     'user': tweet.user.screen_name,
                     'tweetid': tweet.id}
         except ValueError:
@@ -198,6 +198,7 @@ class RackBuilder(object):
             self.bounce(user, err_msg)
             return
         else:
+            # XXX handle errors from bitly.
             shortened_url = shorten_url('%s%s/' % (self.url, result['rack']))
             self.bounce(user,
                         "Thank you! Here's the rack request %s; now you can "
