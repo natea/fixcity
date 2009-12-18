@@ -1,4 +1,8 @@
 import unittest
+import mock
+
+import django.conf
+
 
 class TestRecaptchaTags(unittest.TestCase):
 
@@ -12,9 +16,18 @@ class TestRecaptchaTags(unittest.TestCase):
 
 class TestGoogleTags(unittest.TestCase):
 
-    def test_google_analytics(self):
+    @mock.patch_object(django.conf, 'settings')
+    def test_google_analytics(self, mock_settings):
         from fixcity.bmabr.templatetags import google_analytics
-        from django.conf import settings  
+        mock_settings.GOOGLE_ANALYTICS_KEY = 'xyzpdq'
         html = google_analytics.google_analytics()
-        self.failUnless(settings.GOOGLE_ANALYTICS_KEY in html)
+        self.failUnless('xyzpdq' in html)
         self.failUnless(html.startswith('<script'))
+
+        # For some reason this doesn't work if I put it in a separate
+        # test case... the google_analytics() function keeps a
+        # reference to the OLD mock_settings instance with the
+        # 'xyzpdq' value!
+        mock_settings.GOOGLE_ANALYTICS_KEY = ''
+        html = google_analytics.google_analytics()
+        self.assertEqual(html, '')
