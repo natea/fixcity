@@ -71,4 +71,4 @@ DATABASE_PORT =
 # avoids needing to know where the original sql files to create that
 # template should live, which apparently have different names /
 # locations depending on OS, distro, postgis version, etc.
-POSTGIS_TEMPLATE = postgis_template
+POSTGIS_TEMPLATE = template_postgis
