@@ -319,6 +319,10 @@ height: 23px;
 background: url(/site_media/img/map-legend-iconsonly-bg.png) no-repeat;
 }
 
+.cityracks #map-legend {
+background: url(/site_media/img/map-legend-cityracks-bg.png) no-repeat;
+}
+
 #home-callouts {
 list-style-type: none;
 margin: 0;

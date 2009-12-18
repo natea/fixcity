@@ -208,3 +208,29 @@ class RackForm(ModelForm):
 class SupportForm(ModelForm):
     class Meta:
         model = StatementOfSupport
+
+class CityRack(models.Model):
+    gid = models.IntegerField(primary_key=True)
+    objectid = models.DecimalField(max_digits=65535, decimal_places=65535)
+    address = models.DecimalField(max_digits=65535, decimal_places=65535)
+    street_nam = models.CharField(max_length=31)
+    zip_code_1 = models.CharField(max_length=12)
+    from__cros = models.CharField(max_length=22)
+    to__cross = models.CharField(max_length=22)
+    boro_1 = models.CharField(max_length=8)
+    neighborho = models.CharField(max_length=21)
+    side_of_st = models.CharField(max_length=12)
+    small = models.IntegerField()
+    large = models.IntegerField()
+    alt_addres = models.CharField(max_length=31)
+    x = models.DecimalField(max_digits=65535, decimal_places=65535)
+    y = models.DecimalField(max_digits=65535, decimal_places=65535)
+    id = models.CharField(max_length=13)
+    oppaddress = models.DecimalField(max_digits=65535, decimal_places=65535)
+    borocode = models.DecimalField(max_digits=65535, decimal_places=65535)
+    c_racksid = models.CharField(max_length=17)
+    rackid = models.CharField(max_length=50)
+    the_geom = models.PointField()
+    objects = models.GeoManager()
+    class Meta:
+        db_table = u'gis_cityracks'
