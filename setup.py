@@ -5,7 +5,7 @@ version='0.1dev'
 install_requires=[
       'geopy',
       'sorl-thumbnail>=3.2.2',
-      'Django>=1.1.1',
+      'django>=1.1.1',
       'django-registration>=0.7',
       'psycopg2>=2.0.12',
       'PIL==1.1.6',

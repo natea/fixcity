@@ -282,7 +282,7 @@ def newrack_form(request):
         if not result['errors']:
             message = '''<h2>Thank you for your suggestion!</h2><p>Racks can take six months or more for the DOT to install, but we\'ll be in touch about its progress.</p><a href="/rack/new/">Add another rack</a> or continue to see other suggestions.'''
             flash(message, request)
-            return HttpResponseRedirect(urlresolvers.reverse(verify))
+            return HttpResponseRedirect(urlresolvers.reverse(racks_index))
         else:
             flash_error('Please correct the following errors.', request)
     else:
