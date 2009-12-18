@@ -1,8 +1,6 @@
 import unittest
 import mock
 
-import django.conf
-
 
 class TestRecaptchaTags(unittest.TestCase):
 
@@ -16,7 +14,7 @@ class TestRecaptchaTags(unittest.TestCase):
 
 class TestGoogleTags(unittest.TestCase):
 
-    @mock.patch_object(django.conf, 'settings')
+    @mock.patch('django.conf.settings')
     def test_google_analytics(self, mock_settings):
         from fixcity.bmabr.templatetags import google_analytics
         mock_settings.GOOGLE_ANALYTICS_KEY = 'xyzpdq'
