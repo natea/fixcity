@@ -64,6 +64,8 @@ get started:
   createdb -T template_postgis bmabr
 
   ... the last parameter should be the name of your database.
+  If you don't have a template_postgis database, Google will tell you
+  how to create one ;)
 
  3) Load the data:
 
