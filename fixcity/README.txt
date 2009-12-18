@@ -10,11 +10,43 @@ Rack". Don't worry about it.
 The canonical source code is at http://github.com/iwillig/fixcity
 
 
+Prerequisites
+=============
+
+Things you will need.
+
+On Ubuntu 9.04 - 9.10:
+----------------------
+
+ sudo apt-get install \
+  build-essential \
+  libgeos-dev \
+  libjpeg-dev \
+  libpq-dev \
+  libxml2-dev \
+  libxslt1-dev \
+  postgis \
+  postgresql-8.3 \
+  postgresql-server-dev-8.3 \
+  proj \
+  python \
+  python-dev
+
+postgresql-8.4 also should work.
+
+I had some trouble on Ubuntu 9.10; I was able to proceed by installing
+postgis from source according to the instructions here:
+http://biodivertido.blogspot.com/2009/10/install-postgresql-84-and-postgis-140.html
+
+Add info for other systems here...
+
+
 Installation
 ============
 
-Just run `python setup.py develop`, preferably in a virtualenv to
-avoid installing stuff into your global python site-packages.
+Given all the prerequisites above, just run `python setup.py develop`,
+preferably in a virtualenv to avoid installing stuff into your global
+python site-packages.
 
 
 Bootstrapping a Database

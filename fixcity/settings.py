@@ -197,7 +197,7 @@ COVERAGE_MODULES = ['fixcity.bmabr.views', 'fixcity.bmabr.models',
                     ]
 
 try:
-    POSTGIS_SQL_PATH = config.get('db', 'POSTGIS_SQL_PATH')
+    POSTGIS_TEMPLATE = config.get('db', 'POSTGIS_TEMPLATE')
 except:
     # fall back to default behavior, which works on some systems
     # (notably not ubuntu, hence the need for a config option)

@@ -65,7 +65,10 @@ DATABASE_HOST = localhost
 # Set to empty string for default. Not used with sqlite3.         
 DATABASE_PORT =       
 
-# Uncomment this and tweak as needed if you have problems running
-# tests on eg. Ubuntu.
-# It should point to the location of lwpostgis.sql and spatial_ref_sys.sql.
-#POSTGIS_SQL_PATH = /usr/share/postgresql-8.3-postgis/
+# Tweak this as needed if you have problems running tests on various
+# Linux platforms, eg. Ubuntu.  It should point to the name of a
+# template that can be used to create new postgis databases. This
+# avoids needing to know where the original sql files to create that
+# template should live, which apparently have different names /
+# locations depending on OS, distro, postgis version, etc.
+POSTGIS_TEMPLATE = postgis_template
