@@ -175,6 +175,7 @@ function loadMap(draggable) {
   map.events.on({
           moveend: cityracksVisibilityFn
   });
+  cityracksLayer.setVisibility(false);
   map.addLayer(cityracksLayer);
 
   post_loadmap(map, geometry);
