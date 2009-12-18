@@ -136,5 +136,46 @@ function loadMap(draggable) {
   }
 
   map.addLayers([osm]);
+
+  var cityracksStyle = new OpenLayers.Style({
+        pointRadius: "${radius}",
+        externalGraphic: "${url}"
+    },
+    {
+    context: {
+      url: function(feature) {
+        return "/site_media/img/rack-city-icon.png";
+      },
+      radius: function(feature) {
+        return Math.min(feature.attributes.count*2, 8) + 5;
+      }
+    }});
+  var cityracksLayer = new OpenLayers.Layer.Vector("CityRacks", {
+          projection: map.displayProjection,
+          strategies: [
+                       new OpenLayers.Strategy.BBOX(),
+                       new OpenLayers.Strategy.Cluster()
+                       ],
+          protocol: new OpenLayers.Protocol.HTTP({
+                  url: '/cityracks.kml',
+                  params: {},
+                  format: new OpenLayers.Format.KML()
+              }),
+          styleMap: new OpenLayers.StyleMap({
+                        "default": cityracksStyle
+              })
+      });
+  var cityracksVisibilityFn = function() {
+      if (map.getZoom() >= 16) {
+          cityracksLayer.setVisibility(true);
+      } else {
+          cityracksLayer.setVisibility(false);
+      }
+  };
+  map.events.on({
+          moveend: cityracksVisibilityFn
+  });
+  map.addLayer(cityracksLayer);
+
   post_loadmap(map, geometry);
 }

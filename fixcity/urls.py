@@ -43,6 +43,7 @@ urlpatterns = patterns(
     #(r'communityboards.kml','fixcity.bmabr.views.community_board_kml'),
     (r'communityboard/(?P<cb_id>\d+).kml','fixcity.bmabr.views.community_board_kml'),
     (r'borough/(?P<boro_id>\d+).kml', 'fixcity.bmabr.views.borough_kml'),
+    (r'^cityracks.kml$', 'fixcity.bmabr.views.cityracks_kml'),
 
     # different views for adding infomation, rack, comments, photos.
 

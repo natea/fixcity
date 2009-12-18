@@ -34,6 +34,7 @@ from django.template import Context, loader
 from django.views.decorators.cache import cache_page
 
 from fixcity.bmabr.models import Borough
+from fixcity.bmabr.models import CityRack
 from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import CommunityBoard
 from fixcity.bmabr.models import RackForm, SupportForm
@@ -565,6 +566,18 @@ def borough_kml(request, boro_id):
     borough = get_object_or_404(Borough, gid=boro_id)
     return render_to_kml('borough.kml',
                          {'borough': borough})
+
+def cityracks_kml(request):
+    bbox = request.REQUEST.get('bbox')
+    if bbox:
+        bbox = [float(n) for n in bbox.split(',')]
+        assert len(bbox) == 4
+        geom = Polygon.from_bbox(bbox)
+        cityracks = CityRack.objects.filter(the_geom__within=geom)
+    else:
+        cityracks = CityRack.objects.all()
+    return render_to_kml('cityracks.kml',
+                         {'cityracks': cityracks})
 
 def communityboard(request):
     communityboard_list = CommunityBoard.objects.all()
