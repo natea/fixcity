@@ -366,7 +366,8 @@ def rack_edit(request,rack_id):
         if form.is_valid():
             x = form.save()
             flash('Your changes have been saved.', request)
-            return HttpResponseRedirect(urlresolvers.reverse(rack_edit, rack_id=rack.id))
+            return HttpResponseRedirect(
+                urlresolvers.reverse(rack_edit, kwargs={'rack_id': rack.id}))
         else:
             flash_error('Please correct the following errors.', request)
     else:
