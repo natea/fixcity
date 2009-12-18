@@ -6,6 +6,7 @@ from fixcity.bmabr.models import Source
 from fixcity.bmabr.models import EmailSource
 from fixcity.bmabr.models import TwitterSource
 from fixcity.bmabr.models import  StatementOfSupport
+from fixcity.bmabr.models import CityRack
 
 class StatementOfSupportAdmin(admin.GeoModelAdmin):
     list_display = ('s_rack','email')
@@ -31,3 +32,4 @@ admin.site.register(Source)
 admin.site.register(SeeClickFixSource)
 admin.site.register(EmailSource)
 admin.site.register(TwitterSource)
+admin.site.register(CityRack)
