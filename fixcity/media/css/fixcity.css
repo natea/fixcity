@@ -107,7 +107,7 @@ display: inline-block; /*silly IE 7 */
 display: block;
 }
 
-* hmtl .selfclear {
+* html .selfclear {
 height: 1px;
 }
 

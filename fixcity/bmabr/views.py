@@ -6,7 +6,6 @@ from django.http import HttpResponseServerError
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.template.loader import render_to_string
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
 from django.core.paginator import EmptyPage
@@ -178,8 +177,9 @@ def racks_index(request):
                        }
     # and return the appropriate template based on on request type
     if request.is_ajax():
-        racks_html = render_to_string('racklist.html', template_params)
-        return HttpResponse(racks_html)
+        return render_to_response('racklist.html',
+                                        template_params,
+                                        context_instance=RequestContext(request))
     else:
         boards = CommunityBoard.objects.filter(borough=Borough.brooklyn())
         template_params['boards'] = boards

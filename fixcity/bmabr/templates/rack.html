@@ -29,11 +29,7 @@ jQuery(document).ready(function() {loadMap(false);});
 }
 
 $(document).ready(function() {
-  $(".rack-meta a.likes").click(function () { 
-    var target = this;
-    $.ajax({type: "POST", url: "/rack/{{rack.id}}/votes/", dataType: "json", success: function(response){ $(target).children("strong").text(response.votes); if ($(target).is('.likes-active')) {$(target).removeClass("likes-active");} else {$(target).addClass("likes-active");};}});
-    return false;
-  });
+  $(".rack-meta a.likes").voteify({'rackID': {{rack.id}}});
 });
 //]]>
 </script>

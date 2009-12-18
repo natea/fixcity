@@ -1,8 +1,16 @@
 {% load voting_tags %}
 {% load comments %}
+{% if not page_obj.object_list %}
+<div id="flash-message">
+  <div class="flash error pngfix">
+    <h2>Dang</h2>
+    <p>No racks were found which match those criteria. If you'd like to help change this, get things rolling by <a href="/rack/new/">suggesting a rack</a>!</p>
+  </div>
+</div><!-- /#flash_message -->
+{% else %}
 <ul id="racklist">
   {% for rack in page_obj.object_list %}
-  <li class="selfclear" id="">
+  <li class="selfclear" id="rack-{{rack.id}}">
     <a class="rack-thumbnail" href="{{ rack.get_absolute_url }}">
       <img src="{{ rack.get_thumbnail_url }}" />
     </a>
@@ -17,8 +25,9 @@
         {% if user.is_authenticated %}<a class="edit" href="/rack/{{rack.id}}/edit/">Edit</a>{% endif %}
         <a class="rack-comments {% if user.is_authenticated %} rack-comments-active{% endif %}" href="/rack/{{rack.id}}/#add-comment" title="Add a comment!">{{ comment_count }}</a>
         {% if user.is_authenticated %}
+        {% vote_by_user request.user on rack as user_likes_this_rack %}
           {% if not user_suggested_this_rack %}
-          <a class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" href="#" title="Like this rack!">{{ score.score }}</a>
+          <a class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong></a>
           {% else %}
            <span class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" >{{ score.score }}</span>
           {% endif %}
@@ -26,9 +35,16 @@
         {% if rack.verified %}<span class="rack-verified">verified</span>{% endif %}
       </div>
     </div>
+    <script type="text/javascript">
+    //<![CDATA[
+    $(document).ready(function() {
+      $("#rack-" + {{rack.id}} + ' a.rack-likes').voteify({'rackID': {{rack.id}}, 'activeClass': 'rack-likes-active'});
+    });
+    //]]>
+    </script>
   </li>
   {% endfor %}
 </ul>
-
+{% endif %}
 {% load pagination_tags %}
 {% paginate 2 %}
