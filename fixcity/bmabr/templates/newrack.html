@@ -8,10 +8,16 @@
   // Settings needed by rackmap.js.
   var pointRadius = "10";
   var externalGraphic = "/site_media/img/rack-new.png";
-  var WKT = '{{request.POST.location|default:"POINT(-73.954344 40.714063)" }}';
+  {% if request.POST.location %}
+    var WKT = '{{request.POST.location}}';
+    var initial_zoom = 16;
+  {% else %}
+    var WKT = "POINT(-73.954344 40.714063)";
+    var initial_zoom = 13;
+  {% endif %}
+
   function post_loadmap (map, geom) {
-    var bounds = new OpenLayers.Bounds(-8234063.45026893, 4968638.33081464, -8230209.19302436, 4973585.50729644);
-    map.zoomToExtent(bounds);
+    map.setCenter(geom.getBounds().getCenterLonLat(), initial_zoom);
   };
 </script>
 <script type="text/javascript" src="/site_media/js/rackmap.js"></script>
