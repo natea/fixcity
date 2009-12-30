@@ -281,7 +281,7 @@ def newrack_form(request):
         result = _newrack(request.POST, request.FILES)
         form = result['form']
         if not result['errors']:
-            message = '''<h2>Thank you for your suggestion!</h2><p>Racks can take six months or more for the DOT to install, but we\'ll be in touch about its progress.</p><a href="/rack/new/">Add another rack</a> or continue to see other suggestions.'''
+            message = '''<h2>Thank you for your suggestion!</h2><p>Racks can take six months or more for the DOT to install, but we\'ll be in touch about its progress.</p><a href="/racks/new/">Add another rack</a> or continue to see other suggestions.'''
             flash(message, request)
             return HttpResponseRedirect(urlresolvers.reverse(racks_index))
         else:
@@ -329,8 +329,8 @@ def newrack_json(request):
         rack = rackresult['rack']
         output = {'rack': rack.id,
                   'message': rackresult['message'],
-                  'photo_post_url': '/rack/%d/photos/' % rack.id,
-                  'rack_url': '/rack/%d/' % rack.id,
+                  'photo_post_url': '/racks/%d/photos/' % rack.id,
+                  'rack_url': '/racks/%d/' % rack.id,
                   'user': rack.user,
                   'email': rack.email,
                   # XXX what about other Sources?

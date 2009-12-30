@@ -99,7 +99,7 @@
                         new OpenLayers.Strategy.Fixed()
                     ],		  
                     protocol: new OpenLayers.Protocol.HTTP({
-                        url: "./rack/requested.kml",
+                        url: "./racks/requested.kml",
                         params: {		     
 				
                         },
@@ -157,12 +157,12 @@
 	<div class="verify-text">
 	  
 	  <h4 class="id">{{rack.id}}</h4>
-	<h4><a href="/rack/{{rack.id}}">{{rack.title}} </a></h4>
+	<h4><a href="{{ rack.get_absolute_url }}">{{rack.title}} </a></h4>
 	<h5>{{rack.address}}</h5>
 	<p>{{rack.description|truncatewords:15 }}</p>
 	</div>
 	{% if rack.photo %}
-	<a href="/rack/{{rack.id}}">
+	<a href="{{ rack.get_absolute_url }}">
 	  <img src="{{rack.photo.thumbnail}}" /> 
 	</a>
 	{% else %}

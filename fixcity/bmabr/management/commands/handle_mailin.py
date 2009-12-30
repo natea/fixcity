@@ -4,7 +4,7 @@ typically via stdin.
 
 To hook this up with postfix, set up an alias along the lines of:
 
-myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin -u http://MYDOMAIN/rack/ --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
+myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin -u http://MYDOMAIN/racks/ --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
 '''
 
 # based on email2trac.py, which is Copyright (C) 2002 under the GPL v2 or later
