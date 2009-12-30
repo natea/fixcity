@@ -42,6 +42,7 @@
         {% block lede %}
         {% endblock %}
       </div><!-- /#lede -->
+      {% block flash %}
       {% get_and_remove_flash_messages as flash_messages %}
       {% if flash_messages %}
       <div id="flash-message">
@@ -54,6 +55,7 @@
         {% endfor %}
       </div><!-- /#flash_message -->
       {% endif %}
+      {% endblock %}
       <div id="content" class="content selfclear">
         {% block content %}{% endblock %}
       </div><!-- /#content -->
