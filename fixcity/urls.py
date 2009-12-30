@@ -51,6 +51,9 @@ urlpatterns = patterns(
     (r'^racks/(?P<rack_id>\d+)/photos/$', 'fixcity.bmabr.views.updatephoto'),
     (r'^racks/$', 'fixcity.bmabr.views.newrack_json'),
 
+    # redirect old /rack/ urls
+    (r'^rack/', 'fixcity.bmabr.views.redirect_rack_urls'),
+
     # Static media for dev work.  For deployment, these should be served
     # by a front-end server eg. apache!
     # see http://docs.djangoproject.com/en/dev/howto/static-files/

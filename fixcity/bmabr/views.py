@@ -736,3 +736,9 @@ def cbs_for_boro(request, boro):
     board_tuple.sort()
     return HttpResponse(json.dumps(board_tuple), mimetype='application/json')
 
+def redirect_rack_urls(request):
+    assert request.path_info.startswith('/rack/'), "invalid path info"
+    no_rack_path = request.path_info[len('/rack/'):]
+    new_path = '/racks/' + no_rack_path
+    from django.http import HttpResponsePermanentRedirect
+    return HttpResponsePermanentRedirect(new_path)
