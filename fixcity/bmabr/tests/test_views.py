@@ -199,7 +199,7 @@ class TestKMLViews(TestCase):
         clear_cache()
                 
     def test_rack_requested_kml__empty(self):
-        kml = self.client.get('/rack/requested.kml').content
+        kml = self.client.get('/racks/requested.kml').content
         # This is maybe a bit goofy; we parse the output to test it
         tree = lxml.objectify.fromstring(kml)
         placemarks = tree.Document.getchildren()
@@ -212,7 +212,7 @@ class TestKMLViews(TestCase):
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         rack.save()
-        kml = self.client.get('/rack/requested.kml').content
+        kml = self.client.get('/racks/requested.kml').content
         tree = lxml.objectify.fromstring(kml)
         placemarks = tree.Document.getchildren()
         self.assertEqual(len(placemarks), 1)
@@ -247,7 +247,7 @@ class TestRackView(UserTestCaseBase):
                     user='somebody',
                     )
         rack.save()
-        response = self.client.get('/rack/%d/' % rack.id)
+        response = self.client.get('/racks/%d/' % rack.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['user_likes_this_rack'], False)
         self.assertEqual(response.context['user_suggested_this_rack'], False)
@@ -260,7 +260,7 @@ class TestRackView(UserTestCaseBase):
                     user=user.username,
                     )
         rack.save()
-        response = self.client.get('/rack/%d/' % rack.id)
+        response = self.client.get('/racks/%d/' % rack.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['user_likes_this_rack'], False)
         self.assertEqual(response.context['user_suggested_this_rack'], True)
@@ -274,7 +274,7 @@ class TestVotes(UserTestCaseBase):
                     )
         rack.save()
         user = self._make_user()
-        response = self.client.get('/rack/%d/votes/' % rack.id)
+        response = self.client.get('/racks/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"votes": 0}')
 
@@ -285,9 +285,9 @@ class TestVotes(UserTestCaseBase):
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         rack.save()
-        response = self.client.post('/rack/%d/votes/' % rack.id)
+        response = self.client.post('/racks/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 302)
         user = self._make_user()
-        response = self.client.post('/rack/%d/votes/' % rack.id)
+        response = self.client.post('/racks/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"votes": 1}')

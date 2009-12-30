@@ -32,7 +32,7 @@ jQuery(document).ready(function() {loadMap();});
 </script>
 {% endblock %}
 
-{% block addrack %}<a id="add-rack" class="current" href="/rack/new/">Suggest a Rack</a>{% endblock %}
+{% block addrack %}<a id="add-rack" class="current" href="{% url newrack %}">Suggest a Rack</a>{% endblock %}
 
 {% block content %}
 <form id="addrack-form" action="." method="POST" enctype="multipart/form-data">

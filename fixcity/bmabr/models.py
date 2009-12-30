@@ -50,7 +50,7 @@ class Rack(models.Model):
         return self.address
 
     def get_absolute_url(self):
-        return '/rack/%s' % self.id
+        return '/racks/%s/' % self.id
 
     def get_thumbnail_url(self):
         if self.photo:
