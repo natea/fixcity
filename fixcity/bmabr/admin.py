@@ -15,7 +15,8 @@ class StatementInline(oldAdmin.StackedInline):
     model = StatementOfSupport
 
 class RackAdmin(admin.GeoModelAdmin):
-    list_display = ('address','location')
+    list_display = ('id', 'address', 'location', 'date', 'user', 'email',
+                    'verified', 'source')
 
 class CommunityBoardAdmin(admin.GeoModelAdmin):
     list_display = ('borough','board','gid')
