@@ -219,7 +219,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         #rack = rackform.save()
 
         # So instead, let's POST our data to some URL...
-        url = self.parameters['url']
+        url = settings.RACK_POSTING_URL
         jsondata = json.dumps(data)
         http = httplib2.Http()
         headers = {'Content-type': 'application/json'}
@@ -638,7 +638,6 @@ def adapt_errors(errors):
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
-        make_option('--url', '-u', help="URL to post racks to", action="store"),
         make_option('--dry-run', action="store_true",
                     help="Don't save any data.", dest="dry_run"),
         make_option('--debug', type="int", default=0,
@@ -650,7 +649,6 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        assert options['url'] is not None
         parser = EmailParser(options)
         did_stdin = False
         for filename in args:
