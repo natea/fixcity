@@ -247,6 +247,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         # Django datetime fields can't parse it anyway.
         now = datetime.fromtimestamp(int(time.time()))
         data = dict(title=title,
+                    source_type='email',
                     description=description,
                     date=now.isoformat(' '),
                     address=address,

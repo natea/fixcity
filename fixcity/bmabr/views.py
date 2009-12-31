@@ -38,7 +38,7 @@ from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import CommunityBoard
 from fixcity.bmabr.models import RackForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
-from fixcity.bmabr.models import Source, TwitterSource
+from fixcity.bmabr.models import Source, TwitterSource, EmailSource
 from fixcity.flash_messages import flash
 from fixcity.flash_messages import flash_error
 
@@ -263,9 +263,8 @@ def source_factory(data):
     if source_type == 'twitter':
         source = TwitterSource(name='twitter', user=data['twitter_user'],
                                status_id=data['twitter_id'])
-    elif data.has_key('email'):
-        # XXX actually we don't know if this came via web or email. hmm.
-        pass
+    elif source_type == 'email' and data.has_key('email'):
+        source = EmailSource(name='email', address=data['email'])
     # XXX handle SeeClickFixSource here
     if source:
         # We need to save it to get the ID.  This means we'll need to
