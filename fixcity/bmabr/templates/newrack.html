@@ -8,7 +8,7 @@
   // Settings needed by rackmap.js.
   var pointRadius = "10";
   var externalGraphic = "/site_media/img/rack-new.png";
-  {% if request.POST.location %}
+  {% if request.POST.location and request.POST.address %}
     var WKT = '{{request.POST.location}}';
     var initial_zoom = 16;
   {% else %}
