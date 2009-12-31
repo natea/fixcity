@@ -695,13 +695,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
 
 
-def _find_in_list(astr, alist):
-    alist = alist or []
-    for s in alist:
-        if s.count(astr):
-            return True
-    return False
-
 def adapt_errors(errors):
     """Convert the form field names in the errors dict into things
     that are meaningful via the email workflow, and adjust error
