@@ -56,7 +56,7 @@ $(document).ready(function() {
   {% endif %}
 
   </div>
-  <h2 class="rack-address">{{rack.address}}</h2><a class="edit" href="/rack/{{rack.id}}/edit/">{% if user.is_authenticated %}Edit this Rack{% else %}Log in to edit{% endif %}</a>
+  <h2 class="rack-address">{{rack.address}}</h2><a class="edit" href="{% url editrack rack.id %}">{% if user.is_authenticated %}Edit this Rack{% else %}Log in to edit{% endif %}</a>
 </div>
 <div id="rackinfo">
     <h3 class="rack-title">{{rack.title}}</h3>

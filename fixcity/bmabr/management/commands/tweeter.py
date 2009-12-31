@@ -135,7 +135,7 @@ class RackBuilder(object):
             # - while chars < 140:
             # -   pop a suggestion from the queue
             # -   prepend @username to the message
-            # -   append &id=X to a url like http://fixcity.org/rack/by_id?...
+            # -   append &id=X to a url like http://fixcity.org/racks/by_id?...
             # -   ... this would be a new view that shows all the id'd racks.
             # - build a bit.ly version of the URL and insert it in the message
             # - tweet the message

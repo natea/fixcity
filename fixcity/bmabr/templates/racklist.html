@@ -4,7 +4,7 @@
 <div id="flash-message">
   <div class="flash error pngfix">
     <h2>Dang</h2>
-    <p>No racks were found which match those criteria. If you'd like to help change this, get things rolling by <a href="/rack/new/">suggesting a rack</a>!</p>
+    <p>No racks were found which match those criteria. If you'd like to help change this, get things rolling by <a href="{% url newrack %}">suggesting a rack</a>!</p>
   </div>
 </div><!-- /#flash_message -->
 {% else %}
@@ -22,8 +22,8 @@
         {% get_comment_count for rack as comment_count %}
         {% get_comment_list for rack as comment_list %}
         {% score_for_object rack as score %}
-        {% if user.is_authenticated %}<a class="edit" href="/rack/{{rack.id}}/edit/">Edit</a>{% endif %}
-        <a class="rack-comments {% if user.is_authenticated %} rack-comments-active{% endif %}" href="/rack/{{rack.id}}/#add-comment" title="Add a comment!">{{ comment_count }}</a>
+        {% if user.is_authenticated %}<a class="edit" href="{% url editrack rack.id %}">Edit</a>{% endif %}
+        <a class="rack-comments {% if user.is_authenticated %} rack-comments-active{% endif %}" href="{{ rack.get_absolute_url }}#add-comment" title="Add a comment!">{{ comment_count }}</a>
         {% if user.is_authenticated %}
         {% vote_by_user request.user on rack as user_likes_this_rack %}
           {% if not user_suggested_this_rack %}

@@ -34,7 +34,7 @@ function loadRacks(params) {
           new OpenLayers.Strategy.Cluster()
         ],
         protocol: new OpenLayers.Protocol.HTTP({
-            url: "/rack/requested.kml",
+            url: "/racks/requested.kml",
             params: params,
             format: new OpenLayers.Format.KML()
         }),
@@ -57,12 +57,12 @@ function loadRacks(params) {
         homeList.find('#rack_' + feature.cluster[i].fid).addClass('selected');
       }
        //var popup = new FixcityPopup(null, feature.geometry.getBounds().getCenterLonLat(),
-      //                             null, ('<div class="rack-info"><a href="/rack/' + feature.fid + '"><img src="' + ((feature.cluster[0].attributes.thumbnail != null) ? feature.cluster[0].attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/rack/' + feature.fid + '">' + feature.cluster[0].attributes.name + '</a></h3><h4>' + feature.cluster[0].attributes.address + '</h4>' + ((feature.cluster[0].attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '</div>'),
+      //                             null, ('<div class="rack-info"><a href="/racks/' + feature.fid + '"><img src="' + ((feature.cluster[0].attributes.thumbnail != null) ? feature.cluster[0].attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/racks/' + feature.fid + '">' + feature.cluster[0].attributes.name + '</a></h3><h4>' + feature.cluster[0].attributes.address + '</h4>' + ((feature.cluster[0].attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '</div>'),
       //                             {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(-40, 48)},
       //                             true, function() { selectControl.unselect(feature); });
       var cluster = feature.cluster;
       var firstFeature = cluster[0];
-      var featureHtml = ('<div class="rack-info"><a href="/rack/' + firstFeature.fid + '"><img src="' + ((firstFeature.attributes.thumbnail != null) ? firstFeature.attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/rack/' + firstFeature.fid + '">' + firstFeature.attributes.name + '</a></h3><h4>' + firstFeature.attributes.address + '</h4>' + '<h5>' + firstFeature.attributes.votes.value + ' votes</h5>' + ((firstFeature.attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '</div>');
+      var featureHtml = ('<div class="rack-info"><a href="/racks/' + firstFeature.fid + '"><img src="' + ((firstFeature.attributes.thumbnail != null) ? firstFeature.attributes.thumbnail.value : '/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/racks/' + firstFeature.fid + '">' + firstFeature.attributes.name + '</a></h3><h4>' + firstFeature.attributes.address + '</h4>' + '<h5>' + firstFeature.attributes.votes.value + ' votes</h5>' + ((firstFeature.attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + '</div>');
       var popup = new OpenLayers.Popup.FramedCloud(
           null,
           feature.geometry.getBounds().getCenterLonLat(),
@@ -82,10 +82,10 @@ function loadRacks(params) {
         var prev = $(content).find('a.popupnav.prev');
         var next = $(content).find('a.popupnav.next');
         var replaceHtml = function(f) {
-          $(content).find('a:first').attr('href', '/rack/' + f.fid);
+          $(content).find('a:first').attr('href', '/racks/' + f.fid);
           var thumb = (f.attributes.thumbnail != null) ? f.attributes.thumbnail.value : '/site_media/img/default-rack.jpg';
           $(content).find('img').attr('src', thumb);
-          $(content).find('h3 a').attr('href', '/rack/' + f.fid);
+          $(content).find('h3 a').attr('href', '/racks/' + f.fid);
           $(content).find('h3 a').text(f.attributes.name);
           $(content).find('h4').text(f.attributes.address);
           $(content).find('h5').remove();

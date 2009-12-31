@@ -13,7 +13,7 @@ jQuery(document).ready(function($) {
       obj = $(this);
       obj.bind("click", function (event) {
         var target = this;
-        $.ajax({type: "POST", url: "/rack/" + options.rackID + "/votes/", dataType: "json", success: function(response){ $(target).children(options.targetChild).text(response.votes); if ($(target).is('.' + options.activeClass)) {$(target).removeClass(options.activeClass);} else {$(target).addClass(options.activeClass);};}});
+        $.ajax({type: "POST", url: "/racks/" + options.rackID + "/votes/", dataType: "json", success: function(response){ $(target).children(options.targetChild).text(response.votes); if ($(target).is('.' + options.activeClass)) {$(target).removeClass(options.activeClass);} else {$(target).addClass(options.activeClass);};}});
         return false;
       });
     });

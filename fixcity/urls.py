@@ -25,19 +25,19 @@ urlpatterns = patterns(
     (r'^reverse/$', 'fixcity.bmabr.views.reverse_geocode'),
     (r'^cbs/(?P<boro>\w+)$', 'fixcity.bmabr.views.cbs_for_boro'),
 
-    (r'racks/$','fixcity.bmabr.views.racks_index'),
+    url(r'racks/$','fixcity.bmabr.views.racks_index', name='listracks'),
     (r'racks/communityboard/(?P<cb_id>\d+)/$', 'fixcity.bmabr.views.racks_by_communityboard'),
 
 
-    (r'^rack/(?P<rack_id>\d+)/$', 'fixcity.bmabr.views.rack_view'),
-    (r'^rack/(?P<rack_id>\d+)/edit/$', 'fixcity.bmabr.views.rack_edit'),
-    (r'^rack/(?P<rack_id>\d+)/support/$', 'fixcity.bmabr.views.support'),
-    (r'^rack/(?P<rack_id>\d+)/votes/$', 'fixcity.bmabr.views.votes'),
+    (r'^racks/(?P<rack_id>\d+)/$', 'fixcity.bmabr.views.rack_view'),
+    url(r'^racks/(?P<rack_id>\d+)/edit/$', 'fixcity.bmabr.views.rack_edit', name='editrack'),
+    (r'^racks/(?P<rack_id>\d+)/support/$', 'fixcity.bmabr.views.support'),
+    (r'^racks/(?P<rack_id>\d+)/votes/$', 'fixcity.bmabr.views.votes'),
 
      # KML URLs
 
-    (r'rack/all.kml$', 'fixcity.bmabr.views.rack_all_kml'),
-    (r'rack/requested.kml$', 'fixcity.bmabr.views.rack_requested_kml'),
+    (r'racks/all.kml$', 'fixcity.bmabr.views.rack_all_kml'),
+    (r'racks/requested.kml$', 'fixcity.bmabr.views.rack_requested_kml'),
     # XXX doesn't look like anybody is using this particular url
     # is there a reason why we'd need a layer to have all boards?
     #(r'communityboards.kml','fixcity.bmabr.views.community_board_kml'),
@@ -47,9 +47,12 @@ urlpatterns = patterns(
 
     # different views for adding infomation, rack, comments, photos.
 
-    (r'^rack/new/$', 'fixcity.bmabr.views.newrack_form'),
-    (r'^rack/(?P<rack_id>\d+)/photos/$', 'fixcity.bmabr.views.updatephoto'),
-    (r'^rack/$', 'fixcity.bmabr.views.newrack_json'),
+    url(r'^racks/new/$', 'fixcity.bmabr.views.newrack_form', name='newrack'),
+    (r'^racks/(?P<rack_id>\d+)/photos/$', 'fixcity.bmabr.views.updatephoto'),
+    (r'^racks/$', 'fixcity.bmabr.views.newrack_json'),
+
+    # redirect old /rack/ urls
+    (r'^rack/', 'fixcity.bmabr.views.redirect_rack_urls'),
 
     # Static media for dev work.  For deployment, these should be served
     # by a front-end server eg. apache!
