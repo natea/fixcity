@@ -139,6 +139,11 @@ def make_paginator(objs, start_page, per_page):
     return (page, paginator)
 
 def racks_index(request):
+    # might be creating a new rack...
+    if request.method == 'POST' and \
+            request.META.get('CONTENT_TYPE') == 'application/json':
+        return newrack_json(request)
+
     # determine the appropriate racks query
     racks = Rack.objects.all()
     try:

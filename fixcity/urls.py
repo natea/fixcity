@@ -26,6 +26,7 @@ urlpatterns = patterns(
     (r'^cbs/(?P<boro>\w+)$', 'fixcity.bmabr.views.cbs_for_boro'),
 
     url(r'racks/$','fixcity.bmabr.views.racks_index', name='listracks'),
+
     (r'racks/communityboard/(?P<cb_id>\d+)/$', 'fixcity.bmabr.views.racks_by_communityboard'),
 
 
@@ -49,7 +50,6 @@ urlpatterns = patterns(
 
     url(r'^racks/new/$', 'fixcity.bmabr.views.newrack_form', name='newrack'),
     (r'^racks/(?P<rack_id>\d+)/photos/$', 'fixcity.bmabr.views.updatephoto'),
-    (r'^racks/$', 'fixcity.bmabr.views.newrack_json'),
 
     # redirect old /rack/ urls
     (r'^rack/', 'fixcity.bmabr.views.redirect_rack_urls'),
