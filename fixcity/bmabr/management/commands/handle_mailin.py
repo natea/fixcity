@@ -83,11 +83,6 @@ class EmailParser(object):
         else:
             self.DROP_ALTERNATIVE_HTML_VERSION = 0
 
-        if parameters.has_key('strip_signature'):
-            self.STRIP_SIGNATURE = int(parameters['strip_signature'])
-        else:
-            self.STRIP_SIGNATURE = 0
-
         if parameters.has_key('binhex'):
             self.BINHEX = parameters['binhex']
         else:
@@ -394,18 +389,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         address = address.strip()
         self.new_rack(title, address, spam_msg)
             
-    def strip_signature(self, text):
-        """
-        Strip signature from message, inspired by Mailman software
-        """
-        body = []
-        for line in text.splitlines():
-            if line == '-- ':
-                break
-            body.append(line)
-
-        return ('\n'.join(body))
-
 
     def get_message_parts(self):
         """
@@ -505,9 +488,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
                 format = email.Utils.collapse_rfc2231_value(part.get_param('Format', 'fixed')).lower()
                 delsp = email.Utils.collapse_rfc2231_value(part.get_param('DelSp', 'no')).lower()
-
-                if self.STRIP_SIGNATURE:
-                    body_text = self.strip_signature(body_text)
 
                 # Get contents charset (iso-8859-15 if not defined in mail headers)
                 #
