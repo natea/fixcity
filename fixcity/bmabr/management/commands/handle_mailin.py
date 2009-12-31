@@ -51,52 +51,10 @@ class EmailParser(object):
         self.email_from = None
         self.id = None
 
-        # XXX Cull stuff that just stores a value, we should just
-        # store all the parameters instead.
         if parameters.has_key('debug'):
             self.DEBUG = int(parameters['debug'])
         else:
             self.DEBUG = 0
-
-        if parameters.has_key('email_quote'):
-            self.EMAIL_QUOTE = str(parameters['email_quote'])
-        else:
-            self.EMAIL_QUOTE = '> '
-
-        if parameters.has_key('email_header'):
-            self.EMAIL_HEADER = int(parameters['email_header'])
-        else:
-            self.EMAIL_HEADER = 0
-
-        if parameters.has_key('reply_all'):
-            self.REPLY_ALL = int(parameters['reply_all'])
-        else:
-            self.REPLY_ALL = 0
-
-        if parameters.has_key('rack_update'):
-            self.RACK_UPDATE = int(parameters['rack_update'])
-        else:
-            self.RACK_UPDATE = 0
-
-        if parameters.has_key('drop_alternative_html_version'):
-            self.DROP_ALTERNATIVE_HTML_VERSION = int(parameters['drop_alternative_html_version'])
-        else:
-            self.DROP_ALTERNATIVE_HTML_VERSION = 0
-
-        if parameters.has_key('binhex'):
-            self.BINHEX = parameters['binhex']
-        else:
-            self.BINHEX = 'warn'
-
-        if parameters.has_key('applesingle'):
-            self.APPLESINGLE = parameters['applesingle']
-        else:
-            self.APPLESINGLE = 'warn'
-
-        if parameters.has_key('appledouble'):
-            self.APPLEDOUBLE = parameters['appledouble']
-        else:
-            self.APPLEDOUBLE = 'warn'
 
         # Use OS independend functions
         #
@@ -417,42 +375,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
             ## Check content type
             #
-            if part.get_content_type() == 'application/mac-binhex40':
-                #
-                # Special handling for BinHex attachments. Options are drop (leave out with no warning), warn (and leave out), and keep
-                #
-                if self.BINHEX == 'warn':
-                    message_parts.append("'''A BinHex attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
-                    continue
-                elif self.BINHEX == 'drop':
-                    continue
-
-            elif part.get_content_type() == 'application/applefile':
-                #
-                # Special handling for the Mac-specific part of AppleDouble/AppleSingle attachments. Options are strip (leave out with no warning), warn (and leave out), and keep
-                #
-
-                if part in appledouble_parts:
-                    if self.APPLEDOUBLE == 'warn':
-                        message_parts.append("'''The resource fork of an attachment named '%s' was removed.'''" % part.get_filename())
-                        continue
-                    elif self.APPLEDOUBLE == 'strip':
-                        continue
-                else:
-                    if self.APPLESINGLE == 'warn':
-                        message_parts.append("'''An AppleSingle attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
-                        continue
-                    elif self.APPLESINGLE == 'drop':
-                        continue
-
-            elif part.get_content_type() == 'multipart/appledouble':
-                #
-                # If we entering an AppleDouble container, set up appledouble_parts so that we know what to do with its subparts
-                #
-                appledouble_parts = part.get_payload()
-                continue
-
-            elif part.get_content_type() == 'multipart/alternative':
+            if part.get_content_type() == 'multipart/alternative':
                 ALTERNATIVE_MULTIPART = True
                 continue
 
@@ -467,7 +390,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             inline = self.inline_part(part)
 
             # Drop HTML message
-            if ALTERNATIVE_MULTIPART and self.DROP_ALTERNATIVE_HTML_VERSION:
+            if ALTERNATIVE_MULTIPART:
                 if part.get_content_type() == 'text/html':
                     if self.DEBUG:
                         print "TD: Skipping alternative HTML message"
