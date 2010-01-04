@@ -21,6 +21,7 @@ import re
 import socket
 import string
 import sys
+import tempfile
 import time
 import traceback
 import unicodedata
@@ -34,8 +35,7 @@ from django.utils import simplejson as json
 from django.conf import settings
 
 class EmailParser(object):
-    env = None
-    comment = '> '
+
     msg = None
     
     def __init__(self, parameters):
@@ -103,13 +103,6 @@ class EmailParser(object):
         else:
             self.APPLEDOUBLE = 'warn'
 
-        # Use OS independend functions
-        #
-        self.TMPDIR = os.path.normcase('/tmp')
-        if parameters.has_key('tmpdir'):
-            self.TMPDIR = os.path.normcase(str(parameters['tmpdir']))
-
-
         self.MAX_ATTACHMENT_SIZE = int(parameters.get('max-attachment-size', -1))
 
 
@@ -145,12 +138,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         #str = str.encode('utf-8')
         return str
 
-    def debug_body(self, message_body, tempfile=False):
-        if tempfile:
-            import tempfile
-            body_file = tempfile.mktemp('.handle_mailin')
-        else:
-            body_file = os.path.join(self.TMPDIR, 'body.txt')
+    def debug_body(self, message_body):
+        body_file = tempfile.mktemp('.handle_mailin')
 
         print 'TD: writing body (%s)' % body_file
         fx = open(body_file, 'wb')
@@ -180,8 +169,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             print 'TD: part%d: Content-Type: %s' % (n, part.get_content_type())
             print 'TD: part%d: filename: %s' % (n, part.get_filename())
 
-            part_file = os.path.join(self.TMPDIR, filename)
-            #part_file = '/var/tmp/part%d' % n
+            part_file = tempfile.mktemp('.handle_mailin.part%d' % n)
+
             print 'TD: writing part%d (%s)' % (n,part_file)
             fx = open(part_file, 'wb')
             text = part.get_payload(decode=1)
@@ -212,13 +201,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
 
 
-    def save_email_for_debug(self, message, tempfile=False):
-        if tempfile:
-            import tempfile
-            msg_file = tempfile.mktemp('.email2trac')
-        else:
-            #msg_file = '/var/tmp/msg.txt'
-            msg_file = os.path.join(self.TMPDIR, 'msg.txt')
+    def save_email_for_debug(self, message):
+        msg_file = tempfile.mktemp('.email2trac')
  
         print 'TD: saving email to %s' % msg_file
         fx = open(msg_file, 'wb')
@@ -369,8 +353,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         body_text = self.body_text(message_parts)
 
         if self.DEBUG > 1:        # save the entire e-mail message text
-            self.save_email_for_debug(self.msg, True)
-            self.debug_body(body_text, True)
+            self.save_email_for_debug(self.msg)
+            self.debug_body(body_text)
             self.debug_attachments(message_parts)
 
         self.get_sender_info()
@@ -777,7 +761,7 @@ class Command(BaseCommand):
                 tb_msg += "\n -----Original message follows ----------\n\n"
                 tb_msg += raw_msg
                 if parser.msg:
-                    parser.save_email_for_debug(parser.msg, True)
+                    parser.save_email_for_debug(parser.msg)
                 parser.notify_admin('Unexpected traceback in handle_mailin',
                                     tb_msg)
                 raise
