@@ -37,7 +37,7 @@ from django.conf import settings
 class EmailParser(object):
 
     msg = None
-    
+
     def __init__(self, parameters):
 
         # Save parameters
@@ -202,7 +202,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
 
     def save_email_for_debug(self, message):
-        msg_file = tempfile.mktemp('.email2trac')
+        msg_file = tempfile.mktemp('.handle_mailin')
  
         print 'TD: saving email to %s' % msg_file
         fx = open(msg_file, 'wb')
