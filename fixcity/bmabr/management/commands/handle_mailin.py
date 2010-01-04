@@ -5,6 +5,10 @@ typically via stdin.
 To hook this up with postfix, set up an alias along the lines of:
 
 myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin -u http://MYDOMAIN/racks/ --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
+
+You will want a cron job or something that cleans up the --debug-dir directory
+(defaults to your TMP directory).
+
 '''
 
 # based on email2trac.py, which is Copyright (C) 2002 under the GPL v2 or later
@@ -34,15 +38,6 @@ from django.utils import simplejson as json
 
 from django.conf import settings
 
-def make_logfile(suffix='.handle_mailin'):
-    """where to put dumps of messages for debugging"""
-    logdir = os.path.join(tempfile.gettempdir(), 'mail')
-    try:
-        os.makedirs(logdir)
-    except OSError:
-        if not os.path.isdir(logdir):
-            raise
-    return tempfile.mktemp(suffix, dir=logdir)
 
 class EmailParser(object):
 
@@ -116,6 +111,16 @@ class EmailParser(object):
         self.MAX_ATTACHMENT_SIZE = int(parameters.get('max-attachment-size', -1))
 
 
+    def _make_logfile(self, suffix='.handle_mailin'):
+        """where to put dumps of messages for debugging"""
+        logdir = self.parameters.get('debug_dir') or tempfile.gettempdir()
+        try:
+            os.makedirs(logdir)
+        except OSError:
+            if not os.path.isdir(logdir):
+                raise
+        return tempfile.mktemp(suffix, dir=logdir)
+
     def email_to_unicode(self, message_str):
         """
         Email has 7 bit ASCII code, convert it to unicode with the charset
@@ -149,7 +154,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return str
 
     def debug_body(self, message_body):
-        body_file = make_logfile()
+        body_file = self._make_logfile()
 
         print 'TD: writing body (%s)' % body_file
         fx = open(body_file, 'wb')
@@ -179,7 +184,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             print 'TD: part%d: Content-Type: %s' % (n, part.get_content_type())
             print 'TD: part%d: filename: %s' % (n, part.get_filename())
 
-            part_file = make_logfile(suffix='.handle_mailin.part%d' % n)
+            part_file = self._make_logfile(suffix='.handle_mailin.part%d' % n)
 
             print 'TD: writing part%d (%s)' % (n,part_file)
             fx = open(part_file, 'wb')
@@ -212,7 +217,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
 
     def save_email_for_debug(self, message):
-        msg_file = make_logfile()
+        msg_file = self._make_logfile()
  
         print 'TD: saving email to %s' % msg_file
         fx = open(msg_file, 'wb')
@@ -742,6 +747,8 @@ class Command(BaseCommand):
                     help="Don't save any data.", dest="dry_run"),
         make_option('--debug', type="int", default=0,
                     help="Add some verbosity and save any problematic data."),
+        make_option('--debug-dir', type="str", default=0, action='store',
+                    help="Where to dump mail messages for debugging."),
         make_option('--strip-signature', action="store_true", default=True,
                     help="Remove signatures from incoming mail"),
         make_option('--max-attachment-size', type="int",
