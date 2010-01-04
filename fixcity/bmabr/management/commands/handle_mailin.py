@@ -34,6 +34,16 @@ from django.utils import simplejson as json
 
 from django.conf import settings
 
+def make_logfile(suffix='.handle_mailin'):
+    """where to put dumps of messages for debugging"""
+    logdir = os.path.join(tempfile.gettempdir(), 'mail')
+    try:
+        os.makedirs(logdir)
+    except OSError:
+        if not os.path.isdir(logdir):
+            raise
+    return tempfile.mktemp(suffix, dir=logdir)
+
 class EmailParser(object):
 
     msg = None
@@ -139,7 +149,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return str
 
     def debug_body(self, message_body):
-        body_file = tempfile.mktemp('.handle_mailin')
+        body_file = make_logfile()
 
         print 'TD: writing body (%s)' % body_file
         fx = open(body_file, 'wb')
@@ -169,7 +179,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             print 'TD: part%d: Content-Type: %s' % (n, part.get_content_type())
             print 'TD: part%d: filename: %s' % (n, part.get_filename())
 
-            part_file = tempfile.mktemp('.handle_mailin.part%d' % n)
+            part_file = make_logfile(suffix='.handle_mailin.part%d' % n)
 
             print 'TD: writing part%d (%s)' % (n,part_file)
             fx = open(part_file, 'wb')
@@ -202,7 +212,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
 
     def save_email_for_debug(self, message):
-        msg_file = tempfile.mktemp('.handle_mailin')
+        msg_file = make_logfile()
  
         print 'TD: saving email to %s' % msg_file
         fx = open(msg_file, 'wb')
