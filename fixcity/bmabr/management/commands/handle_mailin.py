@@ -274,7 +274,11 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             response, content = http.request(url, 'POST',
                                              headers=headers,
                                              body=jsondata)
-        except socket.error:
+        except (socket.error, AttributeError):
+            # it's absurd that we have to catch AttributeError here,
+            # but apparently that's what httplib 0.5.0 raises because
+            # the socket ends up being None. Lame!
+            # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
             self.bounce(
                 error_subject,
                 "Thanks for trying to suggest a rack.\n"
