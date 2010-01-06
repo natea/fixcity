@@ -685,7 +685,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return self.reply(subject, body)
 
     def reply(self, subject, body):
-        send_mail(subject, body, self.msg['from'], [self.msg['to']],
+        send_mail(subject, body, self.msg['to'], [self.msg['from']],
                   fail_silently=False)
 
     def notify_admin(self, subject, body):
