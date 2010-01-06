@@ -215,10 +215,9 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         self.author = self.email_addr
 
 
-
     def save_email_for_debug(self, message):
         msg_file = self._make_logfile()
- 
+
         print 'TD: saving email to %s' % msg_file
         fx = open(msg_file, 'wb')
         fx.write('%s' % message)
@@ -254,7 +253,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                     got_communityboard=0,   # Ditto.
                     email=self.email_addr,
                     )
-        
+
         if self.parameters.get('dry-run') and self.DEBUG:
             print "TD: would save rack here"
             return
@@ -393,7 +392,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
         address = address.strip()
         self.new_rack(title, address, spam_msg)
-            
+
     def strip_signature(self, text):
         """
         Strip signature from message, inspired by Mailman software
@@ -596,7 +595,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return part.get_param('inline', None, 'Content-Disposition') == '' or not part.has_key('Content-Disposition')
 
 
-
     def body_text(self, message_parts):
         body_text = []
 
@@ -620,7 +618,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         max_size = self.MAX_ATTACHMENT_SIZE
         status   = ''
         results = {}
-        
+
         for part in message_parts:
             # Skip text body parts
             if not isinstance(part, tuple):
@@ -681,7 +679,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 admin_body += notify_admin_body
             self.notify_admin(admin_subject, admin_body)
         return self.reply(subject, body)
-        
+
     def reply(self, subject, body):
         send_mail(subject, body, self.msg['to'], [self.email_addr],
                   fail_silently=False)
@@ -736,7 +734,6 @@ def adapt_errors(errors):
             key = key_mapping.get(key, key)
             val = val_mapping.get((key, val), val)
             adapted[key] = adapted.get(key, ()) + (val,)
-    
     return adapted
 
 
