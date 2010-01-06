@@ -711,9 +711,10 @@ def adapt_errors(errors):
     messages appropriately too.
     """
     adapted = {}
+    remove_me = object()
     key_mapping = {
         'title': 'subject',
-        'address': 'subject',
+        'address': remove_me,  # an error here will also show up in 'location'.
         'description': 'body',
         }
 
@@ -737,6 +738,8 @@ def adapt_errors(errors):
     for key, vals in errors.items():
         for val in vals:
             key = key_mapping.get(key, key)
+            if key is remove_me:
+                continue
             val = val_mapping.get((key, val), val)
             adapted[key] = adapted.get(key, ()) + (val,)
     return adapted
