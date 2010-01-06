@@ -674,7 +674,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         body += unicode(self.msg.as_string(), errors='ignore')
         if notify_admin:
             admin_subject = 'FixCity handle_mailin bounce! %s' % notify_admin
-            admin_body = 'Bouncing to: %s\n' % self.msg['to']
+            admin_body = 'Bouncing to: %s\n' % self.msg['from']
             admin_body += 'Bounce subject: %r\n' % subject
             admin_body += 'Time: %s\n' % datetime.now().isoformat(' ')
             admin_body += 'Not attaching original body, check the log file.\n'
@@ -685,7 +685,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return self.reply(subject, body)
 
     def reply(self, subject, body):
-        send_mail(subject, body, self.msg['to'], [self.email_addr],
+        send_mail(subject, body, self.msg['from'], [self.msg['to']],
                   fail_silently=False)
 
     def notify_admin(self, subject, body):
@@ -693,6 +693,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         if self.msg and self.msg.get('to'):
             from_addr = self.msg['to']
         else:
+            # email might be so fubar that we can't even get addresses from it?
             from_addr = 'racks@fixcity.org'
         send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
 
