@@ -1,8 +1,10 @@
 from django.contrib.gis.db import models
+from django.contrib.auth.models import User
 from django.forms import ModelForm, ValidationError
 from sorl.thumbnail.fields import ImageWithThumbnailsField
 
 RACK_IMAGE_LOCATION = 'images/racks/'
+
 
 class CommunityBoard(models.Model):
     gid = models.IntegerField(primary_key=True)
@@ -18,6 +20,10 @@ class CommunityBoard(models.Model):
 
     def __unicode__(self):
         return "%s Community Board %s" % (self.borough.boroname, self.board)
+
+    @property
+    def racks(self):
+        return Rack.objects.filter(location__intersects=self.the_geom)
 
 
 class Rack(models.Model):
@@ -39,6 +45,8 @@ class Rack(models.Model):
     location = models.PointField(srid=4326)
 
     verified = models.BooleanField(default=False, blank=True)
+
+    locked = models.BooleanField(default=False, blank=True)
 
     # keep track of where the rack was submitted from
     # if not set, that means it was submitted from the web
@@ -234,3 +242,31 @@ class CityRack(models.Model):
     objects = models.GeoManager()
     class Meta:
         db_table = u'gis_cityracks'
+
+
+class NYCDOTBulkOrder(models.Model):
+    """
+    bulk orders for NYC bike racks
+    """
+
+    communityboard = models.ForeignKey(CommunityBoard)
+    user = models.ForeignKey(User)
+
+    def save(self, *args, **kw):
+        """
+        Lock all racks in the CB
+        """
+        super(NYCDOTBulkOrder, self).save(*args, **kw)
+        for rack in self.communityboard.racks:
+            rack.locked = True
+            rack.save()
+
+    @property
+    def racks(self):
+        return self.communityboard.racks.filter(locked=True)
+
+    def delete(self, *args, **kw):
+        for rack in self.racks:
+            rack.locked = False
+            rack.save()
+        super(NYCDOTBulkOrder, self).delete(*args, **kw)

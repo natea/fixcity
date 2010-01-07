@@ -13,6 +13,7 @@ from django.core.paginator import InvalidPage
 from django.core.paginator import Paginator
 from django.core import urlresolvers
 
+from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator as token_generator
@@ -153,7 +154,7 @@ def racks_index(request):
     if board_gid != 0:
         # racks for a particular community board
         cb = get_object_or_404(CommunityBoard, gid=board_gid)
-        racks = racks.filter(location__within=cb.the_geom)
+        racks = cb.racks
     else:
         try:
             boro_gid = int(request.GET.get('boro', '0'))
@@ -361,7 +362,10 @@ def support(request, rack_id):
 @login_required
 def rack_edit(request,rack_id):
     rack = get_object_or_404(Rack, id=rack_id)
-    if request.method == 'POST':
+    form = RackForm()
+    if rack.locked:
+        flash_error('This rack is locked and cannot be edited.', request)
+    elif request.method == 'POST':
         # For now, preserve the original creator.
         request.POST[u'email'] = rack.email
         request.POST[u'user'] = rack.user
@@ -374,8 +378,6 @@ def rack_edit(request,rack_id):
                 urlresolvers.reverse(rack_edit, kwargs={'rack_id': rack.id}))
         else:
             flash_error('Please correct the following errors.', request)
-    else:
-        form = RackForm()
 
     # Who created this rack?
     if rack.user == request.user.username or rack.email == request.user.email:
@@ -746,3 +748,19 @@ def redirect_rack_urls(request):
     new_path = '/racks/' + no_rack_path
     from django.http import HttpResponsePermanentRedirect
     return HttpResponsePermanentRedirect(new_path)
+
+
+@permission_required('bmabr.add_nycdotbulkorder')
+def create_bulk_order(request, cb_id):
+    cb = get_object_or_404(CommunityBoard, gid=cb_id)
+    if request.method == 'POST':
+        mark_racks_as_locked_somehow
+    return render_to_response(
+        'bulk_order_form.html',
+        {'request': request,
+         'bulk_order': bulk_order,
+         'cb': cb,
+         },
+        context_instance=RequestContext(request)
+        )
+

@@ -6,6 +6,8 @@ from fixcity.bmabr.views import SRID
 from fixcity.bmabr.models import RackForm
 import datetime
 
+EPOCH = datetime.datetime.utcfromtimestamp(0)
+
 class TestCommunityBoard(TestCase):
 
     def test_create_cb_and_borough(self):
@@ -16,6 +18,19 @@ class TestCommunityBoard(TestCase):
             borocd=99, board=123, borough=borough)
         self.assertEqual(unicode(cb), u'Staten Island Community Board 123')
                             
+    def test_racks_within_boundaries(self):
+        from fixcity.bmabr.models import CommunityBoard, Rack
+        communityboard = CommunityBoard(the_geom='MULTIPOLYGON (((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)))')
+        rack_inside = Rack(location='POINT (5.0 5.0)', date=EPOCH)
+        rack_outside = Rack(location='POINT (20.0 20.0)', date=EPOCH)
+        rack_edge = Rack(location='POINT (0.0 0.0)', date=EPOCH)
+        rack_inside.save()
+        rack_edge.save()
+        rack_outside.save()
+
+        self.assertEqual(set(communityboard.racks),
+                         set([rack_inside, rack_edge]))
+
 
 class TestRack(TestCase):
 
@@ -24,7 +39,7 @@ class TestRack(TestCase):
         point = Point(1.0, 2.0, SRID)
         rack = Rack(
             address='somewhere',
-            date=datetime.datetime.utcfromtimestamp(0),
+            date=EPOCH,
             location=point)
         self.assertEqual(rack.verified, False)
 
@@ -34,7 +49,7 @@ class TestRackForm(TestCase):
     data = {'email': 'foo@bar.org',
             'verified': False,
             'title': 'A rack',
-            'date': datetime.datetime.utcfromtimestamp(0),
+            'date': EPOCH,
             'location': Point(1.0, 2.0, SRID),
             'address': 'noplace in particular',
             }
@@ -109,3 +124,52 @@ class TestSource(TestCase):
         generic_source = Source.objects.filter(id=ts.id).all()[0]
         self.assertEqual(generic_source.twittersource, ts)
         self.assertEqual(generic_source.get_child_source(), ts)
+
+
+class TestNYCDOTBulkOrder(TestCase):
+
+    def test_create_and_destroy(self):
+        from fixcity.bmabr.models import NYCDOTBulkOrder, User, CommunityBoard
+        user = User()
+        user.save()
+        cb = CommunityBoard(
+            the_geom='MULTIPOLYGON (((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)))',
+            gid=1, borocd=1, board=1, borough_id=1)
+        cb.save()
+        bo = NYCDOTBulkOrder(user=user, communityboard=cb)
+        bo.save()
+        bo.delete()
+
+    def test_racks(self):
+        from fixcity.bmabr.models import NYCDOTBulkOrder, User, Rack, CommunityBoard
+        user = User()
+        user.save()
+        cb = CommunityBoard(
+            the_geom='MULTIPOLYGON (((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)))',
+            gid=1, borocd=1, board=1, borough_id=1)
+        cb.save()
+        rack = Rack(location='POINT (5.0 5.0)', date=EPOCH)
+        rack.save()
+
+        bo = NYCDOTBulkOrder(user=user, communityboard=cb)
+
+        # Initially the bulk order has no racks, even though the
+        # communityboard does.
+        self.assertEqual(set(cb.racks), set([rack]))
+        self.assertEqual(set(bo.racks), set())
+
+        # Saving marks all racks in the CB as locked for this bulk order.
+        bo.save()
+        self.assertEqual(set(bo.racks), set([rack]))
+        self.assertEqual(set(bo.racks), set(cb.racks))
+        # But gahhh. Django core devs think it's reasonable to chase
+        # down all your references to a changed instance and reload
+        # them by re-looking up the object by ID. Otherwise the state
+        # in memory is out of date. (django ticket 901)
+        rack = Rack.objects.get(id=rack.id)
+        self.assertEqual(rack.locked, True)
+
+        # New racks are not added to an already-saved bulk order.
+        rack2 = Rack(location='POINT (7.0 7.0)', date=EPOCH)
+        rack2.save()
+        self.failIf(rack2 in bo.racks)

@@ -7,6 +7,7 @@ from fixcity.bmabr.models import EmailSource
 from fixcity.bmabr.models import TwitterSource
 from fixcity.bmabr.models import  StatementOfSupport
 from fixcity.bmabr.models import CityRack
+from fixcity.bmabr.models import NYCDOTBulkOrder
 
 class StatementOfSupportAdmin(admin.GeoModelAdmin):
     list_display = ('s_rack','email')
@@ -16,7 +17,7 @@ class StatementInline(oldAdmin.StackedInline):
 
 class RackAdmin(admin.GeoModelAdmin):
     list_display = ('id', 'address', 'location', 'date', 'user', 'email',
-                    'verified', 'source')
+                    'verified', 'locked', 'source')
 
 class CommunityBoardAdmin(admin.GeoModelAdmin):
     list_display = ('borough','board','gid')
@@ -24,6 +25,7 @@ class CommunityBoardAdmin(admin.GeoModelAdmin):
 
 class BoroughAdmin(admin.GeoModelAdmin):
     list_display = ('boroname',)
+
 
 admin.site.register(StatementOfSupport, StatementOfSupportAdmin)
 admin.site.register(Rack, RackAdmin)
@@ -34,3 +36,4 @@ admin.site.register(SeeClickFixSource)
 admin.site.register(EmailSource)
 admin.site.register(TwitterSource)
 admin.site.register(CityRack)
+admin.site.register(NYCDOTBulkOrder)

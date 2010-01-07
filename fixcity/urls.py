@@ -42,6 +42,8 @@ urlpatterns = patterns(
     # XXX doesn't look like anybody is using this particular url
     # is there a reason why we'd need a layer to have all boards?
     #(r'communityboards.kml','fixcity.bmabr.views.community_board_kml'),
+
+    (r'^communityboard/(?P<cb_id>\d+)/create_bulk_order$', 'fixcity.bmabr.views.create_bulk_order'),
     (r'communityboard/(?P<cb_id>\d+).kml','fixcity.bmabr.views.community_board_kml'),
     (r'borough/(?P<boro_id>\d+).kml', 'fixcity.bmabr.views.borough_kml'),
     (r'^cityracks.kml$', 'fixcity.bmabr.views.cityracks_kml'),
