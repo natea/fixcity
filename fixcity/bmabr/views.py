@@ -37,6 +37,7 @@ from fixcity.bmabr.models import Borough
 from fixcity.bmabr.models import CityRack
 from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import CommunityBoard
+from fixcity.bmabr.models import NYCDOTBulkOrder
 from fixcity.bmabr.models import RackForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
 from fixcity.bmabr.models import Source, TwitterSource, EmailSource
@@ -751,16 +752,34 @@ def redirect_rack_urls(request):
 
 
 @permission_required('bmabr.add_nycdotbulkorder')
-def create_bulk_order(request, cb_id):
+def bulk_order_form(request, cb_id):
     cb = get_object_or_404(CommunityBoard, gid=cb_id)
+    try:
+        bulk_order = NYCDOTBulkOrder.objects.get(communityboard=cb)
+        template = 'bulk_order_edit_form.html',
+    except NYCDOTBulkOrder.DoesNotExist:
+        bulk_order = None
+        template = 'bulk_order_create_form.html'
+
     if request.method == 'POST':
-        mark_racks_as_locked_somehow
+        if request.POST.get('delete'):
+            template = 'bulk_order_create_form.html',
+            if bulk_order is None:
+                flash_error('Order does not exist', request)
+            else:
+                bulk_order.delete()
+                flash('Bulk order deleted', request)
+        elif bulk_order is None:
+            bulk_order = NYCDOTBulkOrder(user=request.user, communityboard=cb)
+            bulk_order.save()
+            template = 'bulk_order_edit_form.html'
+        else:
+            flash_error("There is already a bulk order for this CB.", request)
     return render_to_response(
-        'bulk_order_form.html',
+        template,
         {'request': request,
          'bulk_order': bulk_order,
          'cb': cb,
          },
         context_instance=RequestContext(request)
         )
-
