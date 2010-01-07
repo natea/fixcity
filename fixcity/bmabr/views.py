@@ -783,3 +783,13 @@ def bulk_order_form(request, cb_id):
          },
         context_instance=RequestContext(request)
         )
+
+def bulk_order_csv(request, cb_id):
+    cb = get_object_or_404(CommunityBoard, gid=cb_id)
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
+    response = HttpResponse(content_type='text/csv')
+    import csv
+    csv_writer = csv.writer(response)
+    for rack in bulk_order.racks:
+        csv_writer.writerow([rack.id, rack.title, rack.address])
+    return response

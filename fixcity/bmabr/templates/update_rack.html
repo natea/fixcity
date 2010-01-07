@@ -99,7 +99,9 @@ jQuery(document).ready(function() {loadMap();});
     {{ form.verified.errors }}
     </div>
 
-    <input type="submit" value="Save" />
+    {% if not rack.locked %}
+      <input type="submit" value="Save" />
+    {% endif %}
 
 <!--  errors for debugging
  {{ form.errors }}
