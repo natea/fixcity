@@ -261,12 +261,14 @@ class NYCDOTBulkOrder(models.Model):
             rack.locked = True
             rack.save()
 
-    @property
-    def racks(self):
-        return self.communityboard.racks.filter(locked=True)
 
     def delete(self, *args, **kw):
         for rack in self.racks:
             rack.locked = False
             rack.save()
         super(NYCDOTBulkOrder, self).delete(*args, **kw)
+
+    @property
+    def racks(self):
+        return self.communityboard.racks.filter(locked=True)
+

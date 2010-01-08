@@ -166,6 +166,7 @@ INSTALLED_APPS = (
     'django_flash_templatetag',
     'voting',
     'pagination',
+    'attachments',
 )
 
 

@@ -1,3 +1,4 @@
+from attachments.admin import AttachmentInlines
 from django.contrib.gis import admin
 from django.contrib import admin as oldAdmin
 from fixcity.bmabr.models import Rack, CommunityBoard, Borough
@@ -27,6 +28,9 @@ class BoroughAdmin(admin.GeoModelAdmin):
     list_display = ('boroname',)
 
 
+class NYCDOTBulkOrderAdmin(admin.ModelAdmin):
+    inlines = [AttachmentInlines]
+
 admin.site.register(StatementOfSupport, StatementOfSupportAdmin)
 admin.site.register(Rack, RackAdmin)
 admin.site.register(CommunityBoard, CommunityBoardAdmin)
@@ -36,4 +40,5 @@ admin.site.register(SeeClickFixSource)
 admin.site.register(EmailSource)
 admin.site.register(TwitterSource)
 admin.site.register(CityRack)
-admin.site.register(NYCDOTBulkOrder)
+admin.site.register(NYCDOTBulkOrder, NYCDOTBulkOrderAdmin)
+

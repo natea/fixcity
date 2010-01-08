@@ -73,6 +73,9 @@ urlpatterns = patterns(
     (r'^blog/', include('basic.blog.urls')),
 
     (r'^comments/', include('django.contrib.comments.urls')),
+
+    (r'^attachments/', include('attachments.urls')),
+
 )
 
 handler500 = 'fixcity.bmabr.views.server_error'

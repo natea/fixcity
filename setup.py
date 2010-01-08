@@ -22,6 +22,7 @@ install_requires=[
       'django_pagination',
       'coverage',
       'django-voting==0.1',
+      'django-attachments',
       'recaptcha-client',
       'lxml',
       ]

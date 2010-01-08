@@ -2,6 +2,8 @@
 {% block title %} FixCity: Edit Bulk Order {% endblock %}
 
 {% block content %}
+{% load attachments_tags %}
+
 <form id="bulk-order-edit-form" action="." method="POST" enctype="multipart/form-data">
     <h2>Update Bulk Order for {{cb}}</h2>
 
@@ -14,6 +16,23 @@
  {{ form.errors }}
 -->
 </form>
+
+<div class="attachments">
+{% get_attachments_for bulk_order as "bo_attachments" %}
+{% if bo_attachments %}
+<h2>Attachments</h2>
+<ul>
+{% for attachment in bo_attachments %}
+    <li>
+        <a href="{{ attachment.attachment_file.url }}">{{ attachment.filename }}</a>
+        {% attachment_delete_link attachment %}
+    </li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% attachment_form bulk_order %}
+</div>
 
 <div>
 <a href="order.csv">Download bulk order as a CSV</a>
