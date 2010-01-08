@@ -787,9 +787,39 @@ def bulk_order_form(request, cb_id):
 def bulk_order_csv(request, cb_id):
     cb = get_object_or_404(CommunityBoard, gid=cb_id)
     bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
-    response = HttpResponse(content_type='text/csv')
+    response = HttpResponse(mimetype='text/csv')
+    date = bulk_order.date.replace(microsecond=0)
+    filename = "%s_%s.csv" % (str(cb).replace(' ', '-'), date.isoformat('-'))
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
     import csv
     csv_writer = csv.writer(response)
     for rack in bulk_order.racks:
         csv_writer.writerow([rack.id, rack.title, rack.address])
+    return response
+
+def bulk_order_pdf(request, cb_id):
+    cb = get_object_or_404(CommunityBoard, gid=cb_id)
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.units import inch
+
+    response = HttpResponse(mimetype='application/pdf')
+    date = bulk_order.date.replace(microsecond=0)
+    filename = "%s_%s.pdf" % (str(cb).replace(' ', '-'), date.isoformat('-'))
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    pdf = canvas.Canvas(response)
+
+    textobject = pdf.beginText()
+    textobject.setTextOrigin(inch, 7*inch)
+
+    lines = []
+    for rack in bulk_order.racks:
+        lines.append(', '.join([str(rack.id), rack.title, rack.address]))
+    textobject.textLines(lines, trim=1)
+    pdf.drawText(textobject)
+
+    # Close the PDF object cleanly, and we're done.
+    pdf.showPage()
+    pdf.save()
+
     return response

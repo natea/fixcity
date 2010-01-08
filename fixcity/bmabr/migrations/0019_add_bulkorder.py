@@ -12,6 +12,7 @@ class Migration:
             ('id', orm['bmabr.nycdotbulkorder:id']),
             ('communityboard', orm['bmabr.nycdotbulkorder:communityboard']),
             ('user', orm['bmabr.nycdotbulkorder:user']),
+            ('date', orm['bmabr.nycdotbulkorder:date']),
         ))
         db.send_create_signal('bmabr', ['NYCDOTBulkOrder'])
         
@@ -105,6 +106,7 @@ class Migration:
         },
         'bmabr.nycdotbulkorder': {
             'communityboard': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.CommunityBoard']"}),
+            'date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },

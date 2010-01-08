@@ -44,6 +44,7 @@ urlpatterns = patterns(
     #(r'communityboards.kml','fixcity.bmabr.views.community_board_kml'),
 
     (r'^communityboard/(?P<cb_id>\d+)/bulk_order/order.csv/$', 'fixcity.bmabr.views.bulk_order_csv'),
+    (r'^communityboard/(?P<cb_id>\d+)/bulk_order/order.pdf/$', 'fixcity.bmabr.views.bulk_order_pdf'),
     (r'^communityboard/(?P<cb_id>\d+)/bulk_order/$', 'fixcity.bmabr.views.bulk_order_form'),
     (r'communityboard/(?P<cb_id>\d+).kml','fixcity.bmabr.views.community_board_kml'),
     (r'borough/(?P<boro_id>\d+).kml', 'fixcity.bmabr.views.borough_kml'),

@@ -25,6 +25,7 @@ install_requires=[
       'django-attachments',
       'recaptcha-client',
       'lxml',
+      'reportlab',
       ]
 
 import sys

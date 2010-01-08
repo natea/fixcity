@@ -251,6 +251,7 @@ class NYCDOTBulkOrder(models.Model):
 
     communityboard = models.ForeignKey(CommunityBoard)
     user = models.ForeignKey(User)
+    date = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kw):
         """
