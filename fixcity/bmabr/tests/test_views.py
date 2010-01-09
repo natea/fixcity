@@ -23,9 +23,11 @@ def clear_cache():
 
 class UserTestCaseBase(TestCase):
 
-    def _make_user(self):
+    def _make_user(self, is_superuser=False):
         user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
                                         'funkentelechy')
+        user.is_superuser = is_superuser
+        user.save()
         self.client.login(username='bernie', password='funkentelechy')
         return user
 
@@ -291,3 +293,71 @@ class TestVotes(UserTestCaseBase):
         response = self.client.post('/racks/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"votes": 1}')
+
+
+class TestBulkOrders(UserTestCaseBase):
+
+    def _make_bulk_order(self):
+        # Ugh, there's a lot of inter-model dependencies.
+        # And I can't seem to mock these.
+        from fixcity.bmabr.models import NYCDOTBulkOrder, CommunityBoard, Borough
+        user = self._make_user(is_superuser=True)
+        from decimal import Decimal
+        geom = 'MULTIPOLYGON (((0.0 0.0, 1.0 0.0, 1.0 1.0, 0.0 0.0)))'
+        borough = Borough(boroname='Brooklyn', gid=1, borocode=1,
+                          the_geom=geom, 
+                          shape_leng=Decimal("339789.04731400002"),
+                          shape_area=Decimal("635167251.876999974"),
+                          )
+        borough.save()
+        cb = CommunityBoard(gid=1, borocd=1, board=1,
+                            the_geom=geom,
+                            borough=borough)
+        cb.save()
+        bo = NYCDOTBulkOrder(user=user, communityboard=cb)
+        bo.save()
+        return bo
+
+    def test_bulk_order_form__unprivileged(self):
+        response = self.client.get('/communityboard/999/bulk_order/')
+        self.assertEqual(response.status_code, 302)
+        self.failUnless(response.has_header('location'))
+        self.assertEqual(response['location'],
+                         'http://testserver/accounts/login/?next=/communityboard/999/bulk_order/')
+        
+    def test_bulk_order_form__missing(self):
+        user = self._make_user(is_superuser=True)
+        response = self.client.get('/communityboard/999/bulk_order/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_bulk_order_form(self):
+        bo = self._make_bulk_order()
+        cb = bo.communityboard
+        response = self.client.get('/communityboard/%d/bulk_order/' % cb.pk)
+        self.assertEqual(response.status_code, 200)
+
+    def test_bulk_order__create(self):
+        from fixcity.bmabr.models import NYCDOTBulkOrder
+        bo = self._make_bulk_order()
+        cb = bo.communityboard
+        bo.delete()
+        # There's no BO for this community board now...
+        self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
+                         0)
+        response = self.client.post('/communityboard/%d/bulk_order/' % cb.pk)
+        self.assertEqual(response.status_code, 200)
+        # There should be a BO now...
+        self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
+                         1)
+
+    def test_bulk_order_pdf(self):
+        bo = self._make_bulk_order()
+        cb = bo.communityboard
+        response = self.client.get('/communityboard/%d/bulk_order/order.pdf/' % cb.pk)
+        self.assertEqual(response.status_code, 200)
+
+    def test_bulk_order_csv(self):
+        bo = self._make_bulk_order()
+        cb = bo.communityboard
+        response = self.client.get('/communityboard/%d/bulk_order/order.csv/' % cb.pk)
+        self.assertEqual(response.status_code, 200)

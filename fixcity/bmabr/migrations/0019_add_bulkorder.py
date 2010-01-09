@@ -19,6 +19,38 @@ class Migration:
         # Adding field 'Rack.locked'
         db.add_column('bmabr_rack', 'locked', orm['bmabr.rack:locked'])
         
+        # Changing field 'Borough.shape_area'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=100))
+        db.alter_column(u'gis_boroughs', 'shape_area', orm['bmabr.borough:shape_area'])
+        
+        # Changing field 'Borough.shape_leng'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=100))
+        db.alter_column(u'gis_boroughs', 'shape_leng', orm['bmabr.borough:shape_leng'])
+        
+        # Changing field 'CityRack.objectid'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=100))
+        db.alter_column(u'gis_cityracks', 'objectid', orm['bmabr.cityrack:objectid'])
+        
+        # Changing field 'CityRack.oppaddress'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=100))
+        db.alter_column(u'gis_cityracks', 'oppaddress', orm['bmabr.cityrack:oppaddress'])
+        
+        # Changing field 'CityRack.borocode'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=100))
+        db.alter_column(u'gis_cityracks', 'borocode', orm['bmabr.cityrack:borocode'])
+        
+        # Changing field 'CityRack.address'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=100))
+        db.alter_column(u'gis_cityracks', 'address', orm['bmabr.cityrack:address'])
+        
+        # Changing field 'CityRack.y'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=100))
+        db.alter_column(u'gis_cityracks', 'y', orm['bmabr.cityrack:y'])
+        
+        # Changing field 'CityRack.x'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=100))
+        db.alter_column(u'gis_cityracks', 'x', orm['bmabr.cityrack:x'])
+        
     
     
     def backwards(self, orm):
@@ -28,6 +60,38 @@ class Migration:
         
         # Deleting field 'Rack.locked'
         db.delete_column('bmabr_rack', 'locked')
+        
+        # Changing field 'Borough.shape_area'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
+        db.alter_column(u'gis_boroughs', 'shape_area', orm['bmabr.borough:shape_area'])
+        
+        # Changing field 'Borough.shape_leng'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
+        db.alter_column(u'gis_boroughs', 'shape_leng', orm['bmabr.borough:shape_leng'])
+        
+        # Changing field 'CityRack.objectid'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
+        db.alter_column(u'gis_cityracks', 'objectid', orm['bmabr.cityrack:objectid'])
+        
+        # Changing field 'CityRack.oppaddress'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
+        db.alter_column(u'gis_cityracks', 'oppaddress', orm['bmabr.cityrack:oppaddress'])
+        
+        # Changing field 'CityRack.borocode'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
+        db.alter_column(u'gis_cityracks', 'borocode', orm['bmabr.cityrack:borocode'])
+        
+        # Changing field 'CityRack.address'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
+        db.alter_column(u'gis_cityracks', 'address', orm['bmabr.cityrack:address'])
+        
+        # Changing field 'CityRack.y'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
+        db.alter_column(u'gis_cityracks', 'y', orm['bmabr.cityrack:y'])
+        
+        # Changing field 'CityRack.x'
+        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
+        db.alter_column(u'gis_cityracks', 'x', orm['bmabr.cityrack:x'])
         
     
     
@@ -64,32 +128,32 @@ class Migration:
             'borocode': ('django.db.models.fields.SmallIntegerField', [], {}),
             'boroname': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'gid': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
-            'shape_area': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '1000'}),
-            'shape_leng': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '1000'}),
+            'shape_area': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '100'}),
+            'shape_leng': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '100'}),
             'the_geom': ('django.contrib.gis.db.models.fields.MultiPolygonField', [], {})
         },
         'bmabr.cityrack': {
             'Meta': {'db_table': "u'gis_cityracks'"},
-            'address': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '1000'}),
+            'address': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '100'}),
             'alt_addres': ('django.db.models.fields.CharField', [], {'max_length': '31'}),
             'boro_1': ('django.db.models.fields.CharField', [], {'max_length': '8'}),
-            'borocode': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '1000'}),
+            'borocode': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '100'}),
             'c_racksid': ('django.db.models.fields.CharField', [], {'max_length': '17'}),
             'from__cros': ('django.db.models.fields.CharField', [], {'max_length': '22'}),
             'gid': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
             'id': ('django.db.models.fields.CharField', [], {'max_length': '13'}),
             'large': ('django.db.models.fields.IntegerField', [], {}),
             'neighborho': ('django.db.models.fields.CharField', [], {'max_length': '21'}),
-            'objectid': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '1000'}),
-            'oppaddress': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '1000'}),
+            'objectid': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '100'}),
+            'oppaddress': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '100'}),
             'rackid': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'side_of_st': ('django.db.models.fields.CharField', [], {'max_length': '12'}),
             'small': ('django.db.models.fields.IntegerField', [], {}),
             'street_nam': ('django.db.models.fields.CharField', [], {'max_length': '31'}),
             'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {}),
             'to__cross': ('django.db.models.fields.CharField', [], {'max_length': '22'}),
-            'x': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '1000'}),
-            'y': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '1000'}),
+            'x': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '100'}),
+            'y': ('django.db.models.fields.DecimalField', [], {'max_digits': '1000', 'decimal_places': '100'}),
             'zip_code_1': ('django.db.models.fields.CharField', [], {'max_length': '12'})
         },
         'bmabr.communityboard': {
