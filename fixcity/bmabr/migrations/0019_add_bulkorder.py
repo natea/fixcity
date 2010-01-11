@@ -15,7 +15,17 @@ class Migration:
             ('date', orm['bmabr.nycdotbulkorder:date']),
         ))
         db.send_create_signal('bmabr', ['NYCDOTBulkOrder'])
-        
+
+        # That should have created a permission to create bulk orders...
+        from django.contrib.auth.models import Group, Permission
+        perm = Permission.objects.get(codename='add_nycdotbulkorder')
+        # Add a group with that permission.
+        group = Group(name='bulk_ordering')
+        group.save()
+        group.permissions.add(perm)
+        group.save()
+
+        # The rest is auto-generated:
         # Adding field 'Rack.locked'
         db.add_column('bmabr_rack', 'locked', orm['bmabr.rack:locked'])
         
@@ -54,44 +64,19 @@ class Migration:
     
     
     def backwards(self, orm):
-        
+        # Remove the group that can add bulk orders.
+        from django.contrib.auth.models import Group
+        group = Group.objects.get(name='bulk_ordering')
+        group.delete()
+
         # Deleting model 'NYCDOTBulkOrder'
         db.delete_table('bmabr_nycdotbulkorder')
         
         # Deleting field 'Rack.locked'
         db.delete_column('bmabr_rack', 'locked')
         
-        # Changing field 'Borough.shape_area'
-        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
-        db.alter_column(u'gis_boroughs', 'shape_area', orm['bmabr.borough:shape_area'])
-        
-        # Changing field 'Borough.shape_leng'
-        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
-        db.alter_column(u'gis_boroughs', 'shape_leng', orm['bmabr.borough:shape_leng'])
-        
-        # Changing field 'CityRack.objectid'
-        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
-        db.alter_column(u'gis_cityracks', 'objectid', orm['bmabr.cityrack:objectid'])
-        
-        # Changing field 'CityRack.oppaddress'
-        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
-        db.alter_column(u'gis_cityracks', 'oppaddress', orm['bmabr.cityrack:oppaddress'])
-        
-        # Changing field 'CityRack.borocode'
-        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
-        db.alter_column(u'gis_cityracks', 'borocode', orm['bmabr.cityrack:borocode'])
-        
-        # Changing field 'CityRack.address'
-        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
-        db.alter_column(u'gis_cityracks', 'address', orm['bmabr.cityrack:address'])
-        
-        # Changing field 'CityRack.y'
-        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
-        db.alter_column(u'gis_cityracks', 'y', orm['bmabr.cityrack:y'])
-        
-        # Changing field 'CityRack.x'
-        # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=1000))
-        db.alter_column(u'gis_cityracks', 'x', orm['bmabr.cityrack:x'])
+        # Don't try to set decimial_places back to 1000 as this causes errors.
+        # Not sure how things ever worked in the first place!
         
     
     
