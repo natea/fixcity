@@ -298,8 +298,9 @@ class TestVotes(UserTestCaseBase):
 class TestBulkOrders(UserTestCaseBase):
 
     def _make_bulk_order(self):
-        # Ugh, there's a lot of inter-model dependencies.
-        # And I can't seem to mock these.
+        # Ugh, there's a lot of inter-model dependencies to satisfy
+        # before I can save a BulkOrder.  And I can't seem to mock
+        # these.
         from fixcity.bmabr.models import NYCDOTBulkOrder, CommunityBoard, Borough
         user = self._make_user(is_superuser=True)
         from decimal import Decimal

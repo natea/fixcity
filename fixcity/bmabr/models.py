@@ -33,12 +33,10 @@ class Rack(models.Model):
     description = models.CharField(max_length=300, blank=True)
     email = models.EmailField(blank=True)
     photo = ImageWithThumbnailsField(
-                              upload_to=RACK_IMAGE_LOCATION,
-                              thumbnail={'size': (100, 100)},
-                              extra_thumbnails = {
-                                   'large': {'size': (400,400)},
-                                },
-                              blank=True, null=True)
+        upload_to=RACK_IMAGE_LOCATION,
+        thumbnail={'size': (100, 100)},
+        extra_thumbnails={'large': {'size': (400,400)},},
+        blank=True, null=True)
     # We might make this a foreign key to a User eventually, but for now
     # it's optional.
     user = models.CharField(max_length=20, blank=True)
@@ -67,6 +65,7 @@ class Rack(models.Model):
             return '/site_media/img/default-rack.jpg'
 
     def get_source(self):
+        """ how did this rack get submitted? """
         if self.source:
             return self.source.name
         else:
@@ -171,8 +170,8 @@ class RackForm(ModelForm):
         verified = self.cleaned_data.get('verified')
         errors = []
         if verified:
-            if not (self.cleaned_data.get('photo') or (
-                self.is_bound and bool(self.instance.photo))):
+            if not (self.cleaned_data.get('photo')
+                    or (self.is_bound and bool(self.instance.photo))):
                 raise ValidationError(NEED_PHOTO_TO_VERIFY)
         return verified
 
@@ -272,4 +271,3 @@ class NYCDOTBulkOrder(models.Model):
     @property
     def racks(self):
         return self.communityboard.racks.filter(locked=True)
-
