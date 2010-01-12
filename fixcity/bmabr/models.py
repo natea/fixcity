@@ -261,7 +261,6 @@ class NYCDOTBulkOrder(models.Model):
             rack.locked = True
             rack.save()
 
-
     def delete(self, *args, **kw):
         for rack in self.racks:
             rack.locked = False
@@ -271,3 +270,22 @@ class NYCDOTBulkOrder(models.Model):
     @property
     def racks(self):
         return self.communityboard.racks.filter(locked=True)
+
+
+class NYCStreet(models.Model):
+
+    # A small subset of the NYC streets database schema
+    # ... maybe not even needed.
+    # converted from http://www.nyc.gov/html/dcp/html/bytes/dwnlion.shtml
+
+    gid = models.IntegerField(primary_key=True)
+    street = models.CharField(max_length=35)
+    nodeidfrom = models.CharField(max_length=7)
+    nodeidto = models.CharField(max_length=7)
+    zipleft = models.CharField(max_length=5)
+    the_geom = models.MultiLineStringField()
+
+    objects = models.GeoManager()
+
+    class Meta:
+        db_table = u'gis_nycstreets'

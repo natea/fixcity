@@ -794,7 +794,9 @@ def bulk_order_csv(request, cb_id):
     import csv
     csv_writer = csv.writer(response)
     for rack in bulk_order.racks:
-        csv_writer.writerow([rack.id, rack.title, rack.address])
+        csv_writer.writerow([rack.id, rack.title, rack.address,
+                             cross_streets_for_rack(rack),
+                             ])
     return response
 
 def bulk_order_pdf(request, cb_id):
@@ -823,3 +825,38 @@ def bulk_order_pdf(request, cb_id):
     pdf.save()
 
     return response
+
+
+def cross_streets_for_rack(rack):
+    from django.db import connection
+    cursor = connection.cursor()
+    cursor.execute(
+        """SELECT street, nodeidfrom, nodeidto FROM gis_nycstreets
+        WHERE ST_DWithin(the_geom, ST_PointFromText(%s, %s), .001)
+        ORDER BY ST_Distance(the_geom, ST_PointFromText(%s, %s))
+        LIMIT 1;
+        """, [rack.location.wkt, SRID, rack.location.wkt, SRID])
+    #import pdb; pdb.set_trace()
+
+    rack_info = cursor.fetchone()
+    if rack_info is None:
+        return "(no cross streets found; not in NYC?)"
+    else:
+        street, nodeidfrom, nodeidto = rack_info
+
+    cursor.execute(
+        """SELECT street FROM gis_nycstreets
+        WHERE nodeidto = %s AND street != %s
+        """, [nodeidfrom, street])
+    previous_cross_street = cursor.fetchone()
+    if previous_cross_street is not None:
+        previous_cross_street = previous_cross_street[0]
+
+    cursor.execute(
+        """SELECT street FROM gis_nycstreets
+        WHERE nodeidfrom = %s AND street != %s
+        """, [nodeidto, street])
+    next_cross_street = cursor.fetchone()
+    if next_cross_street is not None:
+        next_cross_street = next_cross_street[0]
+    return "between %s and %s" % (previous_cross_street, next_cross_street)

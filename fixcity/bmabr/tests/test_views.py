@@ -1,4 +1,5 @@
 # XXX I feel kinda icky importing settings during test
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -16,6 +17,7 @@ import unittest
 from django.contrib.gis.geos.point import Point
 
 from django.core.cache import cache        
+
 
 def clear_cache():
     for key in cache._expire_info.keys():
@@ -163,6 +165,34 @@ class TestUtilFunctions(unittest.TestCase):
         self.assertEqual(result['errors'], {})
         self.failUnless(result.get('message'))
         self.failUnless(result.get('rack'))
+
+
+class TestStreetsFunctions(TestCase):
+
+    # This is a tiny subset of brooklyn CB 1, enough for a couple tests.
+    fixtures = ['gis_nycstreets_testfixture.json']
+
+    def test_cross_streets(self):
+        from fixcity.bmabr.views import cross_streets_for_rack
+        rack = Rack(address='67 s 3rd st, brooklyn, ny 11211',
+                    title='williamsburg somewhere',
+                    date=datetime.datetime.utcfromtimestamp(0),
+                    email='john@doe.net',
+                    location=Point(-73.964858020364, 40.713349294636,
+                                    srid=SRID),
+                    )
+        self.assertEqual(cross_streets_for_rack(rack),
+                         "between WYTHE AV and BERRY ST")
+
+    def test_cross_streets_outside_nyc(self):
+        from fixcity.bmabr.views import cross_streets_for_rack
+        rack = Rack(address='i have no idea where this is',
+                    title='far away',
+                    date=datetime.datetime.utcfromtimestamp(0),
+                    email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
+                    )
+        self.assertEqual(cross_streets_for_rack(rack),
+                         "(no cross streets found; not in NYC?)")
 
 
 class TestIndex(TestCase):
@@ -362,3 +392,4 @@ class TestBulkOrders(UserTestCaseBase):
         cb = bo.communityboard
         response = self.client.get('/communityboard/%d/bulk_order/order.csv/' % cb.pk)
         self.assertEqual(response.status_code, 200)
+
