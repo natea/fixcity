@@ -1,7 +1,7 @@
 from attachments.admin import AttachmentInlines
 from django.contrib.gis import admin
 from django.contrib import admin as oldAdmin
-from fixcity.bmabr.models import Rack, CommunityBoard, Borough
+from fixcity.bmabr.models import Rack, Neighborhood, CommunityBoard, Borough
 from fixcity.bmabr.models import SeeClickFixSource
 from fixcity.bmabr.models import Source
 from fixcity.bmabr.models import EmailSource
@@ -20,6 +20,10 @@ class RackAdmin(admin.GeoModelAdmin):
     list_display = ('id', 'address', 'location', 'date', 'user', 'email',
                     'verified', 'locked', 'source')
 
+class NeighborhoodAdmin(admin.GeoModelAdmin):
+    list_display = ('name','county')
+ 
+
 class CommunityBoardAdmin(admin.GeoModelAdmin):
     list_display = ('borough','board','gid')
     ordering = ('borough','board')
@@ -34,6 +38,7 @@ class NYCDOTBulkOrderAdmin(admin.ModelAdmin):
 
 
 admin.site.register(StatementOfSupport, StatementOfSupportAdmin)
+admin.site.register(Neighborhood, NeighborhoodAdmin)
 admin.site.register(Rack, RackAdmin)
 admin.site.register(CommunityBoard, CommunityBoardAdmin)
 admin.site.register(Borough, BoroughAdmin)

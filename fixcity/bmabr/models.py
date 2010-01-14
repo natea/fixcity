@@ -138,6 +138,23 @@ class StatementOfSupport(models.Model):
         return self.email
 
 
+class Neighborhood(models.Model):
+    gid = models.IntegerField(primary_key=True)
+    state = models.CharField(max_length=2)
+    county = models.CharField(max_length=43)
+    city = models.CharField(max_length=64)
+    name = models.CharField(max_length=64)
+    regionid = models.IntegerField()
+    the_geom = models.MultiPolygonField() 
+
+    objects = models.GeoManager()
+
+    class Meta:
+        db_table = u'gis_neighborhoods'
+        
+    def __unicode__(self):
+        return self.name
+
 class Borough(models.Model):
     gid = models.IntegerField(primary_key=True)
     borocode = models.SmallIntegerField()

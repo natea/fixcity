@@ -173,3 +173,17 @@ class TestNYCDOTBulkOrder(TestCase):
         rack2 = Rack(location='POINT (7.0 7.0)', date=EPOCH)
         rack2.save()
         self.failIf(rack2 in bo.racks)
+
+
+class TestNeighborhood(TestCase):
+
+    def test_create_and_destroy(self):
+        from fixcity.bmabr.models import Neighborhood
+        nb = Neighborhood(
+            gid=1, regionid=2, state='NY', county='Kings', city='Brooklyn',
+            name='Williamsburg',
+            the_geom='MULTIPOLYGON (((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)))',
+            )
+        nb.save()
+        self.assertEqual(unicode(nb), u'Williamsburg')
+        nb.delete()

@@ -195,6 +195,35 @@ class TestStreetsFunctions(TestCase):
                          "(no cross streets found; not in NYC?)")
 
 
+
+class TestNeighborhoodForRack(TestCase):
+
+    # Just williamsburg for testing.
+    fixtures = ['gis_neighborhoods_testfixture.json']
+
+    def test_neighborhood_outside_nyc(self):
+        from fixcity.bmabr.views import neighborhood_for_rack
+        rack = Rack(address='i have no idea where this is',
+                    title='far away',
+                    date=datetime.datetime.utcfromtimestamp(0),
+                    email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
+                    )
+        self.assertEqual(neighborhood_for_rack(rack),
+                         "<unknown>")
+
+    def test_cross_streets(self):
+        from fixcity.bmabr.views import neighborhood_for_rack
+        rack = Rack(address='67 s 3rd st, brooklyn, ny 11211',
+                    title='williamsburg somewhere',
+                    date=datetime.datetime.utcfromtimestamp(0),
+                    email='john@doe.net',
+                    location=Point(-73.964858020364, 40.713349294636,
+                                    srid=SRID),
+                    )
+        self.assertEqual(neighborhood_for_rack(rack),
+                         "Williamsburg")
+
+
 class TestIndex(TestCase):
 
     def test_index(self):

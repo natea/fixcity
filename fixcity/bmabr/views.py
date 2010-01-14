@@ -827,6 +827,14 @@ def bulk_order_pdf(request, cb_id):
     return response
 
 
+def neighborhood_for_rack(rack):
+    from fixcity.bmabr.models import Neighborhood
+    neighborhood = Neighborhood.objects.filter(the_geom__contains=rack.location)
+    if neighborhood:
+        return neighborhood[0].name
+    return '<unknown>'
+    
+    
 def cross_streets_for_rack(rack):
     from django.db import connection
     cursor = connection.cursor()
@@ -836,8 +844,6 @@ def cross_streets_for_rack(rack):
         ORDER BY ST_Distance(the_geom, ST_PointFromText(%s, %s))
         LIMIT 1;
         """, [rack.location.wkt, SRID, rack.location.wkt, SRID])
-    #import pdb; pdb.set_trace()
-
     rack_info = cursor.fetchone()
     if rack_info is None:
         return "(no cross streets found; not in NYC?)"
