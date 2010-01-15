@@ -308,9 +308,6 @@ class TestTweeter(TestCase):
 
 class TestTweeterTransactions(TransactionTestCase):
 
-    def test_foo(self):
-        pass
-
     @mock.patch('logging.Logger.error')
     def test_newrack__source_gets_rolled_back(self, mock_error):
         from fixcity.bmabr.views import newrack_json
