@@ -732,7 +732,8 @@ def server_error(request, template_name='500.html'):
                                    mimetype="application/xhtml+xml")
 
 def cbs_for_boro(request, boro):
-    """return json results for ajax call to fetch boards for a cb"""
+    """return json results for ajax call to fetch boards for a cb
+    """
     try:
         boro = int(boro)
     except ValueError:
@@ -753,50 +754,56 @@ def redirect_rack_urls(request):
 
 @permission_required('bmabr.add_nycdotbulkorder')
 def bulk_order_edit_form(request, cb_id):
+
     cb = get_object_or_404(CommunityBoard, gid=cb_id)
     bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
-    template = 'bulk_order_edit_form.html',
+    form = BulkOrderForm()
     if request.method == 'POST':
-        if request.POST.get('delete'):
-            bulk_order.delete()
-            flash('Bulk order deleted', request)
+        post = request.POST.copy()
+        cb_gid = request.POST.get('cb_gid')
+        post = request.POST.copy()
+        post[u'communityboard'] = cb_id
+        post[u'user'] = request.user.pk
+        form = BulkOrderForm(post)
+        if form.is_valid():
+            form.save()
         else:
-            # XXX form?
-            flash_error("There is already a bulk order for this CB.", request)
+            flash_error('Please correct the following errors.', request)
+
     return render_to_response(
-        template,
+        'bulk_order_edit_form.html',
         {'request': request,
          'bulk_order': bulk_order,
          'cb': cb,
+         'form': form,
          },
         context_instance=RequestContext(request)
         )
 
 @permission_required('bmabr.add_nycdotbulkorder')
 def bulk_order_add_form(request):
-    template = 'bulk_order_create_form.html',
     cb = None
     form = BulkOrderForm()
     if request.method == 'POST':
-        cb_id = request.POST.get('cb_id')
-        cb = get_object_or_404(CommunityBoard, gid=cb_id)
-        bulk_order = NYCDOTBulkOrder.objects.filter(communityboard=cb)
-        if bulk_order:
-            flash_error("There is already a bulk order for this CB.", request)
-        else:
-            request.POST[u'communityboard'] = cb_id
-            form = BulkOrderForm(request.POST)
-            if form.is_valid():
+        cb_gid = request.POST.get('cb_gid')
+        post = request.POST.copy()
+        post[u'communityboard'] = cb_gid
+        post[u'user'] = request.user.pk
+        form = BulkOrderForm(post)
+        if form.is_valid():
+            bulk_order = NYCDOTBulkOrder.objects.filter(communityboard=cb_gid)
+            if bulk_order:
+                flash_error("There is already a bulk order for this CB.", request)
+            else:
                 bulk_order = form.save()
                 flash("Bulk order created!", request)
                 return HttpResponseRedirect(
                     urlresolvers.reverse(bulk_order_edit_form,
-                                         kwargs={'cb_id': cb_id}))
-            else:
-                flash_error('Please correct the following errors.', request)
-
+                                         kwargs={'cb_id': cb_gid}))
+        else:
+            flash_error('Please correct the following errors.', request)
     return render_to_response(
-        template,
+        'bulk_order_create_form.html',
         {'request': request,
          'cb': cb,
          'form': form,

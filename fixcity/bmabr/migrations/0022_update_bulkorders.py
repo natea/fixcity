@@ -10,13 +10,14 @@ class Migration:
         # Adding field 'NYCDOTBulkOrder.organization'
         db.add_column('bmabr_nycdotbulkorder', 'organization', orm['bmabr.nycdotbulkorder:organization'])
         
+        db.add_column('bmabr_nycdotbulkorder', 'rationale', orm['bmabr.nycdotbulkorder:rationale'])
     
     
     def backwards(self, orm):
         
         # Deleting field 'NYCDOTBulkOrder.organization'
         db.delete_column('bmabr_nycdotbulkorder', 'organization')
-        
+        db.delete_column('bmabr_nycdotbulkorder', 'rationale')
     
     
     models = {
@@ -107,6 +108,7 @@ class Migration:
             'date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'organization': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'rationale': ('django.db.models.fields.TextField', [], {}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
         'bmabr.nycstreet': {

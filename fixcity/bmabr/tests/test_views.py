@@ -466,10 +466,13 @@ class TestBulkOrders(UserTestCaseBase):
         self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
                          0)
         user = self._login(is_superuser=True)
-        response = self.client.post('/bulk_order/', {'cb_id': cb.pk,
-                                                     'user': user.pk,
-                                                     'organization': 'TOPP'})
+        response = self.client.post('/bulk_order/', {'cb_gid': cb.pk,
+                                                     'organization': 'TOPP',
+                                                     'rationale': 'because i care'})
+        if response.context is not None:
+            self.assertEqual(response.context['form'].errors, [])
         self.assertEqual(response.status_code, 302)
+        
         self.assertEqual(response['location'],
                          'http://testserver/communityboard/%d/bulk_order/' % cb.pk)
         # There should be a BO now...
@@ -480,11 +483,13 @@ class TestBulkOrders(UserTestCaseBase):
         bo = self._make_bulk_order()
         cb = bo.communityboard
         response = self.client.get('/communityboard/%d/bulk_order/order.pdf/' % cb.pk)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertEqual(response.status_code, 200)
 
     def test_bulk_order_csv(self):
         bo = self._make_bulk_order()
         cb = bo.communityboard
         response = self.client.get('/communityboard/%d/bulk_order/order.csv/' % cb.pk)
+        self.assertEqual(response['Content-Type'], 'text/csv')
         self.assertEqual(response.status_code, 200)
 

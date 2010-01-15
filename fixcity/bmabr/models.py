@@ -269,6 +269,7 @@ class NYCDOTBulkOrder(models.Model):
     user = models.ForeignKey(User)
     date = models.DateTimeField(auto_now=True)
     organization = models.CharField(max_length=128, blank=False)
+    rationale = models.TextField(blank=False)
 
     def save(self, *args, **kw):
         """
