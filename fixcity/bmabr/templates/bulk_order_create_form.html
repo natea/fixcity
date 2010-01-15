@@ -3,9 +3,17 @@
 
 {% block content %}
 <form id="bulk-order-create-form" action="." method="POST" enctype="multipart/form-data">
-    <h2>Create a Bulk Order for {{cb}}</h2>
 
-    <input type="submit" value="Create this bulk order" />
+  <h2>Create a Bulk Order</h2>
+
+  <label for="organization">Organization</label>
+  <div class="required"><input type="text" name="organization" />
+  </div>
+ 
+
+  <input type="submit" value="submit" />
+
+
 
 <!--  errors for debugging
  {{ form.errors }}

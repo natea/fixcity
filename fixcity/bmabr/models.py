@@ -268,6 +268,7 @@ class NYCDOTBulkOrder(models.Model):
     communityboard = models.ForeignKey(CommunityBoard)
     user = models.ForeignKey(User)
     date = models.DateTimeField(auto_now=True)
+    organization = models.CharField(max_length=128, blank=False)
 
     def save(self, *args, **kw):
         """
@@ -287,6 +288,11 @@ class NYCDOTBulkOrder(models.Model):
     @property
     def racks(self):
         return self.communityboard.racks.filter(locked=True)
+
+
+class BulkOrderForm(ModelForm):
+    class Meta:
+        model = NYCDOTBulkOrder
 
 
 class NYCStreet(models.Model):
