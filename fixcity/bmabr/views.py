@@ -803,7 +803,7 @@ def bulk_order_add_form(request):
         else:
             flash_error('Please correct the following errors.', request)
     return render_to_response(
-        'bulk_order_create_form.html',
+        'bulk_order_add_form.html',
         {'request': request,
          'cb': cb,
          'form': form,
