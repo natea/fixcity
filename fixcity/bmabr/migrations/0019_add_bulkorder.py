@@ -8,6 +8,7 @@ class Migration:
     def forwards(self, orm):
         
         # Adding model 'NYCDOTBulkOrder'
+        db.start_transaction()
         db.create_table('bmabr_nycdotbulkorder', (
             ('id', orm['bmabr.nycdotbulkorder:id']),
             ('communityboard', orm['bmabr.nycdotbulkorder:communityboard']),
@@ -15,8 +16,11 @@ class Migration:
             ('date', orm['bmabr.nycdotbulkorder:date']),
         ))
         db.send_create_signal('bmabr', ['NYCDOTBulkOrder'])
+        db.commit_transaction()
 
         # That should have created a permission to create bulk orders...
+        # but we need a new transaction before we can use it.
+        db.start_transaction()
         from django.contrib.auth.models import Group, Permission
         perm = Permission.objects.get(codename='add_nycdotbulkorder')
         # Add a group with that permission.
@@ -61,6 +65,7 @@ class Migration:
         # (to signature: django.db.models.fields.DecimalField(max_digits=1000, decimal_places=100))
         db.alter_column(u'gis_cityracks', 'x', orm['bmabr.cityrack:x'])
         
+        db.commit_transaction()
     
     
     def backwards(self, orm):
