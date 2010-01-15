@@ -23,7 +23,7 @@ urlpatterns = patterns(
 
     (r'^geocode/$', 'fixcity.bmabr.views.geocode'),
     (r'^reverse/$', 'fixcity.bmabr.views.reverse_geocode'),
-    (r'^cbs/(?P<boro>\w+)$', 'fixcity.bmabr.views.cbs_for_boro'),
+    (r'^cbs/(?P<boro>\w+)/$', 'fixcity.bmabr.views.cbs_for_boro'),
 
     url(r'racks/$','fixcity.bmabr.views.racks_index', name='listracks'),
 
@@ -45,7 +45,9 @@ urlpatterns = patterns(
 
     (r'^communityboard/(?P<cb_id>\d+)/bulk_order/order.csv/$', 'fixcity.bmabr.views.bulk_order_csv'),
     (r'^communityboard/(?P<cb_id>\d+)/bulk_order/order.pdf/$', 'fixcity.bmabr.views.bulk_order_pdf'),
-    (r'^communityboard/(?P<cb_id>\d+)/bulk_order/$', 'fixcity.bmabr.views.bulk_order_form'),
+    (r'^communityboard/(?P<cb_id>\d+)/bulk_order/$', 'fixcity.bmabr.views.bulk_order_edit_form'),
+    (r'^bulk_order/$', 'fixcity.bmabr.views.bulk_order_add_form'),
+
     (r'communityboard/(?P<cb_id>\d+).kml','fixcity.bmabr.views.community_board_kml'),
     (r'borough/(?P<boro_id>\d+).kml', 'fixcity.bmabr.views.borough_kml'),
     (r'^cityracks.kml$', 'fixcity.bmabr.views.cityracks_kml'),

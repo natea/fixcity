@@ -37,7 +37,7 @@ from fixcity.bmabr.models import Borough
 from fixcity.bmabr.models import CityRack
 from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import CommunityBoard
-from fixcity.bmabr.models import NYCDOTBulkOrder
+from fixcity.bmabr.models import NYCDOTBulkOrder, BulkOrderForm
 from fixcity.bmabr.models import RackForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
 from fixcity.bmabr.models import Source, TwitterSource, EmailSource
@@ -752,34 +752,54 @@ def redirect_rack_urls(request):
 
 
 @permission_required('bmabr.add_nycdotbulkorder')
-def bulk_order_form(request, cb_id):
+def bulk_order_edit_form(request, cb_id):
     cb = get_object_or_404(CommunityBoard, gid=cb_id)
-    try:
-        bulk_order = NYCDOTBulkOrder.objects.get(communityboard=cb)
-        template = 'bulk_order_edit_form.html',
-    except NYCDOTBulkOrder.DoesNotExist:
-        bulk_order = None
-        template = 'bulk_order_create_form.html'
-
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
+    template = 'bulk_order_edit_form.html',
     if request.method == 'POST':
         if request.POST.get('delete'):
-            template = 'bulk_order_create_form.html',
-            if bulk_order is None:
-                flash_error('Order does not exist', request)
-            else:
-                bulk_order.delete()
-                flash('Bulk order deleted', request)
-        elif bulk_order is None:
-            bulk_order = NYCDOTBulkOrder(user=request.user, communityboard=cb)
-            bulk_order.save()
-            template = 'bulk_order_edit_form.html'
+            bulk_order.delete()
+            flash('Bulk order deleted', request)
         else:
+            # XXX form?
             flash_error("There is already a bulk order for this CB.", request)
     return render_to_response(
         template,
         {'request': request,
          'bulk_order': bulk_order,
          'cb': cb,
+         },
+        context_instance=RequestContext(request)
+        )
+
+@permission_required('bmabr.add_nycdotbulkorder')
+def bulk_order_add_form(request):
+    template = 'bulk_order_create_form.html',
+    cb = None
+    form = BulkOrderForm()
+    if request.method == 'POST':
+        cb_id = request.POST.get('cb_id')
+        cb = get_object_or_404(CommunityBoard, gid=cb_id)
+        bulk_order = NYCDOTBulkOrder.objects.filter(communityboard=cb)
+        if bulk_order:
+            flash_error("There is already a bulk order for this CB.", request)
+        else:
+            request.POST[u'communityboard'] = cb_id
+            form = BulkOrderForm(request.POST)
+            if form.is_valid():
+                bulk_order = form.save()
+                flash("Bulk order created!", request)
+                return HttpResponseRedirect(
+                    urlresolvers.reverse(bulk_order_edit_form,
+                                         kwargs={'cb_id': cb_id}))
+            else:
+                flash_error('Please correct the following errors.', request)
+
+    return render_to_response(
+        template,
+        {'request': request,
+         'cb': cb,
+         'form': form,
          },
         context_instance=RequestContext(request)
         )
@@ -823,7 +843,6 @@ def bulk_order_pdf(request, cb_id):
     # Close the PDF object cleanly, and we're done.
     pdf.showPage()
     pdf.save()
-
     return response
 
 

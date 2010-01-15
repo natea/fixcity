@@ -16,7 +16,8 @@ import unittest
 
 from django.contrib.gis.geos.point import Point
 
-from django.core.cache import cache        
+from django.core.cache import cache
+from django.utils import simplejson as json
 
 
 def clear_cache():
@@ -25,13 +26,32 @@ def clear_cache():
 
 class UserTestCaseBase(TestCase):
 
+
+    def setUp(self):
+        super(UserTestCaseBase, self).setUp()
+        self._make_user()
+
+    def tearDown(self):
+        del(self.user)
+        super(UserTestCaseBase, self).tearDown()
+        
     def _make_user(self, is_superuser=False):
-        user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
-                                        'funkentelechy')
-        user.is_superuser = is_superuser
-        user.save()
+        user = getattr(self, 'user', None)
+        if user is None:
+            user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
+                                            'funkentelechy')
+            user.save()
+        if is_superuser != user.is_superuser:
+            user.is_superuser = is_superuser
+            user.save()
+        self.user = user
+        return user
+
+    def _login(self, is_superuser=False):
+        user = self._make_user(is_superuser)
         self.client.login(username='bernie', password='funkentelechy')
         return user
+
 
 class TestSourceFactory(unittest.TestCase):
 
@@ -167,6 +187,25 @@ class TestUtilFunctions(unittest.TestCase):
         self.failUnless(result.get('rack'))
 
 
+class TestCbsForBoro(TestCase):
+
+    fixtures = ['communityboard_test_fixture.json']
+
+    def test_cbs_for_boro__invalid(self):
+        response = self.client.get('/cbs/not_an_int/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_cbs_for_boro__no_such_borough(self):
+        response = self.client.get('/cbs/123456789/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_cbs_for_boro(self):
+        response = self.client.get('/cbs/1/')  # 1 = Manhattan
+        self.assertEqual(response['Content-Type'], 'application/json')
+        parsed = json.loads(response.content)
+        self.assertEqual(parsed,
+                         [[1, 1], [2, 2], [64, 13]])
+        
 class TestStreetsFunctions(TestCase):
 
     # This is a tiny subset of brooklyn CB 1, enough for a couple tests.
@@ -236,7 +275,7 @@ class TestProfile(UserTestCaseBase):
     def test_profile(self):
         response = self.client.get('/profile/')
         self.assertEqual(response.status_code, 302)
-        user = self._make_user()
+        self._login()
         response = self.client.get('/profile/')
         self.assertEqual(response.status_code, 200)
         
@@ -314,7 +353,7 @@ class TestRackView(UserTestCaseBase):
         self.assertEqual(response.context['user_suggested_this_rack'], False)
 
     def test_rack_view_logged_in(self):
-        user = self._make_user()
+        user = self._login()
         rack = Rack(address='148 Lafayette St, New York NY',
                     title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
@@ -334,7 +373,7 @@ class TestVotes(UserTestCaseBase):
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         rack.save()
-        user = self._make_user()
+        self._login()
         response = self.client.get('/racks/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"votes": 0}')
@@ -348,7 +387,7 @@ class TestVotes(UserTestCaseBase):
         rack.save()
         response = self.client.post('/racks/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 302)
-        user = self._make_user()
+        self._login()
         response = self.client.post('/racks/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '{"votes": 1}')
@@ -378,25 +417,41 @@ class TestBulkOrders(UserTestCaseBase):
         bo.save()
         return bo
 
-    def test_bulk_order_form__unprivileged(self):
+    def test_bulk_order_edit_form__unprivileged(self):
         response = self.client.get('/communityboard/999/bulk_order/')
         self.assertEqual(response.status_code, 302)
         self.failUnless(response.has_header('location'))
         self.assertEqual(response['location'],
                          'http://testserver/accounts/login/?next=/communityboard/999/bulk_order/')
         
-    def test_bulk_order_form__missing(self):
-        user = self._make_user(is_superuser=True)
+    def test_bulk_order_edit_form__missing(self):
+        user = self._login(is_superuser=True)
         response = self.client.get('/communityboard/999/bulk_order/')
         self.assertEqual(response.status_code, 404)
 
-    def test_bulk_order_form(self):
+    def test_bulk_order_edit_form__get(self):
         bo = self._make_bulk_order()
         cb = bo.communityboard
         response = self.client.get('/communityboard/%d/bulk_order/' % cb.pk)
+        self.assertEqual(response.status_code, 302)
+        self._login(is_superuser=True)
+        response = self.client.get('/communityboard/%d/bulk_order/' % cb.pk)
+        self.assertEqual(response.status_code, 200)
+        
+
+    def test_bulk_order_edit_form__post(self):
+        bo = self._make_bulk_order()
+        # XXX do something
+
+
+    def test_bulk_order_add_form__get(self):
+        response = self.client.get('/bulk_order/')
+        self.assertEqual(response.status_code, 302)
+        self._login(is_superuser=True)
+        response = self.client.get('/bulk_order/')
         self.assertEqual(response.status_code, 200)
 
-    def test_bulk_order__create(self):
+    def test_bulk_order_add_form__post(self):
         from fixcity.bmabr.models import NYCDOTBulkOrder
         bo = self._make_bulk_order()
         cb = bo.communityboard
@@ -404,8 +459,13 @@ class TestBulkOrders(UserTestCaseBase):
         # There's no BO for this community board now...
         self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
                          0)
-        response = self.client.post('/communityboard/%d/bulk_order/' % cb.pk)
-        self.assertEqual(response.status_code, 200)
+        user = self._login(is_superuser=True)
+        response = self.client.post('/bulk_order/', {'cb_id': cb.pk,
+                                                     'user': user.pk,
+                                                     'organization': 'TOPP'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'],
+                         'http://testserver/communityboard/%d/bulk_order/' % cb.pk)
         # There should be a BO now...
         self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
                          1)
