@@ -26,6 +26,13 @@ def clear_cache():
 
 class UserTestCaseBase(TestCase):
 
+    """Base class providing some conveniences
+    for creating a user and logging in.
+    """
+
+    username = 'bernie'
+    password = 'funkentelechy'
+    email = 'bernieworrell@funk.org'
 
     def setUp(self):
         super(UserTestCaseBase, self).setUp()
@@ -38,8 +45,7 @@ class UserTestCaseBase(TestCase):
     def _make_user(self, is_superuser=False):
         user = getattr(self, 'user', None)
         if user is None:
-            user = User.objects.create_user('bernie', 'bernieworrell@funk.org',
-                                            'funkentelechy')
+            user = User.objects.create_user(self.username, self.email, self.password)
             user.save()
         if is_superuser != user.is_superuser:
             user.is_superuser = is_superuser
@@ -49,7 +55,7 @@ class UserTestCaseBase(TestCase):
 
     def _login(self, is_superuser=False):
         user = self._make_user(is_superuser)
-        self.client.login(username='bernie', password='funkentelechy')
+        self.client.login(username=self.username, password=self.password)
         return user
 
 
