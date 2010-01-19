@@ -30,6 +30,29 @@ jQuery(document).ready(function($) {
   } catch(err) {
   // no OpenLayers - we're probably on a static, mapless page
   }
+
+	$('#content form .required').each(function () {
+		var obj=$(this);
+		if(obj.val() != '') {
+			obj.removeClass('required')
+		}
+	}).bind("focus", function (event) {
+	  $(this).removeClass('required');
+	}).bind("blur", function (event) {
+	  var obj = $(this);
+	  if (obj.val() == "")  {
+	    obj.addClass('required');
+	  }
+	}).bind("change", function (event) {
+	  var obj = $(this);
+	  if (obj.val() == "")  {
+	    obj.addClass('required');
+	  }
+	});
+
+	$('#content form .section h2').click(function() {$('#content form .section').removeClass('expanded').addClass('collapsed');$(this).parent('.section').removeClass('collapsed').addClass('expanded');});
+	$('#content form .section').addClass('collapsed');
+	$('#content form .section:first').removeClass('collapsed').addClass('expanded');
 });
 
 function expandOnce(selector, text) {
@@ -43,26 +66,6 @@ jQuery.fn.infoSuffixify = function() { //chainable
     jQuery('<img src="/site_media/img/info.png" alt="More information about this field" title="' + obj.attr('title') + '" />').click(function () {return false;}).appendTo('label[for="' + obj.attr('id') + '"]');
   });
 };
-
-$('#content form .required').each(function () {
-	var obj=$(this);
-	if(obj.val() != '') {
-		obj.removeClass('required')
-	}
-}).bind("focus", function (event) {
-  $(this).removeClass('required');
-}).bind("blur", function (event) {
-  var obj = $(this);
-  if (obj.val() == "")  {
-    obj.addClass('required');
-  }
-}).bind("change", function (event) {
-  var obj = $(this);
-  if (obj.val() == "")  {
-    obj.addClass('required');
-  }
-});
-
 
 // Taken from http://www.andrewpeace.com/textarea-maxlength.html
 jQuery.fn.truncate = function(len)
