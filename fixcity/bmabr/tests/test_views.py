@@ -10,14 +10,16 @@ from fixcity.bmabr.views import _preprocess_rack_form
 
 import lxml.objectify
 
-import datetime
 import mock
 import unittest
+
+from datetime import datetime
 
 from django.contrib.gis.geos.point import Point
 
 from django.core.cache import cache
 from django.utils import simplejson as json
+
 
 
 def clear_cache():
@@ -221,23 +223,23 @@ class TestStreetsFunctions(TestCase):
         from fixcity.bmabr.views import cross_streets_for_rack
         rack = Rack(address='67 s 3rd st, brooklyn, ny 11211',
                     title='williamsburg somewhere',
-                    date=datetime.datetime.utcfromtimestamp(0),
+                    date=datetime.utcfromtimestamp(0),
                     email='john@doe.net',
                     location=Point(-73.964858020364, 40.713349294636,
                                     srid=SRID),
                     )
         self.assertEqual(cross_streets_for_rack(rack),
-                         "between WYTHE AV and BERRY ST")
+                         (u"WYTHE AV", u"BERRY ST"))
 
     def test_cross_streets_outside_nyc(self):
         from fixcity.bmabr.views import cross_streets_for_rack
         rack = Rack(address='i have no idea where this is',
                     title='far away',
-                    date=datetime.datetime.utcfromtimestamp(0),
+                    date=datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         self.assertEqual(cross_streets_for_rack(rack),
-                         "(no cross streets found; not in NYC?)")
+                         (None, None))
 
 
 
@@ -250,7 +252,7 @@ class TestNeighborhoodForRack(TestCase):
         from fixcity.bmabr.views import neighborhood_for_rack
         rack = Rack(address='i have no idea where this is',
                     title='far away',
-                    date=datetime.datetime.utcfromtimestamp(0),
+                    date=datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         self.assertEqual(neighborhood_for_rack(rack),
@@ -260,7 +262,7 @@ class TestNeighborhoodForRack(TestCase):
         from fixcity.bmabr.views import neighborhood_for_rack
         rack = Rack(address='67 s 3rd st, brooklyn, ny 11211',
                     title='williamsburg somewhere',
-                    date=datetime.datetime.utcfromtimestamp(0),
+                    date=datetime.utcfromtimestamp(0),
                     email='john@doe.net',
                     location=Point(-73.964858020364, 40.713349294636,
                                     srid=SRID),
@@ -314,7 +316,7 @@ class TestKMLViews(TestCase):
         
     def test_rack_requested_kml__one(self):
         rack = Rack(address='148 Lafayette St, New York NY',
-                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    title='TOPP', date=datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         rack.save()
@@ -348,7 +350,7 @@ class TestRackView(UserTestCaseBase):
 
     def test_rack_view_anonymous(self):
         rack = Rack(address='148 Lafayette St, New York NY',
-                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    title='TOPP', date=datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     user='somebody',
                     )
@@ -361,7 +363,7 @@ class TestRackView(UserTestCaseBase):
     def test_rack_view_logged_in(self):
         user = self._login()
         rack = Rack(address='148 Lafayette St, New York NY',
-                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    title='TOPP', date=datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     user=user.username,
                     )
@@ -375,7 +377,7 @@ class TestVotes(UserTestCaseBase):
 
     def test_get(self):
         rack = Rack(address='148 Lafayette St, New York NY',
-                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    title='TOPP', date=datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         rack.save()
@@ -387,7 +389,7 @@ class TestVotes(UserTestCaseBase):
 
     def test_post(self):
         rack = Rack(address='148 Lafayette St, New York NY',
-                    title='TOPP', date=datetime.datetime.utcfromtimestamp(0),
+                    title='TOPP', date=datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         rack.save()
@@ -419,6 +421,20 @@ class TestBulkOrders(UserTestCaseBase):
                             the_geom=geom,
                             borough=borough)
         cb.save()
+
+        from fixcity.bmabr.models import Rack
+        from fixcity.bmabr.models import TwitterSource
+        ts = TwitterSource(name='twitter', user='joe', status_id='99')
+
+        rack = Rack(location='POINT (0.5 0.5)', email=user.email,
+                    user=user.username,
+                    title='A popular bar',
+                    address='123 Something St, Brooklyn NY',
+                    date=datetime.utcfromtimestamp(0),
+                    source=ts,
+                    )
+        rack.save()
+
         bo = NYCDOTBulkOrder(user=user, communityboard=cb)
         bo.save()
         return bo

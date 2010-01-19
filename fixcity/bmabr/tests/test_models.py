@@ -72,7 +72,7 @@ class TestRackForm(TestCase):
         data = self.data.copy()
         # Jump through a few hoops to simulate a real upload.
         import os.path
-        HERE = os.path.abspath(os.path.dirname(__file__))
+        HERE = os.path.abspath(os.path.dirname(__file__))i
         path = os.path.join(HERE, 'files', 'test_exif.jpg')
         content = open(path).read()
         photofile = TemporaryUploadedFile('test_exif.jpg', 'image/jpeg',
