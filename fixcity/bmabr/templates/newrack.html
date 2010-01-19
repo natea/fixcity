@@ -36,18 +36,26 @@ jQuery(document).ready(function() {loadMap();});
 
 {% block content %}
 <form id="addrack-form" action="." method="POST" enctype="multipart/form-data">
+  <div class="section">
+    <h2>Step 1: Locate <small class="required">(required)</small></h2>
     <label for="address">Street Address</label>
-    <div class="required"><input id="address" name="address" type="text"
-                                 title="Enter an address or click a point on the map"
-                                 value="{{request.POST.address}}" />
-    <input type="hidden" id="location" name="location" value="{{request.POST.location}}" />
-        {{ form.address.errors }} {{ form.location.errors }} </div>
+    <input id="address" name="address" class="required" type="text" title="Enter an address or click a point on the map" value="{{request.POST.address}}" />
+    <div class="helptext">Enter an address or click a point on the map. <a href="/placement-guide/">Location Guidelines</a></div>
+    <input type="hidden" id="location" name="location" class="required" value="{{request.POST.location}}" />
+    {{ form.address.errors }} {{ form.location.errors }}
     <label for="title">Establishment</label>
-    <div class="required"><input id="title" name="title" type="text"
-                                 title="What are you trying to get to? i.e. Key Foods, PS 121, restaurants"
-                                 value="{{request.POST.title}}"
-                           />{{ form.title.errors }}</div>
-
+    <input id="title" name="title" class="required" type="text" value="{{request.POST.title}}" />
+    <div class="helptext">Which places will this rack provide Bike Parking for? i.e. Key Foods, PS 121, restaurants…</div>
+    {{ form.title.errors }}
+    <label for="email">Your Email</label>
+    <input id="email" type="text" class="required"name="email" value="{{request.POST.email|default:user_email}}" />
+    <div class="helptext">This will not be shared, but we may wish to contact you.</div>
+    {{ form.email.errors }}
+    <input type="hidden" name="user" value="{{user.username}}" />
+    {{ form.user.errors }}
+  </div><!-- /.section -->
+  <div class="section">
+    <h2>Step 2: Description/Photo <small class="optional">(optional)</small></h2>
     <label for="description">Description</label>
       <textarea id="description" name="description"
                   title="Why are bike racks needed here? Other details?">{{ request.POST.description }}</textarea>
@@ -60,19 +68,34 @@ jQuery(document).ready(function() {loadMap();});
     {{ form.photo.errors }}
 
     <div id="statement-wrap">
-      <label for="statement">Statement of Support <small class="optional">(<a href="/site_media/resources/SupportStatement.pdf">optional</a>)</small></label>
+      <label for="statement">Statement of Support</label>
       <input id="statement" name="statement" type="file" value="" size="20" />
       <div id="fakestatement" class="selfclear"><input name="fakestatementinput" id="fakestatementinput" type="text" title="" /><span class="fakebutton">browse</span></div>
     </div><!-- /#statement-wrap -->
 
-    <label for="email">Your Email</label>
-    <div class="required">
-     <input id="email" type="text" name="email"
-            value="{{request.POST.email|default:user_email}}" title="This will not be shared, but we may wish to contact you." />
-     {{ form.email.errors }}
-     <input type="hidden" name="user" value="{{user.username}}" />
-     {{ form.user.errors }}
-    </div>
+  </div><!-- /.section -->
+  <div class="section">
+    <h2>Step 3: Verification / Details <small class="optional">(optional)</small></h2>
+    <fieldset class="verification">
+      <h3 class="restrictive-clearance">Most Restrictive</h3>
+      <div><input id="dummy1" name="dummy1" type="checkbox" /><label for="dummy1">15' Crosswalks &#038; special curb areas: bus stops, taxi stands, hotel loading zones Franchised structures: sidewalk cafes, bus &#038; bike shelters, toilets, newstands</label></div>
+      <div><input id="dummy2" name="dummy2" type="checkbox" /><label for="dummy2">8' Fire hydrants</label></div>
+      <div><input id="dummy3" name="dummy3" type="checkbox" /><label for="dummy3">5' Building entrances &#038; driveways</label></div>
+      <div><input id="dummy4" name="dummy4" type="checkbox" /><label for="dummy4">3' Hatches &#038; subway entrances  (railings, stairs, elevators, etc.)</label></div>
+    </fieldset>
+    <fieldset class="verification">
+      <h3 class="moderate-clearance">Moderately Restrictive</h3>
+      <div><input id="dummy5" name="dummy6" type="checkbox" /><label for="dummy5">5' Benches, planters, telephones, mailboxes</label></div>
+      <div><input id="dummy5" name="dummy6" type="checkbox" /><label for="dummy6">5' Signs, parking meters, lamp posts, standpipes, etc.)</label></div>
+    </fieldset>
+    <fieldset class="verification">
+      <h3 class="permissive-clearance">Least Restrictive</h3>
+      <div><input id="dummy7" name="dummy7" type="checkbox" /><label for="dummy7">11' wide public sidewalk</label></div>
+      <div><input id="dummy8" name="dummy8" type="checkbox" /><label for="dummy8">3' Utility covers, tree pit edges, grates with hinges</label></div>
+      <div><input id="dummy9" name="dummy9" type="checkbox" /><label for="dummy9">Un-cracked concrete surface</label></div>
+    </fieldset>
+  </div><!-- /.section -->
+
     <input type="hidden" name="date" value="{% now "Y-m-d H:i:s" %}"/>
 
     <!-- These flags will trigger server-side processing of location
@@ -93,7 +116,6 @@ jQuery(document).ready(function() {loadMap();});
 	<div id="request-map" class="cityracks">
 	  <div id="map-legend" class="pngfix"></div>
 	</div>
-        {% include "quickcheck.html" %}
 </div><!-- /#suggest -->
 {% endblock %}
 
@@ -105,11 +127,26 @@ jQuery(document).ready(function() {loadMap();});
 <script type="text/javascript">
 //<![CDATA[
   jQuery(document).ready(function($) {
-    $('input#address, input#title, textarea#description, input#email, input#fakebrowseinput').inlineInfoTextify();
-    $('input#browse').change(function( objEvent ){$('#fakebrowseinput').val($(this).val()).removeClass("overlabel");});
-    $('input#statement').change(function( objEvent ){$('#fakestatementinput').val($(this).val()).removeClass("overlabel");});
+    $('input#browse').change(function( objEvent ){$('#fakebrowseinput').val($(this).val());});
+    $('input#statement').change(function( objEvent ){$('#fakestatementinput').val($(this).val());});
     expandOnce('#statement-wrap', 'Add Statement of Support');
     $('textarea#description').maxLength(300);
+    $('#content form .section h2').click(function() {$('#content form .section').removeClass('expanded').addClass('collapsed');$(this).parent('.section').removeClass('collapsed').addClass('expanded');});
+    $('#content form .section').addClass('collapsed');
+    $('#content form .section:first').removeClass('collapsed').addClass('expanded');
+    $('#content form .required').each(function () {var obj=$(this);if(obj.val()!=''){obj.removeClass('required')}}).bind("focus", function (event) {
+      $(this).removeClass('required');
+    }).bind("blur", function (event) {
+      var obj = $(this);
+      if (obj.val() == "")  {
+        obj.addClass('required');
+      }
+    }).bind("change", function (event) {
+      var obj = $(this);
+      if (obj.val() == "")  {
+        obj.addClass('required');
+      }
+    });
   });
 //]]>
 </script>
