@@ -158,10 +158,17 @@ class TestNYCDOTBulkOrder(TestCase):
         self.assertEqual(set(cb.racks), set([rack]))
         self.assertEqual(set(bo.racks), set())
 
-        # Saving marks all racks in the CB as locked for this bulk order.
+        # Saving doesn't affect the rack count...
+
+        bo.save()
+        self.assertEqual(set(bo.racks), set([]))
+        self.failIf(bo.approved)
+        # But approving marks all racks in the CB as locked for this bulk order.
+        bo.approve()
         bo.save()
         self.assertEqual(set(bo.racks), set([rack]))
         self.assertEqual(set(bo.racks), set(cb.racks))
+        self.assert_(bo.approved)
         # But gahhh. Django core devs think it's reasonable to chase
         # down all your references to a changed instance and reload
         # them by re-looking up the object by ID. Otherwise the state

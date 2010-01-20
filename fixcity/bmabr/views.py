@@ -8,6 +8,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
+from django.core.mail import send_mail
 from django.core.paginator import EmptyPage
 from django.core.paginator import InvalidPage
 from django.core.paginator import Paginator
@@ -15,7 +16,7 @@ from django.core import urlresolvers
 
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator as token_generator
 
 from django.contrib.comments.forms import CommentForm
@@ -780,7 +781,7 @@ def bulk_order_edit_form(request, cb_id):
         context_instance=RequestContext(request)
         )
 
-@permission_required('bmabr.add_nycdotbulkorder')
+@login_required
 def bulk_order_add_form(request):
     cb = None
     form = BulkOrderForm()
@@ -796,10 +797,32 @@ def bulk_order_add_form(request):
                 flash_error("There is already a bulk order for this CB.", request)
             else:
                 bulk_order = form.save()
-                flash("Bulk order created!", request)
-                return HttpResponseRedirect(
-                    urlresolvers.reverse(bulk_order_edit_form,
-                                         kwargs={'cb_id': cb_gid}))
+                if request.user.has_perm('bmabr.add_nycdotbulkorder'):
+                    flash("Bulk order created!", request)
+                    bulk_order.approve()
+                    bulk_order.save()
+                    return HttpResponseRedirect(
+                        urlresolvers.reverse(bulk_order_edit_form,
+                                             kwargs={'cb_id': cb_gid}))
+                
+                else:
+                    flash("Thanks for your request. "
+                          "The site admins will check out your request and "
+                          "get back to you soon!",
+                          request
+                          )
+                    subject = 'New bulk order request needs approval'
+                    approval_uri = request.build_absolute_uri(
+                        urlresolvers.reverse(
+                            bulk_order_approval_form, args=[bulk_order.id]))
+                    body = """
+A new bulk order has been submitted.
+To approve this user and this order, go to:
+%s
+""" % approval_uri
+                    send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
+                              settings.BULK_ORDER_APPROVAL_EMAIL,
+                              fail_silently=False)
         else:
             flash_error('Please correct the following errors.', request)
     return render_to_response(
@@ -810,6 +833,38 @@ def bulk_order_add_form(request):
          },
         context_instance=RequestContext(request)
         )
+
+@permission_required('auth.change_user')
+def bulk_order_approval_form(request, bo_id):
+    bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    if request.method == 'POST':
+        bo.approve()
+        bo.save()
+        group = Group.objects.get(name='bulk_ordering')
+        bo.user.groups.add(group)
+        bo.user.save()
+        subject = 'Your bulk order has been approved for submission to the DOT'
+        body = """
+Thanks for your bulk order request. Our site admins have given
+you approval to submit this bulk order to the NYC Department of
+Transportation.
+
+To finish your bulk order, follow this link:
+%s
+""" % request.build_absolute_uri(urlresolvers.reverse(
+                bulk_order_edit_form, kwargs={'cb_id': bo.communityboard.gid}))
+
+        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
+                  [bo.user.email],
+                  fail_silently=False)
+
+    return render_to_response('bulk_order_approval_form.html',
+       {'request':request,
+        'bulk_order': bo,
+        'cb': bo.communityboard,
+        },
+       context_instance=RequestContext(request))
+    
 
 def bulk_order_csv(request, cb_id):
     cb = get_object_or_404(CommunityBoard, gid=cb_id)

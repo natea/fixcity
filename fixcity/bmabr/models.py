@@ -270,15 +270,13 @@ class NYCDOTBulkOrder(models.Model):
     date = models.DateTimeField(auto_now=True)
     organization = models.CharField(max_length=128, blank=False)
     rationale = models.TextField(blank=False)
+    approved = models.BooleanField(default=False)
 
-    def save(self, *args, **kw):
-        """
-        Lock all racks in the CB
-        """
-        super(NYCDOTBulkOrder, self).save(*args, **kw)
+    def approve(self):
         for rack in self.communityboard.racks:
             rack.locked = True
             rack.save()
+        self.approved = True
 
     def delete(self, *args, **kw):
         for rack in self.racks:

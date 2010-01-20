@@ -11,6 +11,8 @@ class Migration:
         db.add_column('bmabr_nycdotbulkorder', 'organization', orm['bmabr.nycdotbulkorder:organization'])
         
         db.add_column('bmabr_nycdotbulkorder', 'rationale', orm['bmabr.nycdotbulkorder:rationale'])
+
+        db.add_column('bmabr_nycdotbulkorder', 'approved', orm['bmabr.nycdotbulkorder:approved'])
     
     
     def backwards(self, orm):
@@ -18,6 +20,7 @@ class Migration:
         # Deleting field 'NYCDOTBulkOrder.organization'
         db.delete_column('bmabr_nycdotbulkorder', 'organization')
         db.delete_column('bmabr_nycdotbulkorder', 'rationale')
+        db.delete_column('bmabr_nycdotbulkorder', 'approved')
     
     
     models = {
@@ -107,8 +110,9 @@ class Migration:
             'communityboard': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.CommunityBoard']"}),
             'date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'rationale': ('django.db.models.fields.TextField', [], {}),
+            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128', 'blank': 'False'}),
+            'rationale': ('django.db.models.fields.TextField', [], {'blank': 'False'}),
+            'approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
         'bmabr.nycstreet': {
