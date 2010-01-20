@@ -511,7 +511,8 @@ class TestBulkOrders(UserTestCaseBase):
 
         if response.context is not None:
             self.assertEqual(response.context['form'].errors, {})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], 'http://testserver/blank/')
         # There should be a BO now...
         self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
                          1)

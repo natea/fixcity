@@ -10,6 +10,8 @@ urlpatterns = patterns(
     '',
     (r'^$', 'fixcity.bmabr.views.index'),
 
+    (r'^blank/$', 'fixcity.bmabr.views.blank_page'),
+
     # Account URL overrides.
     # Note these go first because django just iterates over these
     # patterns and uses the FIRST match.

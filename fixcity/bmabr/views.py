@@ -91,6 +91,14 @@ def index(request):
        context_instance=RequestContext(request)
                               )
 
+def blank_page(request):
+    """ Useful for pages that just need to deplay a flash message and
+    nothing else, eg. after submitting a form where there's no other
+    obvious next page to redirect to.
+    """
+    return render_to_response(
+        'base.html', {}, context_instance=RequestContext(request))
+                      
 @login_required
 def profile(request):
     user = request.user
@@ -822,6 +830,7 @@ To approve this user and this order, go to:
                     send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
                               settings.BULK_ORDER_APPROVAL_EMAIL,
                               fail_silently=False)
+                    return HttpResponseRedirect(urlresolvers.reverse(blank_page))
         else:
             flash_error('Please correct the following errors.', request)
     return render_to_response(
