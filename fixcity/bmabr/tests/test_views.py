@@ -440,24 +440,24 @@ class TestBulkOrders(UserTestCaseBase):
         return bo
 
     def test_bulk_order_edit_form__unprivileged(self):
-        response = self.client.get('/communityboard/999/bulk_order/')
+        response = self.client.get('/bulk_order/999/edit/')
         self.assertEqual(response.status_code, 302)
         self.failUnless(response.has_header('location'))
         self.assertEqual(response['location'],
-                         'http://testserver/accounts/login/?next=/communityboard/999/bulk_order/')
+                         'http://testserver/accounts/login/?next=/bulk_order/999/edit/')
         
     def test_bulk_order_edit_form__missing(self):
         user = self._login(is_superuser=True)
-        response = self.client.get('/communityboard/999/bulk_order/')
+        response = self.client.get('/bulk_order/123456789/edit/')
         self.assertEqual(response.status_code, 404)
 
     def test_bulk_order_edit_form__get(self):
         bo = self._make_bulk_order()
         cb = bo.communityboard
-        response = self.client.get('/communityboard/%d/bulk_order/' % cb.pk)
+        response = self.client.get('/bulk_order/%d/edit/' % bo.id)
         self.assertEqual(response.status_code, 302)
         self._login(is_superuser=True)
-        response = self.client.get('/communityboard/%d/bulk_order/' % cb.pk)
+        response = self.client.get('/bulk_order/%d/edit/' % bo.id)
         self.assertEqual(response.status_code, 200)
         
 
@@ -488,12 +488,12 @@ class TestBulkOrders(UserTestCaseBase):
         if response.context is not None:
             self.assertEqual(response.context['form'].errors, [])
         self.assertEqual(response.status_code, 302)
-        
-        self.assertEqual(response['location'],
-                         'http://testserver/communityboard/%d/bulk_order/' % cb.pk)
         # There should be a BO now...
         self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
                          1)
+        bo_id = NYCDOTBulkOrder.objects.get(communityboard=cb).id
+        self.assertEqual(response['location'],
+                         'http://testserver/bulk_order/%d/edit/' % bo_id)
 
     def test_bulk_order_pdf(self):
         bo = self._make_bulk_order()

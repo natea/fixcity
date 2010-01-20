@@ -754,10 +754,9 @@ def redirect_rack_urls(request):
 
 
 @permission_required('bmabr.add_nycdotbulkorder')
-def bulk_order_edit_form(request, cb_id):
-
-    cb = get_object_or_404(CommunityBoard, gid=cb_id)
-    bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
+def bulk_order_edit_form(request, bo_id):
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    cb = bulk_order.communityboard
     form = BulkOrderForm()
     if request.method == 'POST':
         post = request.POST.copy()
@@ -803,7 +802,7 @@ def bulk_order_add_form(request):
                     bulk_order.save()
                     return HttpResponseRedirect(
                         urlresolvers.reverse(bulk_order_edit_form,
-                                             kwargs={'cb_id': cb_gid}))
+                                             kwargs={'bo_id': bulk_order.id}))
                 
                 else:
                     flash("Thanks for your request. "
@@ -852,7 +851,7 @@ Transportation.
 To finish your bulk order, follow this link:
 %s
 """ % request.build_absolute_uri(urlresolvers.reverse(
-                bulk_order_edit_form, kwargs={'cb_id': bo.communityboard.gid}))
+                bulk_order_edit_form, kwargs={'bo_id': bo.id}))
 
         send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
                   [bo.user.email],
