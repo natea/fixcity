@@ -137,46 +137,52 @@ function loadMap(draggable) {
 
   map.addLayers([osm]);
 
-  var cityracksStyle = new OpenLayers.Style({
+  var createLayerFn = function(iconUrl, layerName, kmlUrl) {
+      var layerStyle = new OpenLayers.Style({
         pointRadius: "${radius}",
-        externalGraphic: "${url}"
-    },
-    {
-    context: {
-      url: function(feature) {
-        return "/site_media/img/rack-city-icon.png";
+        externalGraphic: iconUrl
       },
-      radius: function(feature) {
-        return Math.min(feature.attributes.count*2, 8) + 5;
-      }
-    }});
-  var cityracksLayer = new OpenLayers.Layer.Vector("CityRacks", {
+      {
+      context: {
+        radius: function(feature) {
+          return Math.min(feature.attributes.count*2, 8) + 5;
+        }
+      }});
+      var newLayer = new OpenLayers.Layer.Vector(layerName, {
           projection: map.displayProjection,
           strategies: [
                        new OpenLayers.Strategy.BBOX(),
                        new OpenLayers.Strategy.Cluster()
                        ],
           protocol: new OpenLayers.Protocol.HTTP({
-                  url: '/cityracks.kml',
+                  url: kmlUrl,
                   params: {},
                   format: new OpenLayers.Format.KML()
               }),
           styleMap: new OpenLayers.StyleMap({
-                        "default": cityracksStyle
+                        "default": layerStyle
               })
       });
-  var cityracksVisibilityFn = function() {
+      return newLayer;
+  };
+  var cityracksLayer = createLayerFn('/site_media/img/rack-city-icon.png', 'cityracks', '/cityracks.kml');
+  var suggestedLayer = createLayerFn('/site_media/img/rack-verified-icon.png', 'suggestedracks', '/racks/requested.kml');
+  var showLayersFn = function() {
       if (map.getZoom() >= 16) {
           cityracksLayer.setVisibility(true);
+          suggestedLayer.setVisibility(true);
       } else {
           cityracksLayer.setVisibility(false);
+          suggestedLayer.setVisibility(false);
       }
   };
   map.events.on({
-          moveend: cityracksVisibilityFn
+          moveend: showLayersFn
   });
   cityracksLayer.setVisibility(false);
+  suggestedLayer.setVisibility(false);
   map.addLayer(cityracksLayer);
+  map.addLayer(suggestedLayer);
 
   post_loadmap(map, geometry);
 }
