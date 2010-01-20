@@ -1,5 +1,6 @@
 {% load voting_tags %}
 {% load comments %}
+{% load rackheart_tags %}
 {% if not page_obj.object_list %}
 <div id="flash-message">
   <div class="flash error pngfix">
@@ -25,7 +26,8 @@
         {% if user.is_authenticated %}<a class="edit" href="{% url editrack rack.id %}">Edit</a>{% endif %}
         <a class="rack-comments {% if user.is_authenticated %} rack-comments-active{% endif %}" href="{{ rack.get_absolute_url }}#add-comment" title="Add a comment!">{{ comment_count }}</a>
         {% vote_by_user request.user on rack as user_likes_this_rack %}
-        {% if user.is_authenticated and not user_likes_this_rack and not user_suggested_this_rack %}
+        {% can_heart request.user rack as canheart %}
+        {% if canheart %}
           <a class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong></a>
         {% else %}
           <span class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" >{{ score.score }}</span>
