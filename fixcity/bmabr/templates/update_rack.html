@@ -31,51 +31,75 @@ jQuery(document).ready(function() {loadMap();});
 
 {% block content %}
 <form id="addrack-form" action="." method="POST" enctype="multipart/form-data">
+  <div class="section">
+    <h2>Step 1: Locate <small class="required">(required)</small></h2>
     <label for="address">Street Address</label>
-    <div class="required"><input id="address" name="address" type="text"
-                                 title="Enter an address or click a point on the map"
-                                 value="{{request.POST.address|default:rack.address}}" />
-    <input type="hidden" id="location" name="location" value="{{wkt}}" />
-        {{ form.address.errors }} {{ form.location.errors }}
-    </div>
+    <input id="address" name="address" class="required" type="text" title="Enter an address or click a point on the map" value="{{request.POST.address|default:rack.address}}" />
+    <div class="helptext">Enter an address or click a point on the map. <a href="/placement-guide/">Location Guidelines</a></div>
+    <input type="hidden" id="location" name="location" class="required" value="{{wkt}}" />
+    {{ form.address.errors }} {{ form.location.errors }}
     <label for="title">Establishment</label>
-    <div class="required"><input id="title" name="title" type="text"
-                                 title="What are you trying to get to? i.e. Key Foods, PS 121, restaurants"
-                                 value="{{request.POST.title|default:rack.title}}"
-                           />{{ form.title.errors }}</div>
-
-    <label for="description">Description</label>
-      <textarea id="description" name="description"
-                  title="Why are bike racks needed here? Other details?">{{ request.POST.description|default:rack.description }}</textarea>
-    {{ form.description.errors }}
-    <label for="browse">Photo</label>
-    {% if rack.photo %}
-      <img src="{{rack.photo.extra_thumbnails.large}}" />
-      <br />
-    {% else %}
-      <div>No photo uploaded.</div>
-    {% endif %}
-    {{ form.photo.errors }}
-    
-    <div id="photo-wrap">
-      <label for="fakebrowseinput">{% if rack.photo %}Replace{% else %}Add{% endif %} Photo</label>
-      <input id="browse" name="photo" type="file" value="{{request.FILES.photo.name}}" size="20" />
-      <div id="fakebrowse" class="selfclear"><input name="fakebrowseinput" id="fakebrowseinput" type="text" title="JPG, GIF or PNG files - 5MB maximum" /><span class="fakebutton">browse</span></div>
-    </div><!-- /#photo-wrap -->
-    
-    <div id="statement-wrap">
-      <label for="statement">Statement of Support <small class="optional">(<a href="/site_media/resources/SupportStatement.pdf">optional</a>)</small></label>
-      <input id="statement" name="statement" type="file" value="" size="20" />
-      <div id="fakestatement" class="selfclear"><input name="fakestatementinput" id="fakestatementinput" type="text" title="" /><span class="fakebutton">browse</span></div>
-    </div><!-- /#statement-wrap -->
-     
-    <!-- XXX Do we want to update date on edit? -->
-    <input type="hidden" name="date" value="{{rack.date}}"/>
-
+    <input id="title" name="title" class="required" type="text" value="{{request.POST.title|default:rack.title}}" />
+    <div class="helptext">Which places will this rack provide Bike Parking for? i.e. Key Foods, PS 121, restaurants…</div>
+    {{ form.title.errors }}
     <div id="email-wrap">
      <label>Created By</label>
      <div>{{creator}}</div>
     </div>
+  </div><!-- /.section -->
+  <div class="section">
+    <h2>Step 2: Description/Photo <small class="optional">(optional)</small></h2>
+    <label for="description">Description</label>
+      <textarea id="description" name="description"
+                  title="Why are bike racks needed here? Other details?">{{ request.POST.description|default:rack.description }}</textarea>
+      {{ form.description.errors }}
+      <label for="browse">Photo</label>
+      {% if rack.photo %}
+        <img src="{{rack.photo.extra_thumbnails.large}}" />
+        <br />
+      {% else %}
+        <div>No photo uploaded.</div>
+      {% endif %}
+      {{ form.photo.errors }}
+      <div id="photo-wrap">
+        <label for="fakebrowseinput">{% if rack.photo %}Replace{% else %}Add{% endif %} Photo</label>
+        <input id="browse" name="photo" type="file" value="{{request.FILES.photo.name}}" size="20" />
+        <div id="fakebrowse" class="selfclear"><input name="fakebrowseinput" id="fakebrowseinput" type="text" title="JPG, GIF or PNG files - 5MB maximum" /><span class="fakebutton">browse</span></div>
+      </div><!-- /#photo-wrap -->
+    {{ form.photo.errors }}
+
+    <div id="statement-wrap">
+      <label for="statement">Statement of Support</label>
+      <input id="statement" name="statement" type="file" value="" size="20" />
+      <div id="fakestatement" class="selfclear"><input name="fakestatementinput" id="fakestatementinput" type="text" title="" /><span class="fakebutton">browse</span></div>
+    </div><!-- /#statement-wrap -->
+
+  </div><!-- /.section -->
+  <div class="section">
+    <h2>Step 3: Verification / Details <small class="optional">(optional)</small></h2>
+    <fieldset class="verification">
+      <h3 class="restrictive-clearance">Most Restrictive</h3>
+      <div><input id="dummy1" name="dummy1" type="checkbox" /><label for="dummy1">15' Crosswalks &#038; special curb areas: bus stops, taxi stands, hotel loading zones Franchised structures: sidewalk cafes, bus &#038; bike shelters, toilets, newstands</label></div>
+      <div><input id="dummy2" name="dummy2" type="checkbox" /><label for="dummy2">8' Fire hydrants</label></div>
+      <div><input id="dummy3" name="dummy3" type="checkbox" /><label for="dummy3">5' Building entrances &#038; driveways</label></div>
+      <div><input id="dummy4" name="dummy4" type="checkbox" /><label for="dummy4">3' Hatches &#038; subway entrances  (railings, stairs, elevators, etc.)</label></div>
+    </fieldset>
+    <fieldset class="verification">
+      <h3 class="moderate-clearance">Moderately Restrictive</h3>
+      <div><input id="dummy5" name="dummy6" type="checkbox" /><label for="dummy5">5' Benches, planters, telephones, mailboxes</label></div>
+      <div><input id="dummy5" name="dummy6" type="checkbox" /><label for="dummy6">5' Signs, parking meters, lamp posts, standpipes, etc.)</label></div>
+    </fieldset>
+    <fieldset class="verification">
+      <h3 class="permissive-clearance">Least Restrictive</h3>
+      <div><input id="dummy7" name="dummy7" type="checkbox" /><label for="dummy7">11' wide public sidewalk</label></div>
+      <div><input id="dummy8" name="dummy8" type="checkbox" /><label for="dummy8">3' Utility covers, tree pit edges, grates with hinges</label></div>
+      <div><input id="dummy9" name="dummy9" type="checkbox" /><label for="dummy9">Un-cracked concrete surface</label></div>
+    </fieldset>
+  </div><!-- /.section -->
+
+    <!-- XXX Do we want to update date on edit? -->
+    <input type="hidden" name="date" value="{% now "Y-m-d H:i:s" %}"/>
+
     <!-- These flags will trigger server-side processing of location
     if set to zero. We use this to hack around
     the impossibility of knowing if asynch functions have finished
@@ -83,7 +107,6 @@ jQuery(document).ready(function() {loadMap();});
     degrading... not like we have a lot of that in a map-heavy
     site. -->
     <input type="hidden" id="geocoded" name="geocoded" value="0" />
-
     <div id="verified-wrap">
      <label for="verified">Verified</label>
     
@@ -102,7 +125,7 @@ jQuery(document).ready(function() {loadMap();});
     {% if not rack.locked %}
       <input type="submit" value="Save" />
     {% endif %}
-
+    
 <!--  errors for debugging
  {{ form.errors }}
 -->
@@ -110,7 +133,6 @@ jQuery(document).ready(function() {loadMap();});
 <div class="suggest">
 	<div id="request-map">
 	</div>
-        {% include "quickcheck.html" %}
 </div><!-- /#suggest -->
 {% endblock %}
 
@@ -122,9 +144,8 @@ jQuery(document).ready(function() {loadMap();});
 <script type="text/javascript">
 //<![CDATA[
   jQuery(document).ready(function($) {
-    $('input#address, input#title, textarea#description, input#email, input#fakebrowseinput').inlineInfoTextify();
-    $('input#browse').change(function( objEvent ){$('#fakebrowseinput').val($(this).val()).removeClass("overlabel");});
-    $('input#statement').change(function( objEvent ){$('#fakestatementinput').val($(this).val()).removeClass("overlabel");});
+    $('input#browse').change(function( objEvent ){$('#fakebrowseinput').val($(this).val());});
+    $('input#statement').change(function( objEvent ){$('#fakestatementinput').val($(this).val());});
     expandOnce('#statement-wrap', 'Add Statement of Support');
     $('textarea#description').maxLength(300);
 });
