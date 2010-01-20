@@ -1,7 +1,7 @@
 # XXX I feel kinda icky importing settings during test
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.test import TestCase
 
 from fixcity.bmabr.models import Rack
@@ -403,26 +403,31 @@ class TestVotes(UserTestCaseBase):
 
 class TestBulkOrders(UserTestCaseBase):
 
-    def _make_bulk_order(self):
-        # Ugh, there's a lot of inter-model dependencies to satisfy
-        # before I can save a BulkOrder.  And I can't seem to mock
-        # these.
-        from fixcity.bmabr.models import NYCDOTBulkOrder, CommunityBoard, Borough
-        user = self._make_user(is_superuser=True)
+    geom = 'MULTIPOLYGON (((0.0 0.0, 1.0 0.0, 1.0 1.0, 0.0 0.0)))'
+
+    def _make_cb(self):
+        from fixcity.bmabr.models import CommunityBoard, Borough
         from decimal import Decimal
-        geom = 'MULTIPOLYGON (((0.0 0.0, 1.0 0.0, 1.0 1.0, 0.0 0.0)))'
         borough = Borough(boroname='Brooklyn', gid=1, borocode=1,
-                          the_geom=geom, 
+                          the_geom=self.geom,
                           shape_leng=Decimal("339789.04731400002"),
                           shape_area=Decimal("635167251.876999974"),
                           )
         borough.save()
         cb = CommunityBoard(gid=1, borocd=1, board=1,
-                            the_geom=geom,
+                            the_geom=self.geom,
                             borough=borough)
         cb.save()
+        return cb
 
-        from fixcity.bmabr.models import Rack
+    def _make_bulk_order(self):
+        # Ugh, there's a lot of inter-model dependencies to satisfy
+        # before I can save a BulkOrder.  And I can't seem to mock
+        # these.
+        user = self.user
+        cb = self._make_cb()
+
+        from fixcity.bmabr.models import Rack, NYCDOTBulkOrder
         from fixcity.bmabr.models import TwitterSource
         ts = TwitterSource(name='twitter', user='joe', status_id='99')
 
@@ -447,7 +452,7 @@ class TestBulkOrders(UserTestCaseBase):
                          'http://testserver/accounts/login/?next=/bulk_order/999/edit/')
         
     def test_bulk_order_edit_form__missing(self):
-        user = self._login(is_superuser=True)
+        self._login(is_superuser=True)
         response = self.client.get('/bulk_order/123456789/edit/')
         self.assertEqual(response.status_code, 404)
 
@@ -461,6 +466,25 @@ class TestBulkOrders(UserTestCaseBase):
         self.assertEqual(response.status_code, 200)
         
 
+    def test_bulk_order_approve_form__get(self):
+        bo = self._make_bulk_order()
+        response = self.client.get('/bulk_order/%d/approve/' % bo.id)
+        self.assertEqual(response.status_code, 302)
+        self._login(is_superuser=True)
+        response = self.client.get('/bulk_order/%d/approve/' % bo.id)
+        self.assertEqual(response.status_code, 200)
+
+    @mock.patch('fixcity.bmabr.views.send_mail')
+    def test_bulk_order_approve_form__post(self, mock_send_mail):
+        group = Group(name='bulk_ordering')
+        group.save()
+        bo = self._make_bulk_order()
+        self._login(is_superuser=True)
+        response = self.client.post('/bulk_order/%d/approve/' % bo.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(mock_send_mail.call_count, 1)
+
+
     def test_bulk_order_edit_form__post(self):
         bo = self._make_bulk_order()
         # XXX do something
@@ -473,39 +497,63 @@ class TestBulkOrders(UserTestCaseBase):
         response = self.client.get('/bulk_order/')
         self.assertEqual(response.status_code, 200)
 
-    def test_bulk_order_add_form__post(self):
+    @mock.patch('fixcity.bmabr.views.send_mail')
+    def test_bulk_order_add_form__post__not_superuser(self, mock_send_mail):
         from fixcity.bmabr.models import NYCDOTBulkOrder
-        bo = self._make_bulk_order()
-        cb = bo.communityboard
-        bo.delete()
-        # There's no BO for this community board now...
-        self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
-                         0)
-        user = self._login(is_superuser=True)
+        cb = self._make_cb()
+
+        self._login(is_superuser=False)
         response = self.client.post('/bulk_order/', {'cb_gid': cb.pk,
                                                      'organization': 'TOPP',
                                                      'rationale': 'because i care'})
+        # Mail is sent when the user doesn't have permission to approve the BO.
+        self.assertEqual(mock_send_mail.call_count, 1)
+
         if response.context is not None:
-            self.assertEqual(response.context['form'].errors, [])
+            self.assertEqual(response.context['form'].errors, {})
+        self.assertEqual(response.status_code, 200)
+        # There should be a BO now...
+        self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
+                         1)
+        bo = NYCDOTBulkOrder.objects.get(communityboard=cb)
+        self.failIf(bo.approved)
+
+
+    @mock.patch('fixcity.bmabr.views.send_mail')
+    def test_bulk_order_add_form__post__superuser(self, mock_send_mail):
+        from fixcity.bmabr.models import NYCDOTBulkOrder
+        cb = self._make_cb()
+        self._login(is_superuser=True)
+        response = self.client.post('/bulk_order/', {'cb_gid': cb.pk,
+                                                     'organization': 'TOPP',
+                                                     'rationale': 'because i care'})
+        # No mail is sent when the user already has permission to
+        # create a BO.
+        self.assertEqual(mock_send_mail.call_count, 0)
+
+        if response.context is not None:
+            self.assertEqual(response.context['form'].errors, {})
         self.assertEqual(response.status_code, 302)
         # There should be a BO now...
         self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
                          1)
-        bo_id = NYCDOTBulkOrder.objects.get(communityboard=cb).id
+        bo = NYCDOTBulkOrder.objects.get(communityboard=cb)
         self.assertEqual(response['location'],
-                         'http://testserver/bulk_order/%d/edit/' % bo_id)
+                         'http://testserver/bulk_order/%d/edit/' % bo.id)
+        self.assert_(bo.approved)
+
 
     def test_bulk_order_pdf(self):
         bo = self._make_bulk_order()
-        cb = bo.communityboard
-        response = self.client.get('/communityboard/%d/bulk_order/order.pdf/' % cb.pk)
-        self.assertEqual(response['Content-Type'], 'application/pdf')
+        response = self.client.get('/bulk_order/%d/order.pdf/' % bo.id)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
 
     def test_bulk_order_csv(self):
         bo = self._make_bulk_order()
-        cb = bo.communityboard
-        response = self.client.get('/communityboard/%d/bulk_order/order.csv/' % cb.pk)
-        self.assertEqual(response['Content-Type'], 'text/csv')
+        response = self.client.get('/bulk_order/%d/order.csv/' % bo.id)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+
 

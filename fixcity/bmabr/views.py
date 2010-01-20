@@ -865,9 +865,9 @@ To finish your bulk order, follow this link:
        context_instance=RequestContext(request))
     
 
-def bulk_order_csv(request, cb_id):
-    cb = get_object_or_404(CommunityBoard, gid=cb_id)
-    bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
+def bulk_order_csv(request, bo_id):
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    cb = bulk_order.communityboard
     response = HttpResponse(mimetype='text/csv')
     date = bulk_order.date.replace(microsecond=0)
     filename = "%s_%s.csv" % (str(cb).replace(' ', '-'), date.isoformat('-'))
@@ -911,9 +911,9 @@ def bulk_order_csv(request, cb_id):
              
     return response
 
-def bulk_order_pdf(request, cb_id):
-    cb = get_object_or_404(CommunityBoard, gid=cb_id)
-    bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
+def bulk_order_pdf(request, bo_id):
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    cb = bulk_order.communityboard
     from reportlab.pdfgen import canvas
     from reportlab.lib.units import inch
 

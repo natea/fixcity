@@ -40,8 +40,9 @@ urlpatterns = patterns(
     (r'racks/all.kml$', 'fixcity.bmabr.views.rack_all_kml'),
     (r'racks/requested.kml$', 'fixcity.bmabr.views.rack_requested_kml'),
 
-    (r'^communityboard/(?P<cb_id>\d+)/bulk_order/order.csv/$', 'fixcity.bmabr.views.bulk_order_csv'),
-    (r'^communityboard/(?P<cb_id>\d+)/bulk_order/order.pdf/$', 'fixcity.bmabr.views.bulk_order_pdf'),
+    # Bulk order URLs
+    (r'^bulk_order/(?P<bo_id>\d+)/order.csv/$', 'fixcity.bmabr.views.bulk_order_csv'),
+    (r'^bulk_order/(?P<bo_id>\d+)/order.pdf/$', 'fixcity.bmabr.views.bulk_order_pdf'),
     (r'^bulk_order/$', 'fixcity.bmabr.views.bulk_order_add_form'),
     (r'^bulk_order/(?P<bo_id>\d+)/approve/$', 'fixcity.bmabr.views.bulk_order_approval_form'),
     (r'^bulk_order/(?P<bo_id>\d+)/edit/$', 'fixcity.bmabr.views.bulk_order_edit_form'),
