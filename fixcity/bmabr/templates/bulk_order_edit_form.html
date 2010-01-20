@@ -25,8 +25,8 @@
 <div class="attachments">
   {% get_attachments_for bulk_order as "bo_attachments" %}
 
-  <form method="post" enctype="multipart/form-data" action="/attachments/add-for/bmabr/nycdotbulkorder/{{bo.pk}}/" class="add-attachment">
-    <input type="hidden" name="next" value="/communityboard/{{cb.gid}}/bulk_order/"/>
+  <form method="post" enctype="multipart/form-data" action="/attachments/add-for/bmabr/nycdotbulkorder/{{bulk_order.id}}/" class="add-attachment">
+    <input type="hidden" name="next" value="{{request.get_full_path}}" />
     <div><label for="id_attachment_file">Upload Supporting Documents</label> <input type="file" name="attachment_file" id="id_attachment_file" /></div>
 
     <p class="submit">
@@ -58,9 +58,9 @@ enctype="multipart/form-data">
 </div>
 
 <div>
-<a href="order.csv">Download bulk order as a CSV</a>
+<a href="../order.csv">Download bulk order as a CSV</a>
 <br/>
-<a href="order.pdf">Download bulk order as a PDF</a>
+<a href="../order.pdf">Download bulk order as a PDF</a>
 </div>
 
 
