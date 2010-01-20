@@ -454,14 +454,20 @@ def votes(request, rack_id):
     # AJAX back-end for getting / incrementing votes on a rack.
     user = request.user
     rack = get_object_or_404(Rack, id=rack_id)
+    result = {}
     if request.method == 'POST':
-        if rack.user == user.username:
-            flash_error(u"You can't vote on a rack you suggested.", request)
+        user_voted = Vote.objects.get_for_user(rack, request.user)
+        if user_voted is not None:
+            result['error'] = u"Already voted on rack"
+        elif rack.user == user.username:
+            result['error'] = u"You can't vote on a rack you suggested."
         else:
             Vote.objects.record_vote(rack, request.user, 1)
     votes = Vote.objects.get_score(rack)
-    response = HttpResponse(content_type='application/json')
-    response.write(json.dumps({'votes': votes['score']}))
+    result['votes'] = votes['score']
+    status = 'error' in result and 400 or 200
+    response = HttpResponse(content_type='application/json', status=status)
+    response.write(json.dumps(result))
     return response
 
 
