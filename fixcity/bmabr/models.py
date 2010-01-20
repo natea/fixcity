@@ -286,6 +286,10 @@ class NYCDOTBulkOrder(models.Model):
 
     @property
     def racks(self):
+        # This work as long as we never allow another bulk order for
+        # the same CB... maybe instead there should just be an
+        # explicit one-to-many relationship between BulkOrder and
+        # Racks
         return self.communityboard.racks.filter(locked=True)
 
 
