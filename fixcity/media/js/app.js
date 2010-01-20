@@ -13,7 +13,21 @@ jQuery(document).ready(function($) {
       obj = $(this);
       obj.bind("click", function (event) {
         var target = this;
-        $.ajax({type: "POST", url: "/racks/" + options.rackID + "/votes/", dataType: "json", success: function(response){ $(target).children(options.targetChild).text(response.votes); if ($(target).is('.' + options.activeClass)) {$(target).removeClass(options.activeClass);} else {$(target).addClass(options.activeClass);};}});
+        $.ajax({type: "POST", url: "/racks/" + options.rackID + "/votes/", dataType: "json",
+                    success: function(response){
+                      $(target).children(options.targetChild).text(response.votes);
+                      if ($(target).is('.' + options.activeClass)) {
+                          $(target).removeClass(options.activeClass);
+                      } else {
+                          $(target).addClass(options.activeClass);
+                          // also replace the anchor tag itself with a
+                          // span tag to prevent multiple votes
+                          thetarget = target;
+                          var newSpan = $('<span class="rack-likes ' + options.activeClass + '"><strong>' + $(target).children(options.targetChild)[0].innerHTML + '</strong></span>');
+                          thespan = newSpan;
+                          $(target).replaceWith(newSpan);
+                      };
+                    }});
         return false;
       });
     });
