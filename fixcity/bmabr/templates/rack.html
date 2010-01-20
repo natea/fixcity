@@ -48,7 +48,7 @@ $(document).ready(function() {
   <div class="rack-meta">
     <a class="comments{% if user.is_authenticated %} comments-active{% endif %}" href="#add-comment" title="Add a comment!"><strong>{{ comment_count }}</strong> comment{{ comment_count|pluralize }}</a>
   {% if user.is_authenticated %}
-    {% if not user_suggested_this_rack %}
+    {% if not user_suggested_this_rack and not user_likes_this_rack %}
     <a class="likes{% if user_likes_this_rack %} likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a>
     {% else %}
      <span class="likes{% if user_likes_this_rack %} likes-active{% endif %}" ><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</span>
