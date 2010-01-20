@@ -3,6 +3,7 @@
 {% load voting_tags %}
 {% load comments %}
 {% load recaptcha_tags %}
+{% load rackheart_tags %}
 
 {% block title %} FixCity: Rack Detail {% endblock %} 
 
@@ -47,12 +48,12 @@ $(document).ready(function() {
 <div id="sublede" class="selfclear">
   <div class="rack-meta">
     <a class="comments{% if user.is_authenticated %} comments-active{% endif %}" href="#add-comment" title="Add a comment!"><strong>{{ comment_count }}</strong> comment{{ comment_count|pluralize }}</a>
-  {% if user.is_authenticated %}
-    {% if not user_suggested_this_rack %}
+  {% vote_by_user request.user on rack as user_likes_this_rack %}
+  {% can_heart user rack as canheart %}
+  {% if canheart %}
     <a class="likes{% if user_likes_this_rack %} likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a>
-    {% else %}
-     <span class="likes{% if user_likes_this_rack %} likes-active{% endif %}" ><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</span>
-    {% endif %}
+  {% else %}
+    <span class="likes{% if user_likes_this_rack %} likes-active{% endif %}" ><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</span>
   {% endif %}
 
   </div>
