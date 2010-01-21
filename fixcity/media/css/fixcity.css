@@ -1337,115 +1337,62 @@ margin: 0 0 0.5em;
 
 
 /* OpenLayers styles */
-#OpenLayers\.Control\.PanZoom_5_zoomworld,
-#OpenLayers\.Control\.PanZoom_5_panup,
-#OpenLayers\.Control\.PanZoom_5_panright,
-#OpenLayers\.Control\.PanZoom_5_pandown,
-#OpenLayers\.Control\.PanZoom_5_panleft,
-#OpenLayers\.Control\.PanZoom_4_zoomworld,
-#OpenLayers\.Control\.PanZoom_4_panup,
-#OpenLayers\.Control\.PanZoom_4_panright,
-#OpenLayers\.Control\.PanZoom_4_pandown,
-#OpenLayers\.Control\.PanZoom_4_panleft { /* not sure why edit map uses "4" instead of "5" */
-display: none !important; 
+#map-wrap {
+position:relative;
 }
 
-#OpenLayers\.Control\.PanZoom_5_zoomin,
-#OpenLayers\.Control\.PanZoom_4_zoomin {
-background: url(/site_media/img/custom-zoom.png) no-repeat !important;
-height: 23px !important;
-width: 23px !important;
-top: 5px !important;
-left: 5px !important;
-cursor: pointer;
+#feature {
+position: absolute;
+z-index: 100000;
+} 
+
+.gquery-wrap {
+background: transparent url(/site_media/img/map-popup-bg.png) no-repeat;
+width: 292px;
+height: 78px;
+padding: 3px 15px 3px 3px;
+position: relative;
+left: -310px;
+top: -19px;
 }
 
-#OpenLayers\.Control\.PanZoom_5_zoomout,
-#OpenLayers\.Control\.PanZoom_4_zoomout {
-background: url(/site_media/img/custom-zoom.png) 0 -24px no-repeat !important;
-height: 22px !important;
-width: 23px !important;
-top: 28px !important;
-left: 5px !important;
-cursor: pointer;
+.gquery-popup {
+overflow: auto;
+height: 78px;
+width: 292px;
+font-size: 0.9em;
 }
 
-#OpenLayers\.Control\.PanZoom_5_zoomin:hover,
-#OpenLayers\.Control\.PanZoom_4_zoomin:hover {
-background-position: -23px 0 !important;
-}
-
-#OpenLayers\.Control\.PanZoom_5_zoomout:hover,
-#OpenLayers\.Control\.PanZoom_4_zoomout:hover {
-background-position: -23px -24px !important;
-}
-
-#OpenLayers\.Control\.PanZoom_5_zoomin img,
-#OpenLayers\.Control\.PanZoom_5_zoomout img,
-#OpenLayers\.Control\.PanZoom_4_zoomin img,
-#OpenLayers\.Control\.PanZoom_4_zoomout img {
-display: none;	
-}
-
-body .olPopup {
-/* background: transparent url(/site_media/img/map-popup-bg.png) no-repeat !important; */
-/* width: 292px !important; */
-/* height: 78px !important; */
-/* padding: 3px 14px 3px 3px !important; */
-}
-
-body .olFramedCloudPopupContent {
-/* padding: 0 0 0 5px !important; */
-/* background: transparent none !important; */
-/* width: 280px !important; */
-/* overflow: visible !important; */
-}
-
-body .olPopupCloseBox {
+.gquery-close {
+float: right; 
 background: transparent url(/site_media/img/close.gif) no-repeat scroll 0 0;
-/* top: 7px !important; */
-/* right: 13px !important; */
+width: 12px;
+height: 12px;
+cursor: pointer;
+overflow: hidden;
+text-indent: -9999em;
 }
 
-
-body .olPopup div.rack {
-width: 280px;
-}
-
-/* prevent grey border in Safari */
-.olPopup div div img {
-/* display: none !important; */
-}
-
-.olPopup div div.rack-info img {
-display: block !important;
-}
-
-body .olPopup img {
+.gquery-popup img {
 width: 50px;
 float: left;
-margin-left: -3px;
 }
 
-* html body .olPopup img {
-margin-left: -1px;
-}
-
-body .olPopup h3 {
+.gquery-popup h3 {
 color: #00b0f1;
 margin: 0 0 0.2em 55px;
 font-size: 1.1em;
 line-height:130%;
 }
 
-body .olPopup h4 {
+.gquery-popup h4 {
 color: #e69900;
 font-size: 1em;
 margin: 0 0 0.1em 55px;
 line-height:130%;
 }
 
-body .olPopup h5 {
+.gquery-popup h5 {
 color: #a5c665;
 padding: 2px 0 2px 19px;
 text-transform: uppercase;
@@ -1454,10 +1401,11 @@ font-size: 1em;
 margin: 0 0 0 55px;
 }
 
-body .olPopup h5 em {
+.gquery-popup h5 em {
 font-style: normal;
 font-size: 0.7em;
 }
+
 
 /* - */
 #footer {

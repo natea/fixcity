@@ -278,7 +278,7 @@ function loadMap() {
 
 {% block content %}
 <div id="home-main">
-  <div id="home-map"><div id="map-legend" class="pngfix"></div></div>
+  <div id="map-wrap"><div id="home-map"><div id="map-legend" class="pngfix"></div></div><div id="feature"></div></div>
   <ul id="home-callouts" class="selfclear">
     <li id="spot-it"><h3><a href="{% url newrack %}">Spot It.</a></h3><p>Where do you want more bike racks? Examine the area for spots racks can fit in!</p></li>
     <li id="map-it"><h3><a href="{% url newrack %}">Map It.</a></h3><p>Suggest a <a href="{% url newrack %}">New Rack</a> to put your spot on the map! Submit details and photo via email from your phone, twitter, or web.</p></li>
