@@ -4,6 +4,7 @@ from django.forms import ValidationError
 from django.test import TestCase
 from fixcity.bmabr.views import SRID
 from fixcity.bmabr.models import RackForm
+from fixcity.bmabr.models import Source
 import datetime
 
 EPOCH = datetime.datetime.utcfromtimestamp(0)
@@ -69,9 +70,12 @@ class TestRackForm(TestCase):
                          ["You can't mark a rack as verified unless it has a photo"])
 
     def test_rack_form_clean_photo(self):
+        from fixcity.exif_utils import get_exif_info
+        from PIL import Image
+        import os.path
+
         data = self.data.copy()
         # Jump through a few hoops to simulate a real upload.
-        import os.path
         HERE = os.path.abspath(os.path.dirname(__file__))
         path = os.path.join(HERE, 'files', 'test_exif.jpg')
         content = open(path).read()
@@ -83,35 +87,56 @@ class TestRackForm(TestCase):
         data['photo'] = photofile
         form = RackForm(data, {'photo': photofile})
         self.assert_(form.is_valid())
-        from fixcity.exif_utils import get_exif_info
-        from PIL import Image
         # Make sure it doesn't have a bad rotation.        
         self.assertEqual({},
                          get_exif_info(Image.open(photofile.temporary_file_path())))
         
     
-    def test_rack_form_clean(self):
+    def test_rack_form_clean__bound(self):
         data = self.data.copy()
         form = RackForm(data, {})
-        form.bound = True
-        from fixcity.bmabr.models import Source
+        form.is_bound = True
         form.instance.source = Source()
         form.is_valid()
-        self.assertEqual(form.clean(), form.cleaned_data)
+        self.assertEqual(form.cleaned_data, form.clean())
+
+
+    def test_rack_form_clean__unbound_with_email(self):
+        data = self.data.copy()
+        form = RackForm(data, {})
+        form = RackForm(data, {})
         form.is_bound = False
-        # Unbound it still validates, we have an email in the data.
-        self.assertEqual(form.clean(), form.cleaned_data)
-        # But not if we don't have any of those.
-        # Let's trick the form into that state...
+        form.cleaned_data = data
+        form._errors = {}
+
+        self.assertEqual(form.cleaned_data, form.clean())
+
+
+    def test_rack_form_clean__unbound_with_no_email_or_source(self):
+        data = self.data.copy()
+        del(data['email'])
+        form = RackForm(data, {})
+        form.is_bound = False
+        form.cleaned_data = data
+        form._errors = {}
+
+        # Can't validate without an email or source
+        self.assertRaises(ValidationError, form.clean)
+
+
+    def test_rack_form_clean__unbound_with_source(self):
+        data = self.data.copy()
         del(data['email'])
         form = RackForm(data, {})
         form.is_bound = False
         form.cleaned_data = data
         form._errors = {}
         self.assertRaises(ValidationError, form.clean)
+
         # A source is sufficient.
         form.cleaned_data['source'] = 'something'
-        self.assertEqual(form.clean(), form.cleaned_data)
+        self.assertEqual(form.cleaned_data, form.clean())
+
         
 
 class TestSource(TestCase):
