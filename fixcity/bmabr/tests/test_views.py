@@ -36,23 +36,15 @@ class UserTestCaseBase(TestCase):
     password = 'funkentelechy'
     email = 'bernieworrell@funk.org'
 
-    def setUp(self):
-        super(UserTestCaseBase, self).setUp()
-        self._make_user()
-
-    def tearDown(self):
-        del(self.user)
-        super(UserTestCaseBase, self).tearDown()
-        
     def _make_user(self, is_superuser=False):
-        user = getattr(self, 'user', None)
-        if user is None:
+        try:
+            user = User.objects.get(username=self.username)
+        except User.DoesNotExist:
             user = User.objects.create_user(self.username, self.email, self.password)
             user.save()
         if is_superuser != user.is_superuser:
             user.is_superuser = is_superuser
             user.save()
-        self.user = user
         return user
 
     def _login(self, is_superuser=False):
@@ -424,7 +416,7 @@ class TestBulkOrders(UserTestCaseBase):
         # Ugh, there's a lot of inter-model dependencies to satisfy
         # before I can save a BulkOrder.  And I can't seem to mock
         # these.
-        user = self.user
+        user = self._make_user()
         cb = self._make_cb()
 
         from fixcity.bmabr.models import Rack, NYCDOTBulkOrder
