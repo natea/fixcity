@@ -26,6 +26,7 @@ class CommunityBoard(models.Model):
         return Rack.objects.filter(location__intersects=self.the_geom)
 
 
+
 class Rack(models.Model):
     address = models.CharField(max_length=200)
     title = models.CharField(max_length=140)
@@ -44,11 +45,10 @@ class Rack(models.Model):
 
     verified = models.BooleanField(default=False, blank=True)
 
-    locked = models.BooleanField(default=False, blank=True)
-
     # keep track of where the rack was submitted from
     # if not set, that means it was submitted from the web
     source = models.ForeignKey('Source', null=True, blank=True)
+    bulk_order = models.ForeignKey('NYCDOTBulkOrder', null=True, blank=True)
 
     objects = models.GeoManager()
 
@@ -70,6 +70,11 @@ class Rack(models.Model):
             return self.source.name
         else:
             return u'web'
+
+    @property
+    def locked(self):
+        return self.bulk_order is not None
+
 
 class Source(models.Model):
     """base class representing the source of where a rack was submitted from"""
@@ -179,6 +184,98 @@ NEED_SOURCE_OR_EMAIL = "If email address is not provided, another source must be
 NEED_PHOTO_TO_VERIFY = "You can't mark a rack as verified unless it has a photo"
 NEED_LOGGEDIN_OR_EMAIL = "Email is required if you're not logged in."
 
+class CityRack(models.Model):
+    gid = models.IntegerField(primary_key=True)
+    objectid = models.DecimalField(max_digits=1000, decimal_places=100)
+    address = models.DecimalField(max_digits=1000, decimal_places=100)
+    street_nam = models.CharField(max_length=31)
+    zip_code_1 = models.CharField(max_length=12)
+    from__cros = models.CharField(max_length=22)
+    to__cross = models.CharField(max_length=22)
+    boro_1 = models.CharField(max_length=8)
+    neighborho = models.CharField(max_length=21)
+    side_of_st = models.CharField(max_length=12)
+    small = models.IntegerField()
+    large = models.IntegerField()
+    alt_addres = models.CharField(max_length=31)
+    x = models.DecimalField(max_digits=1000, decimal_places=100)
+    y = models.DecimalField(max_digits=1000, decimal_places=100)
+    id = models.CharField(max_length=13)
+    oppaddress = models.DecimalField(max_digits=1000, decimal_places=100)
+    borocode = models.DecimalField(max_digits=1000, decimal_places=100)
+    c_racksid = models.CharField(max_length=17)
+    rackid = models.CharField(max_length=50)
+    the_geom = models.PointField()
+    objects = models.GeoManager()
+    class Meta:
+        db_table = u'gis_cityracks'
+
+
+class NYCDOTBulkOrder(models.Model):
+    """
+    bulk orders for NYC bike racks
+    """
+
+    communityboard = models.ForeignKey(CommunityBoard)
+    user = models.ForeignKey(User)
+    date = models.DateTimeField(auto_now=True)
+    organization = models.CharField(max_length=128, blank=False)
+    rationale = models.TextField(blank=False)
+    approved = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return u'Bulk order for %s' % self.communityboard
+
+    def approve(self):
+        for rack in self.communityboard.racks:
+            rack.bulk_order = self
+            rack.save()
+        self.approved = True
+
+    def delete(self, *args, **kw):
+        for rack in self.racks:
+            rack.bulk_order = None
+            rack.save()
+        super(NYCDOTBulkOrder, self).delete(*args, **kw)
+
+    @property
+    def racks(self):
+        # This work as long as we never allow another bulk order for
+        # the same CB... maybe instead there should just be an
+        # explicit one-to-many relationship between BulkOrder and
+        # Racks
+        return self.communityboard.racks.filter(bulk_order=self)
+
+
+class NYCStreet(models.Model):
+
+    # A small subset of the NYC streets database schema
+    # ... maybe not even needed.
+    # converted from http://www.nyc.gov/html/dcp/html/bytes/dwnlion.shtml
+
+    gid = models.IntegerField(primary_key=True)
+    street = models.CharField(max_length=35)
+    nodeidfrom = models.CharField(max_length=7)
+    nodeidto = models.CharField(max_length=7)
+    zipleft = models.CharField(max_length=5)
+    the_geom = models.MultiLineStringField()
+
+    objects = models.GeoManager()
+
+    class Meta:
+        db_table = u'gis_nycstreets'
+
+
+class BulkOrderForm(ModelForm):
+    class Meta:
+        model = NYCDOTBulkOrder
+
+
+class SupportForm(ModelForm):
+    class Meta:
+        model = StatementOfSupport
+
+
 class RackForm(ModelForm):
     class Meta:
         model = Rack
@@ -228,90 +325,3 @@ class RackForm(ModelForm):
         # It goes in errors.__all__ so it isn't shown on our web UI.
         raise ValidationError(NEED_SOURCE_OR_EMAIL)
 
-
-class SupportForm(ModelForm):
-    class Meta:
-        model = StatementOfSupport
-
-class CityRack(models.Model):
-    gid = models.IntegerField(primary_key=True)
-    objectid = models.DecimalField(max_digits=1000, decimal_places=100)
-    address = models.DecimalField(max_digits=1000, decimal_places=100)
-    street_nam = models.CharField(max_length=31)
-    zip_code_1 = models.CharField(max_length=12)
-    from__cros = models.CharField(max_length=22)
-    to__cross = models.CharField(max_length=22)
-    boro_1 = models.CharField(max_length=8)
-    neighborho = models.CharField(max_length=21)
-    side_of_st = models.CharField(max_length=12)
-    small = models.IntegerField()
-    large = models.IntegerField()
-    alt_addres = models.CharField(max_length=31)
-    x = models.DecimalField(max_digits=1000, decimal_places=100)
-    y = models.DecimalField(max_digits=1000, decimal_places=100)
-    id = models.CharField(max_length=13)
-    oppaddress = models.DecimalField(max_digits=1000, decimal_places=100)
-    borocode = models.DecimalField(max_digits=1000, decimal_places=100)
-    c_racksid = models.CharField(max_length=17)
-    rackid = models.CharField(max_length=50)
-    the_geom = models.PointField()
-    objects = models.GeoManager()
-    class Meta:
-        db_table = u'gis_cityracks'
-
-
-class NYCDOTBulkOrder(models.Model):
-    """
-    bulk orders for NYC bike racks
-    """
-
-    communityboard = models.ForeignKey(CommunityBoard)
-    user = models.ForeignKey(User)
-    date = models.DateTimeField(auto_now=True)
-    organization = models.CharField(max_length=128, blank=False)
-    rationale = models.TextField(blank=False)
-    approved = models.BooleanField(default=False)
-
-    def approve(self):
-        for rack in self.communityboard.racks:
-            rack.locked = True
-            rack.save()
-        self.approved = True
-
-    def delete(self, *args, **kw):
-        for rack in self.racks:
-            rack.locked = False
-            rack.save()
-        super(NYCDOTBulkOrder, self).delete(*args, **kw)
-
-    @property
-    def racks(self):
-        # This work as long as we never allow another bulk order for
-        # the same CB... maybe instead there should just be an
-        # explicit one-to-many relationship between BulkOrder and
-        # Racks
-        return self.communityboard.racks.filter(locked=True)
-
-
-class BulkOrderForm(ModelForm):
-    class Meta:
-        model = NYCDOTBulkOrder
-
-
-class NYCStreet(models.Model):
-
-    # A small subset of the NYC streets database schema
-    # ... maybe not even needed.
-    # converted from http://www.nyc.gov/html/dcp/html/bytes/dwnlion.shtml
-
-    gid = models.IntegerField(primary_key=True)
-    street = models.CharField(max_length=35)
-    nodeidfrom = models.CharField(max_length=7)
-    nodeidto = models.CharField(max_length=7)
-    zipleft = models.CharField(max_length=5)
-    the_geom = models.MultiLineStringField()
-
-    objects = models.GeoManager()
-
-    class Meta:
-        db_table = u'gis_nycstreets'

@@ -4,6 +4,7 @@ from django.forms import ValidationError
 from django.test import TestCase
 from fixcity.bmabr.views import SRID
 from fixcity.bmabr.models import RackForm
+from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import Source
 import datetime
 
@@ -20,7 +21,7 @@ class TestCommunityBoard(TestCase):
         self.assertEqual(unicode(cb), u'Staten Island Community Board 123')
                             
     def test_racks_within_boundaries(self):
-        from fixcity.bmabr.models import CommunityBoard, Rack
+        from fixcity.bmabr.models import CommunityBoard
         communityboard = CommunityBoard(the_geom='MULTIPOLYGON (((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)))')
         rack_inside = Rack(location='POINT (5.0 5.0)', date=EPOCH)
         rack_outside = Rack(location='POINT (20.0 20.0)', date=EPOCH)
@@ -153,19 +154,7 @@ class TestSource(TestCase):
 
 class TestNYCDOTBulkOrder(TestCase):
 
-    def test_create_and_destroy(self):
-        from fixcity.bmabr.models import NYCDOTBulkOrder, User, CommunityBoard
-        user = User()
-        user.save()
-        cb = CommunityBoard(
-            the_geom='MULTIPOLYGON (((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)))',
-            gid=1, borocd=1, board=1, borough_id=1)
-        cb.save()
-        bo = NYCDOTBulkOrder(user=user, communityboard=cb)
-        bo.save()
-        bo.delete()
-
-    def test_racks(self):
+    def _make_bo_and_rack(self):
         from fixcity.bmabr.models import NYCDOTBulkOrder, User, Rack, CommunityBoard
         user = User()
         user.save()
@@ -177,14 +166,22 @@ class TestNYCDOTBulkOrder(TestCase):
         rack.save()
 
         bo = NYCDOTBulkOrder(user=user, communityboard=cb)
+        return bo, rack
 
+    def test_create_and_destroy(self):
+        bo, rack = self._make_bo_and_rack()
+        bo.save()
+        bo.delete()
+
+    def test_approval_adds_racks(self):
+        bo, rack = self._make_bo_and_rack()
+        cb = bo.communityboard
         # Initially the bulk order has no racks, even though the
         # communityboard does.
         self.assertEqual(set(cb.racks), set([rack]))
         self.assertEqual(set(bo.racks), set())
 
         # Saving doesn't affect the rack count...
-
         bo.save()
         self.assertEqual(set(bo.racks), set([]))
         self.failIf(bo.approved)
@@ -201,13 +198,31 @@ class TestNYCDOTBulkOrder(TestCase):
         rack = Rack.objects.get(id=rack.id)
         self.assert_(rack.locked)
 
+    def test_racks_get_locked(self):
+        bo, rack = self._make_bo_and_rack()
+        bo.save()
+        rack.bulk_order = bo
+        rack.save()
+        # reload to get new state.
+        rack = Rack.objects.get(id=rack.id)
+        self.assert_(rack.locked)
+
+    def test_new_racks_not_added_to_existing_approved_order(self):
+        bo, rack = self._make_bo_and_rack()
+        cb = bo.communityboard
+        bo.approve()
         # New racks are not added to an already-saved bulk order.
         rack2 = Rack(location='POINT (7.0 7.0)', date=EPOCH)
         rack2.save()
-        self.failIf(rack2 in bo.racks)
+        self.failIf(rack2 in set(bo.racks))
+        self.failIf(rack2.locked)
 
-        # Deleting the order causes the racks to be unlocked.
+    def test_deletion_unlocks_racks(self):
+        bo, rack = self._make_bo_and_rack()
+        bo.approve()
+        bo.save()
         bo.delete()
+        # re-load the rack to get new state.
         rack = Rack.objects.get(id=rack.id)
         self.failIf(rack.locked)
 

@@ -13,7 +13,12 @@ class Migration:
         db.add_column('bmabr_nycdotbulkorder', 'rationale', orm['bmabr.nycdotbulkorder:rationale'])
 
         db.add_column('bmabr_nycdotbulkorder', 'approved', orm['bmabr.nycdotbulkorder:approved'])
-    
+
+        db.add_column('bmabr_rack', 'bulk_order', orm['bmabr.rack:bulk_order'])
+
+
+        db.delete_column('bmabr_rack', 'locked')
+
     
     def backwards(self, orm):
         
@@ -21,6 +26,9 @@ class Migration:
         db.delete_column('bmabr_nycdotbulkorder', 'organization')
         db.delete_column('bmabr_nycdotbulkorder', 'rationale')
         db.delete_column('bmabr_nycdotbulkorder', 'approved')
+        db.delete_column('bmabr_rack', 'bulk_order_id')
+
+        #db.add_column('bmabr_rack', 'locked', orm['bmabr.rack:locked'])
     
     
     models = {
@@ -131,9 +139,10 @@ class Migration:
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'location': ('django.contrib.gis.db.models.fields.PointField', [], {}),
-            'locked': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
             'photo': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'source': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.Source']", 'null': 'True', 'blank': 'True'}),
+            'bulk_order': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.NYCDOTBulkOrder']", 'null': 'True', 'blank': 'True'}),
+
             'title': ('django.db.models.fields.CharField', [], {'max_length': '140'}),
             'user': ('django.db.models.fields.CharField', [], {'max_length': '20', 'blank': 'True'}),
             'verified': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'})

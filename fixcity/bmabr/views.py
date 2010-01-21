@@ -813,7 +813,7 @@ def bulk_order_add_form(request):
             else:
                 bulk_order = form.save()
                 if request.user.has_perm('bmabr.add_nycdotbulkorder'):
-                    flash("Bulk order created!", request)
+                    flash("Bulk order created! Follow the directions below to complete it.", request)
                     bulk_order.approve()
                     bulk_order.save()
                     return HttpResponseRedirect(
