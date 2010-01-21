@@ -357,8 +357,8 @@ class TestRackView(UserTestCaseBase):
         rack.save()
         response = self.client.get('/racks/%d/' % rack.id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['user_likes_this_rack'], False)
-        self.assertEqual(response.context['user_suggested_this_rack'], False)
+        self.assertEqual(response.context['user_likes_this_rack'], None)
+        self.assertEqual(response.context['canheart'], False)
 
     def test_rack_view_logged_in(self):
         user = self._login()
@@ -370,8 +370,8 @@ class TestRackView(UserTestCaseBase):
         rack.save()
         response = self.client.get('/racks/%d/' % rack.id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['user_likes_this_rack'], False)
-        self.assertEqual(response.context['user_suggested_this_rack'], True)
+        self.assertEqual(response.context['user_likes_this_rack'], None)
+        self.assertEqual(response.context['canheart'], False)
 
 class TestVotes(UserTestCaseBase):
 
@@ -398,7 +398,7 @@ class TestVotes(UserTestCaseBase):
         self._login()
         response = self.client.post('/racks/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"votes": 1}')
+        self.assertEqual(response.content, '{"votes": 1, "html": "<span class=\\"rack-likes rack-likes-active\\"><strong>1</strong></span>"}')
 
 
 class TestBulkOrders(UserTestCaseBase):

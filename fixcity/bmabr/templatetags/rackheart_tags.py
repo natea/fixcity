@@ -17,7 +17,7 @@ class CanUserHeartNode(template.Node):
         except template.VariableDoesNotExist:
             context[self.context_var] = False
         else:
-            if (user.is_authenticated and
+            if (user.is_authenticated() and
                 rack.user != user.username and
                 Vote.objects.get_for_user(rack, user) is None):
                 context[self.context_var] = True

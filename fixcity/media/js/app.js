@@ -22,9 +22,12 @@ jQuery(document).ready(function($) {
                           $(target).addClass(options.activeClass);
                           // also replace the anchor tag itself with a
                           // span tag to prevent multiple votes
-                          thetarget = target;
-                          var newSpan = $('<span class="rack-likes ' + options.activeClass + '"><strong>' + $(target).children(options.targetChild)[0].innerHTML + '</strong></span>');
-                          thespan = newSpan;
+                          var newSpan = null;
+                          if (response.html) {
+                              newSpan = response.html;
+                          } else {
+                              newSpan = $('<span class="rack-likes ' + options.activeClass + '"><strong>' + $(target).children(options.targetChild)[0].innerHTML + '</strong></span>');
+                          }
                           $(target).replaceWith(newSpan);
                       };
                     }});
