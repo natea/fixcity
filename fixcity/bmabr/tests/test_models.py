@@ -174,12 +174,17 @@ class TestNYCDOTBulkOrder(TestCase):
         # them by re-looking up the object by ID. Otherwise the state
         # in memory is out of date. (django ticket 901)
         rack = Rack.objects.get(id=rack.id)
-        self.assertEqual(rack.locked, True)
+        self.assert_(rack.locked)
 
         # New racks are not added to an already-saved bulk order.
         rack2 = Rack(location='POINT (7.0 7.0)', date=EPOCH)
         rack2.save()
         self.failIf(rack2 in bo.racks)
+
+        # Deleting the order causes the racks to be unlocked.
+        bo.delete()
+        rack = Rack.objects.get(id=rack.id)
+        self.failIf(rack.locked)
 
 
 class TestNeighborhood(TestCase):
