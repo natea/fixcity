@@ -931,27 +931,12 @@ def bulk_order_csv(request, bo_id):
 def bulk_order_pdf(request, bo_id):
     bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
     cb = bulk_order.communityboard
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.units import inch
-
     response = HttpResponse(mimetype='application/pdf')
     date = bulk_order.date.replace(microsecond=0)
     filename = "%s_%s.pdf" % (str(cb).replace(' ', '-'), date.isoformat('-'))
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
-    pdf = canvas.Canvas(response)
-
-    textobject = pdf.beginText()
-    textobject.setTextOrigin(inch, 7*inch)
-
-    lines = []
-    for rack in bulk_order.racks:
-        lines.append(', '.join([str(rack.id), rack.title, rack.address]))
-    textobject.textLines(lines, trim=1)
-    pdf.drawText(textobject)
-
-    # Close the PDF object cleanly, and we're done.
-    pdf.showPage()
-    pdf.save()
+    from fixcity.bmabr import bulkorderpdf
+    bulkorderpdf.make_pdf(bulk_order, response)
     return response
 
 

@@ -198,6 +198,7 @@ COVERAGE_MODULES = ['fixcity.bmabr.views', 'fixcity.bmabr.models',
                     'fixcity.flash_messages',
                     'fixcity.bmabr.templatetags.recaptcha_tags',
                     'fixcity.bmabr.templatetags.google_analytics',
+                    'fixcity.bmabr.bulkorderpdf',
                     ]
 
 try:
