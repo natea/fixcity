@@ -31,8 +31,8 @@ jQuery(document).ready(function() {loadMap();});
 
 {% block content %}
 <form id="addrack-form" action="." method="POST" enctype="multipart/form-data">
+  <h2 class="toggler">Step 1: Locate <small class="required">(required)</small></h2>
   <div class="section">
-    <h2>Step 1: Locate <small class="required">(required)</small></h2>
     <label for="address">Street Address</label>
     <input id="address" name="address" class="required" type="text" title="Enter an address or click a point on the map" value="{{request.POST.address|default:rack.address}}" />
     <div class="helptext">Enter an address or click a point on the map. <a href="/placement-guide/">Location Guidelines</a></div>
@@ -47,8 +47,8 @@ jQuery(document).ready(function() {loadMap();});
      <div>{{creator}}</div>
     </div>
   </div><!-- /.section -->
+  <h2 class="toggler">Step 2: Description/Photo <small class="optional">(optional)</small></h2>
   <div class="section">
-    <h2>Step 2: Description/Photo <small class="optional">(optional)</small></h2>
     <label for="description">Description</label>
       <textarea id="description" name="description"
                   title="Why are bike racks needed here? Other details?">{{ request.POST.description|default:rack.description }}</textarea>
@@ -75,8 +75,8 @@ jQuery(document).ready(function() {loadMap();});
     </div><!-- /#statement-wrap -->
 
   </div><!-- /.section -->
+  <h2 class="toggler">Step 3: Verification / Details <small class="optional">(optional)</small></h2>
   <div class="section">
-    <h2>Step 3: Verification / Details <small class="optional">(optional)</small></h2>
     <fieldset class="verification">
       <div>
         <input id="dummy1" name="dummy1" type="checkbox" />

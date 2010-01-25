@@ -67,9 +67,10 @@ jQuery(document).ready(function($) {
 	  }
 	});
 
-	$('#content form .section h2').click(function() {$('#content form .section').removeClass('expanded').addClass('collapsed');$(this).parent('.section').removeClass('collapsed').addClass('expanded');});
-	$('#content form .section').addClass('collapsed');
-	$('#content form .section:first').removeClass('collapsed').addClass('expanded');
+	$('#content form').addClass('expandable');
+	$('#content form h2.toggler').click(function() {var target = $(this).next('.section'); if (target.is(':hidden')) {$('#content form .section').slideUp("fast");$('#content form h2.toggler').removeClass('expanded'); target.slideDown("fast"); $(this).addClass('expanded');}});
+  $('#content form h2.toggler:first').addClass('expanded').next('.section').show();
+  
 });
 
 function expandOnce(selector, text) {
