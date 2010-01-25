@@ -6,7 +6,7 @@
 {% block extra_header %}
 
 <script type="text/javascript" src="/site_media/openlayers/OpenLayers.js"></script>
-
+<script type="text/javascript" src="/site_media/js/jquery.map.js"></script>
 <script type="text/javascript" src="/site_media/js/verify-rackmap.js">
 </script>
 
@@ -58,7 +58,7 @@ all code is in racklist.html to reuse for ajax view
 
 </div><!-- /#racks -->
 <div id="verify-map-wrap">
-  <div id="verify-map"><div id="map-legend" class="pngfix"></div></div>
+  <div id="map-wrap"><div id="verify-map"><div id="map-legend" class="pngfix"></div></div><div id="feature"></div></div>
   {% include "quickcheck.html" %}
 </div>
 {% endblock %}
