@@ -78,22 +78,37 @@ jQuery(document).ready(function() {loadMap();});
   <div class="section">
     <h2>Step 3: Verification / Details <small class="optional">(optional)</small></h2>
     <fieldset class="verification">
-      <h3 class="restrictive-clearance">Most Restrictive</h3>
-      <div><input id="dummy1" name="dummy1" type="checkbox" /><label for="dummy1">15' Crosswalks &#038; special curb areas: bus stops, taxi stands, hotel loading zones Franchised structures: sidewalk cafes, bus &#038; bike shelters, toilets, newstands</label></div>
-      <div><input id="dummy2" name="dummy2" type="checkbox" /><label for="dummy2">8' Fire hydrants</label></div>
-      <div><input id="dummy3" name="dummy3" type="checkbox" /><label for="dummy3">5' Building entrances &#038; driveways</label></div>
-      <div><input id="dummy4" name="dummy4" type="checkbox" /><label for="dummy4">3' Hatches &#038; subway entrances  (railings, stairs, elevators, etc.)</label></div>
+      <div>
+        <input id="dummy1" name="dummy1" type="checkbox" />
+        <h3 class="permissive-clearance"><label for="dummy1">Surface</label></h3>
+        <ul>
+          <li>11' wide public sidewalk</li>
+          <li>3' Utility covers, tree pit edges, grates with hinges</li>
+          <li>Un-cracked concrete surface</li>
+        </ul>
+      </div>
     </fieldset>
     <fieldset class="verification">
-      <h3 class="moderate-clearance">Moderately Restrictive</h3>
-      <div><input id="dummy5" name="dummy6" type="checkbox" /><label for="dummy5">5' Benches, planters, telephones, mailboxes</label></div>
-      <div><input id="dummy5" name="dummy6" type="checkbox" /><label for="dummy6">5' Signs, parking meters, lamp posts, standpipes, etc.)</label></div>
+      <div>
+        <input id="dummy2" name="dummy2" type="checkbox" />
+        <h3 class="moderate-clearance"><label for="dummy2">Objects</label></h3>
+        <ul>
+          <li>5' Benches, planters, telephones, mailboxes</li>
+          <li>5' Signs, parking meters, lamp posts, standpipes, etc.)</li>
+        </ul>
+      </div>
     </fieldset>
     <fieldset class="verification">
-      <h3 class="permissive-clearance">Least Restrictive</h3>
-      <div><input id="dummy7" name="dummy7" type="checkbox" /><label for="dummy7">11' wide public sidewalk</label></div>
-      <div><input id="dummy8" name="dummy8" type="checkbox" /><label for="dummy8">3' Utility covers, tree pit edges, grates with hinges</label></div>
-      <div><input id="dummy9" name="dummy9" type="checkbox" /><label for="dummy9">Un-cracked concrete surface</label></div>
+      <div>
+        <input id="dummy3" name="dummy3" type="checkbox" />
+        <h3 class="restrictive-clearance"><label for="dummy3">Access</label></h3>
+        <ul>
+          <li>15' Crosswalks &#038; special curb areas: bus stops, taxi stands, hotel loading zones Franchised structures: sidewalk cafes, bus &#038; bike shelters, toilets, newstands</li>
+          <li>8' Fire hydrants</li>
+          <li>5' Building entrances &#038; driveways</li>
+          <li>3' Hatches &#038; subway entrances  (railings, stairs, elevators, etc.)</li>
+        </ul>
+      </div>
     </fieldset>
   </div><!-- /.section -->
 
