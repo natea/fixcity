@@ -2,8 +2,8 @@ from django.conf import settings
 from django.contrib import comments
 from django.contrib.contenttypes.models import ContentType
 from django.utils.encoding import smart_unicode
-from fixcity.bmabr.models import Rack
 from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Image
@@ -26,7 +26,10 @@ def make_pdf(bulk_order, outfile):
     """
     cb = bulk_order.communityboard
     date = bulk_order.date.replace(microsecond=0)
-    doc = SimpleDocTemplate(outfile) 
+    doc = SimpleDocTemplate(outfile, pagesize=letter,
+                            leftMargin=0.5 * inch,
+                            rightMargin=0.75 * inch,
+                            )
 
     # XXX Sorting by street would be nice, but we don't have
     # addresses split into components, so we can't.
@@ -39,7 +42,7 @@ def make_pdf(bulk_order, outfile):
     for rack in racks:
         body.append(PageBreak())
         body.extend(make_rack_page(rack))
-        break  # XXX
+
     doc.build(body)
 
 
@@ -122,7 +125,15 @@ def make_rack_page(rack):
         map_row.append(Paragraph('<i>no photo provided</i>', normalStyle))
 
     map_table = Table([map_row], colWidths=[image_inches_x + 0.25,
-                                            image_inches_x + 0.25])
+                                            image_inches_x + 0.25],
+                                                
+                      style=TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ]))
+
+
+
     flowables.append(map_table)
     flowables.append(Spacer(0, 0.25 * inch))
   
