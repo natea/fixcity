@@ -1,3 +1,29 @@
+var fixcityDefaultGqueryMapOptions = {
+    center: [-73.945, 40.7334],
+    zoomLevel: 12,
+    clustered: true,
+    url: '/racks/requested.kml',
+    externalGraphic: function (feature) {
+      if (feature.cluster.length > 1) {
+        var n = feature.cluster.length;
+        for (var i = 0; i < n; i++) {
+          if (feature.cluster[i].attributes.verified == null) {
+            return "http://fixcity.org/site_media/img/rack-icon.png";
+          }
+        }
+        return "http://fixcity.org/site_media/img/rack-verified-icon.png";
+      } else if (feature.cluster[0].attributes.verified) {
+        return "http://fixcity.org/site_media/img/rack-verified-icon.png";
+      } else {
+        return "http://fixcity.org/site_media/img/rack-icon.png";
+      }
+    },
+    popupFeatureFormat: function (feature, options) {
+      return '<div class="popup-rack-info"><a href="/rack/' + feature.fid + '"><img src="' + ((feature.attributes.thumbnail != null) ? 'http://fixcity.org' + feature.attributes.thumbnail.value : 'http://fixcity.org/site_media/img/default-rack.jpg') + '" width="50" /></a><h3><a href="/rack/' + feature.fid + '">' + feature.attributes.name + '</a></h3><h4>' + feature.attributes.address + '</h4>' + ((feature.attributes.verified == null) ? '' : '<h5><em>verified</em></h5>') + ((feature.attributes.votes == null) ? '' : '<h5>' + feature.attributes.votes.value + ' votes</h5>')+ '</div>';
+    },
+    popupClusterClass: 'popup-rack-info'
+};
+
 jQuery(document).ready(function($) {
   $(document).superSelectify();
 
