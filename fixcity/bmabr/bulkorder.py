@@ -263,7 +263,9 @@ def make_zip(bulk_order, outfile):
         path = attachment.attachment_file.path
         info = zipfile.ZipInfo(os.path.basename(path), date_time=now)
         info.external_attr = 0660 << 16L
-        # Can't use zf.write() on a file-like object, it needs seek
+        # Rats. We have files on disk already so I'd like to use zf.write(),
+        # but you can't call that when output is a stringio instance
+        # because zf.write() apparently needs to call seek().
         zf.writestr(info, open(path).read())
         
     zf.close()
