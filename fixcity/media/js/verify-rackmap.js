@@ -65,6 +65,8 @@ function updateFilterBehaviors() {
               params,
               function(data) {
                   $('#racks').empty().append(data);
+                  // and add the pagination behavior to the new prev/next links
+                  $('#pagination a').click(addPaginationBehavior);
               });
     };
     var createOutlinedLayer = function(url) {
@@ -125,14 +127,20 @@ function updateFilterBehaviors() {
             fetchNewDataFn(page);
             updateMapFn();
         });
-    $('#pagination a').live('click', function(e) {
-            e.preventDefault();
-            var href = $(this).attr('href');
-            if (!href)
-                return;
-            var page = href.substring(1);
-            fetchNewDataFn(page);
-        });
+    var addPaginationBehavior = function(e) {
+        var href = $(this).attr('href');
+        if (!href)
+            return;
+        var page = href.substring(1);
+        fetchNewDataFn(page);
+    };
+    // used to use live events, but that was causing a strange
+    // interaction with the map and the filter form
+    // all clicks were triggering the live event behavior, and a map
+    // appeared to be injecting itself into the boro select
+    // so we just add the pagination behavior every time we update
+    // the filter
+    $('#pagination a').click(addPaginationBehavior);
 }
 
 if (jQuery.browser.msie) {
