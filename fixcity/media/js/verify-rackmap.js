@@ -98,17 +98,23 @@ function updateFilterBehaviors() {
     }
     var updateMapFn = function() {
         var params = getParamsFn();
-        var urlParams = jQuery.param(params);
-        var url = null;
+        var racksUrl = '/racks/requested.kml?' + jQuery.param(params);
+        var outlineUrl = null;
+        var racksLayer = map.layers[1];
+        var outlineLayer = map.layers[2];
+
+        racksLayer.refresh({url: racksUrl});
+
         if (params.cb == "0") {
-            url = '/borough/' + params.boro + '.kml?' + urlParams;
+            outlineUrl = '/borough/' + params.boro + '.kml';
         } else {
-            url = '/communityboard/' + params.cb + '.kml?' + urlParams;
+            outlineUrl = '/communityboard/' + params.cb + '.kml';
         }
-        if (map.layers[2]) {
-            map.layers[2].setUrl(url);
+        // we don't always have an outline layer on the map
+        if (outlineLayer) {
+            outlineLayer.refresh({url: outlineUrl});
         } else {
-            var outlineLayer = createOutlinedLayer(url);
+            outlineLayer = createOutlinedLayer(outlineUrl);
             map.addLayer(outlineLayer);
         }
     };
