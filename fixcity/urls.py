@@ -45,6 +45,7 @@ urlpatterns = patterns(
     # Bulk order URLs
     (r'^bulk_order/(?P<bo_id>\d+)/order.csv/$', 'fixcity.bmabr.views.bulk_order_csv'),
     (r'^bulk_order/(?P<bo_id>\d+)/order.pdf/$', 'fixcity.bmabr.views.bulk_order_pdf'),
+    (r'^bulk_order/(?P<bo_id>\d+)/order.zip/$', 'fixcity.bmabr.views.bulk_order_zip'),
     (r'^bulk_order/$', 'fixcity.bmabr.views.bulk_order_add_form'),
     (r'^bulk_order/(?P<bo_id>\d+)/approve/$', 'fixcity.bmabr.views.bulk_order_approval_form'),
     (r'^bulk_order/(?P<bo_id>\d+)/edit/$', 'fixcity.bmabr.views.bulk_order_edit_form'),
