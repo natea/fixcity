@@ -219,3 +219,6 @@ handler.setFormatter(formatter)
 logger = logging.getLogger('')
 logger.addHandler(handler) 
 logger.setLevel(logging.DEBUG)
+
+# XXX move this to config.ini
+GKEY="ABQIAAAApLR-B_RMiEN2UBRoEWYPlhTmTlZhMVUZVOGFgSe6Omf4DswcaBSLmUPer5a9LF8EEWHK6IrMgA62bg"

@@ -57,9 +57,9 @@ from voting.models import Vote
 import logging
 import sys
 import traceback
+import urllib
 
-cb_metric = 50.00
-GKEY="ABQIAAAApLR-B_RMiEN2UBRoEWYPlhTmTlZhMVUZVOGFgSe6Omf4DswcaBSLmUPer5a9LF8EEWHK6IrMgA62bg"
+GKEY=settings.GKEY
 SRID=4326
 
 # XXX Need to figure out what order we really want these in.
@@ -769,8 +769,16 @@ def redirect_rack_urls(request):
     return HttpResponsePermanentRedirect(new_path)
 
 
-@permission_required('bmabr.add_nycdotbulkorder')
 def bulk_order_edit_form(request, bo_id):
+    if not request.user.has_perm('bmabr.add_nycdotbulkorder'):
+        error = """Only approved users can edit bulk orders. Please
+        <a href="/contact/">contact us</a> to ask for approval."""
+        flash_error(error, request)
+        url = '%s?%s' % (
+            urlresolvers.reverse('django.contrib.auth.views.login'),
+            urllib.urlencode({'next': request.get_full_path()}))
+        return HttpResponseRedirect(url)
+
     bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
     cb = bulk_order.communityboard
     form = BulkOrderForm()
