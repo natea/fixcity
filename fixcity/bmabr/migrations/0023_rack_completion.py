@@ -6,14 +6,14 @@ from fixcity.bmabr.models import *
 class Migration:
 
     def forwards(self, orm):
-        db.add_column(u'bmabr_rack', 'vrfy_surface', models.BooleanField(default=False))
-        db.add_column(u'bmabr_rack', 'vrfy_objects', models.BooleanField(default=False))
-        db.add_column(u'bmabr_rack', 'vrfy_access', models.BooleanField(default=False))
+        db.add_column(u'bmabr_rack', 'verify_surface', models.BooleanField(default=False))
+        db.add_column(u'bmabr_rack', 'verify_objects', models.BooleanField(default=False))
+        db.add_column(u'bmabr_rack', 'verify_access', models.BooleanField(default=False))
 
     def backwards(self, orm):
-        db.delete_column(u'bmabr_rack', 'vrfy_surface')
-        db.delete_column(u'bmabr_rack', 'vrfy_objects')
-        db.delete_column(u'bmabr_rack', 'vrfy_access')
+        db.delete_column(u'bmabr_rack', 'verify_surface')
+        db.delete_column(u'bmabr_rack', 'verify_objects')
+        db.delete_column(u'bmabr_rack', 'verify_access')
 
 
     models = {

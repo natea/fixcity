@@ -97,7 +97,7 @@ jQuery(document).ready(function() {loadMap();});
     <p><strong>Please verify that the rack location meets these requirements:</strong></p>
     <fieldset class="verification">
       <div>
-        <input id="rackform-surface" name="vrfy_surface" type="checkbox"{% if request.POST.vrfy_surface or rack.vrfy_surface %} checked="true"{%endif%} />
+        <input id="rackform-surface" name="verify_surface" type="checkbox"{% if request.POST.verify_surface or rack.verify_surface %} checked="true"{%endif%} />
         <h3 class="permissive-clearance"><label for="rackform-surface">Surface</label></h3>
         <ul>
           {% for requirement in requirements.surface %}
@@ -108,7 +108,7 @@ jQuery(document).ready(function() {loadMap();});
     </fieldset>
       <fieldset class="verification">
       <div>
-        <input id="rackform-objects" name="vrfy_objects" type="checkbox"{% if request.POST.vrfy_objects or rack.vrfy_objects %} checked="true"{%endif%} />
+        <input id="rackform-objects" name="verify_objects" type="checkbox"{% if request.POST.verify_objects or rack.verify_objects %} checked="true"{%endif%} />
         <h3 class="moderate-clearance"><label for="rackform-objects">Objects</label></h3>
         <ul>
           {% for requirement in requirements.objects %}
@@ -119,7 +119,7 @@ jQuery(document).ready(function() {loadMap();});
     </fieldset>
     <fieldset class="verification">
       <div>
-        <input id="rackform-access" name="vrfy_access" type="checkbox"{% if request.POST.vrfy_access or rack.vrfy_access %} checked="true"{%endif%} />
+        <input id="rackform-access" name="verify_access" type="checkbox"{% if request.POST.verify_access or rack.verify_access %} checked="true"{%endif%} />
         <h3 class="restrictive-clearance"><label for="rackform-access">Access</label></h3>
         <ul>
           {% for requirement in requirements.access %}

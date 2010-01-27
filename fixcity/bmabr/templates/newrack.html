@@ -81,7 +81,7 @@ jQuery(document).ready(function() {loadMap();});
     <p><strong>Please verify that the rack location meets these requirements:</strong></p>
     <fieldset class="verification">
       <div>
-        <input id="rackform-surface" name="vrfy_surface" type="checkbox" />
+        <input id="rackform-surface" name="verify_surface" type="checkbox" />
         <h3 class="permissive-clearance"><label for="rackform-surface">Surface</label></h3>
         <ul>
           {% for requirement in requirements.surface %}
@@ -92,7 +92,7 @@ jQuery(document).ready(function() {loadMap();});
     </fieldset>
     <fieldset class="verification">
       <div>
-        <input id="rackform-objects" name="vrfy_objects" type="checkbox" />
+        <input id="rackform-objects" name="verify_objects" type="checkbox" />
         <h3 class="moderate-clearance"><label for="rackform-objects">Objects</label></h3>
         <ul>
           {% for requirement in requirements.objects %}
@@ -103,7 +103,7 @@ jQuery(document).ready(function() {loadMap();});
     </fieldset>
     <fieldset class="verification">
       <div>
-        <input id="rackform-access" name="vrfy_access" type="checkbox" />
+        <input id="rackform-access" name="verify_access" type="checkbox" />
         <h3 class="restrictive-clearance"><label for="rackform-access">Access</label></h3>
         <ul>
           {% for requirement in requirements.access %}

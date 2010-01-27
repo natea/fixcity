@@ -8,9 +8,9 @@ class Migration:
     def forwards(self, orm):
         for rack in Rack.objects.all():
             if rack.verified:
-                rack.vrfy_surface = True
-                rack.vrfy_objects = True
-                rack.vrfy_access = True
+                rack.verify_surface = True
+                rack.verify_objects = True
+                rack.verify_access = True
                 rack.save()
     
     
@@ -132,9 +132,9 @@ class Migration:
             'title': ('django.db.models.fields.CharField', [], {'max_length': '140'}),
             'user': ('django.db.models.fields.CharField', [], {'max_length': '20', 'blank': 'True'}),
             'verified': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
-            'vrfy_access': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
-            'vrfy_objects': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
-            'vrfy_surface': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'})
+            'verify_access': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
+            'verify_objects': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
+            'verify_surface': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'})
         },
         'bmabr.seeclickfixsource': {
             'image_url': ('django.db.models.fields.URLField', [], {'max_length': '200'}),
