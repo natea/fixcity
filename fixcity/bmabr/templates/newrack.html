@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load rackverification_tags %}
 {% block title %} FixCity: Add a Bike Rack {% endblock %}
 
 {% block extra_header %}
@@ -76,14 +77,15 @@ jQuery(document).ready(function() {loadMap();});
   </div><!-- /.section -->
   <h2 class="toggler">Step 3: Verification / Details <small class="optional">(optional)</small></h2>
   <div class="section">
+    {% rack_requirements as requirements %}
     <fieldset class="verification">
       <div>
         <input id="rackform-surface" name="vrfy_surface" type="checkbox" />
         <h3 class="permissive-clearance"><label for="rackform-surface">Surface</label></h3>
         <ul>
-          <li>11' wide public sidewalk</li>
-          <li>3' Utility covers, tree pit edges, grates with hinges</li>
-          <li>Un-cracked concrete surface</li>
+          {% for requirement in requirements.surface %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
         </ul>
       </div>
     </fieldset>
@@ -92,8 +94,9 @@ jQuery(document).ready(function() {loadMap();});
         <input id="rackform-objects" name="vrfy_objects" type="checkbox" />
         <h3 class="moderate-clearance"><label for="rackform-objects">Objects</label></h3>
         <ul>
-          <li>5' Benches, planters, telephones, mailboxes</li>
-          <li>5' Signs, parking meters, lamp posts, standpipes, etc.)</li>
+          {% for requirement in requirements.objects %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
         </ul>
       </div>
     </fieldset>
@@ -102,10 +105,9 @@ jQuery(document).ready(function() {loadMap();});
         <input id="rackform-access" name="vrfy_access" type="checkbox" />
         <h3 class="restrictive-clearance"><label for="rackform-access">Access</label></h3>
         <ul>
-          <li>15' Crosswalks &#038; special curb areas: bus stops, taxi stands, hotel loading zones Franchised structures: sidewalk cafes, bus &#038; bike shelters, toilets, newstands</li>
-          <li>8' Fire hydrants</li>
-          <li>5' Building entrances &#038; driveways</li>
-          <li>3' Hatches &#038; subway entrances  (railings, stairs, elevators, etc.)</li>
+          {% for requirement in requirements.access %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
         </ul>
       </div>
     </fieldset>
