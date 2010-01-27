@@ -172,20 +172,18 @@ class TestNYCDOTBulkOrder(TestCase):
         bo, rack = self._make_bo_and_rack()
         bo.save()
         bo.delete()
+        rack.delete()
 
     def test_approval_adds_racks(self):
         bo, rack = self._make_bo_and_rack()
+        bo.save()
         cb = bo.communityboard
         # Initially the bulk order has no racks, even though the
         # communityboard does.
         self.assertEqual(set(cb.racks), set([rack]))
         self.assertEqual(set(bo.racks), set())
-
-        # Saving doesn't affect the rack count...
-        bo.save()
-        self.assertEqual(set(bo.racks), set([]))
         self.failIf(bo.approved)
-        # But approving marks all racks in the CB as locked for this bulk order.
+        # Approving marks all racks in the CB as locked for this bulk order.
         bo.approve()
         bo.save()
         self.assertEqual(set(bo.racks), set([rack]))
@@ -201,7 +199,7 @@ class TestNYCDOTBulkOrder(TestCase):
     def test_racks_get_locked(self):
         bo, rack = self._make_bo_and_rack()
         bo.save()
-        rack.bulk_order = bo
+        rack.bulk_order.add(bo)
         rack.save()
         # reload to get new state.
         rack = Rack.objects.get(id=rack.id)
@@ -210,6 +208,7 @@ class TestNYCDOTBulkOrder(TestCase):
     def test_new_racks_not_added_to_existing_approved_order(self):
         bo, rack = self._make_bo_and_rack()
         cb = bo.communityboard
+        bo.save()
         bo.approve()
         # New racks are not added to an already-saved bulk order.
         rack2 = Rack(location='POINT (7.0 7.0)', date=EPOCH)
@@ -219,8 +218,8 @@ class TestNYCDOTBulkOrder(TestCase):
 
     def test_deletion_unlocks_racks(self):
         bo, rack = self._make_bo_and_rack()
-        bo.approve()
         bo.save()
+        bo.approve()
         bo.delete()
         # re-load the rack to get new state.
         rack = Rack.objects.get(id=rack.id)

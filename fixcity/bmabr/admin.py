@@ -18,7 +18,7 @@ class StatementInline(oldAdmin.StackedInline):
 
 class RackAdmin(admin.GeoModelAdmin):
     list_display = ('id', 'address', 'location', 'date', 'user', 'email',
-                    'verified', 'bulk_order', 'source')
+                    'verified', 'locked', 'source')
 
 class NeighborhoodAdmin(admin.GeoModelAdmin):
     list_display = ('name','borough')

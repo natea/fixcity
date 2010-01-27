@@ -48,7 +48,8 @@ class Rack(models.Model):
     # keep track of where the rack was submitted from
     # if not set, that means it was submitted from the web
     source = models.ForeignKey('Source', null=True, blank=True)
-    bulk_order = models.ForeignKey('NYCDOTBulkOrder', null=True, blank=True)
+
+    bulk_order = models.ManyToManyField('NYCDOTBulkOrder', null=True, blank=True)
 
     objects = models.GeoManager()
 
@@ -73,7 +74,7 @@ class Rack(models.Model):
 
     @property
     def locked(self):
-        return self.bulk_order is not None
+        return bool(self.bulk_order.count())
 
 
 class Source(models.Model):
@@ -231,23 +232,20 @@ class NYCDOTBulkOrder(models.Model):
 
     def approve(self):
         for rack in self.communityboard.racks:
-            rack.bulk_order = self
+            rack.bulk_order.add(self)
             rack.save()
         self.approved = True
 
     def delete(self, *args, **kw):
-        for rack in self.racks:
-            rack.bulk_order = None
-            rack.save()
+        self.rack_set.clear()
         super(NYCDOTBulkOrder, self).delete(*args, **kw)
 
     @property
     def racks(self):
-        # This work as long as we never allow another bulk order for
-        # the same CB... maybe instead there should just be an
-        # explicit one-to-many relationship between BulkOrder and
-        # Racks
-        return self.communityboard.racks.filter(bulk_order=self)
+        # I find it odd that Django's back-references don't provide a
+        # convenience for this already....  self.rack_set.all()
+        # returns ALL racks, not just the related ones!
+        return self.rack_set.filter(bulk_order=self)
 
 
 class NYCStreet(models.Model):

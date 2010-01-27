@@ -47,19 +47,19 @@ class Migration:
         db.delete_column(u'gis_neighborhoods', 'city')
         
         # Adding field 'Neighborhood.annoline2'
-        db.add_column(u'gis_neighborhoods', 'annoline2', orm['bmabr.neighborhood:annoline2'])
+#        db.add_column(u'gis_neighborhoods', 'annoline2', orm['bmabr.neighborhood:annoline2'])
         
         # Adding field 'Neighborhood.stacked'
-        db.add_column(u'gis_neighborhoods', 'stacked', orm['bmabr.neighborhood:stacked'])
+#        db.add_column(u'gis_neighborhoods', 'stacked', orm['bmabr.neighborhood:stacked'])
         
         # Adding field 'Neighborhood.annoline3'
-        db.add_column(u'gis_neighborhoods', 'annoline3', orm['bmabr.neighborhood:annoline3'])
+#        db.add_column(u'gis_neighborhoods', 'annoline3', orm['bmabr.neighborhood:annoline3'])
         
         # Adding field 'Neighborhood.annoline1'
-        db.add_column(u'gis_neighborhoods', 'annoline1', orm['bmabr.neighborhood:annoline1'])
+#        db.add_column(u'gis_neighborhoods', 'annoline1', orm['bmabr.neighborhood:annoline1'])
         
         # Adding field 'Neighborhood.annoangle'
-        db.add_column(u'gis_neighborhoods', 'annoangle', orm['bmabr.neighborhood:annoangle'])
+#        db.add_column(u'gis_neighborhoods', 'annoangle', orm['bmabr.neighborhood:annoangle'])
         
         # Changing field 'NYCDOTBulkOrder.approved'
         # (to signature: django.db.models.fields.BooleanField())
@@ -178,7 +178,7 @@ class Migration:
         },
         'bmabr.rack': {
             'address': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'bulk_order': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.NYCDOTBulkOrder']", 'null': 'True', 'blank': 'True'}),
+            'bulk_order': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['bmabr.NYCDOTBulkOrder']", 'null': 'True', 'blank': 'True'}),
             'date': ('django.db.models.fields.DateTimeField', [], {}),
             'description': ('django.db.models.fields.CharField', [], {'max_length': '300', 'blank': 'True'}),
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
