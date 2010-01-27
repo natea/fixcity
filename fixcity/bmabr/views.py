@@ -913,14 +913,20 @@ def bulk_order_zip(request, bo_id):
     return response
 
 def neighborhood_for_rack(rack):
-    from fixcity.bmabr.models import Neighborhood
-    neighborhood = Neighborhood.objects.filter(the_geom__contains=rack.location)
-    if neighborhood:
-        return neighborhood[0].name
-    # XXX for some reason this isn't working for Rack 8 in Williamsburg.
-    # The rack address looks OK; verify the boundaries somehow?
-    print "AAARGH"
-    return '<unknown>'
+    # Unfortunately, django doesn't support ordering by sql functions.
+    # http://code.djangoproject.com/ticket/5293
+    # So we'll use raw SQL.
+    from django.db import connection
+    cursor = connection.cursor()
+    cursor.execute("""
+      SELECT name FROM gis_neighborhoods
+        WHERE ST_Distance(the_geom, ST_GeomFromText(%r, 4326)) < 1.0
+        ORDER BY ST_Distance(the_geom, ST_GeomFromText(%r, 4326)) LIMIT 1
+   """ % (rack.location.wkt, rack.location.wkt))
+    row = cursor.fetchone()
+    if row is None:
+        return '<unknown>'
+    return row[0]
     
     
 def cross_streets_for_rack(rack):

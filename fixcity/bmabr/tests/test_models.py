@@ -232,9 +232,9 @@ class TestNeighborhood(TestCase):
     def test_create_and_destroy(self):
         from fixcity.bmabr.models import Neighborhood
         nb = Neighborhood(
-            gid=1, regionid=2, state='NY', county='Kings', city='Brooklyn',
+            gid=1, objectid=1, state='NY', borough='Brooklyn',
             name='Williamsburg',
-            the_geom='MULTIPOLYGON (((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)))',
+            the_geom='POINT (0.0 0.0)',
             )
         nb.save()
         self.assertEqual(unicode(nb), u'Williamsburg')

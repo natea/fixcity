@@ -148,19 +148,12 @@ class Neighborhood(models.Model):
     gid = models.AutoField(primary_key=True)
     objectid = models.IntegerField()
     name = models.CharField(max_length=100, null=False)
-    # XXX delete these?
-    stacked = models.IntegerField()
-    annoline1 = models.CharField(max_length=50, null=True)
-    annoline2 = models.CharField(max_length=50, null=True)
-    annoline3 = models.CharField(max_length=50, null=True)
-    annoangle = models.DecimalField(max_digits=100, decimal_places=20)
-    # ... XXX
-    borough = models.CharField(max_length=50)
 
-    state = models.CharField(max_length=2, null=True)
+    borough = models.CharField(max_length=50)
+    city = models.CharField(max_length=50, default='New York City')
+    state = models.CharField(max_length=2, null=True, default='NY')
 
     the_geom = models.PointField(srid=4326)
-
 
     objects = models.GeoManager()
 

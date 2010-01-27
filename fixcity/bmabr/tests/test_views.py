@@ -250,7 +250,7 @@ class TestNeighborhoodForRack(TestCase):
         self.assertEqual(neighborhood_for_rack(rack),
                          "<unknown>")
 
-    def test_cross_streets(self):
+    def test_neighborhood(self):
         from fixcity.bmabr.views import neighborhood_for_rack
         rack = Rack(address='67 s 3rd st, brooklyn, ny 11211',
                     title='williamsburg somewhere',
