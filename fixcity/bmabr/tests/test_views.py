@@ -11,6 +11,7 @@ from fixcity.bmabr.views import _preprocess_rack_form
 import lxml.objectify
 
 import mock
+import os
 import unittest
 
 from datetime import datetime
@@ -393,9 +394,9 @@ class TestVotes(UserTestCaseBase):
         self.assertEqual(response.content, '{"votes": 1, "html": "<span class=\\"rack-likes rack-likes-active\\"><strong>1</strong></span>"}')
 
 
-class TestBulkOrders(UserTestCaseBase):
+class TestBulkOrderViews(UserTestCaseBase):
 
-    geom = 'MULTIPOLYGON (((0.0 0.0, 1.0 0.0, 1.0 1.0, 0.0 0.0)))'
+    geom = 'MULTIPOLYGON (((0.0 0.0, 1.0 0.0, 1.0 1.0, 0.0 1.0, 0.0 0.0)))'
 
     def _make_cb(self):
         from fixcity.bmabr.models import CommunityBoard, Borough
@@ -412,17 +413,11 @@ class TestBulkOrders(UserTestCaseBase):
         cb.save()
         return cb
 
-    def _make_bulk_order(self):
-        # Ugh, there's a lot of inter-model dependencies to satisfy
-        # before I can save a BulkOrder.  And I can't seem to mock
-        # these.
-        user = self._make_user()
-        cb = self._make_cb()
-
-        from fixcity.bmabr.models import Rack, NYCDOTBulkOrder
+    def _make_rack(self):
+        from fixcity.bmabr.models import Rack
         from fixcity.bmabr.models import TwitterSource
+        user = self._make_user()
         ts = TwitterSource(name='twitter', user='joe', status_id='99')
-
         rack = Rack(location='POINT (0.5 0.5)', email=user.email,
                     user=user.username,
                     title='A popular bar',
@@ -431,7 +426,16 @@ class TestBulkOrders(UserTestCaseBase):
                     source=ts,
                     )
         rack.save()
+        return rack
 
+    def _make_bulk_order(self):
+        # Ugh, there's a lot of inter-model dependencies to satisfy
+        # before I can save a BulkOrder.  And I can't seem to mock
+        # these.
+        user = self._make_user()
+        cb = self._make_cb()
+        rack = self._make_rack()
+        from fixcity.bmabr.models import NYCDOTBulkOrder
         bo = NYCDOTBulkOrder(user=user, communityboard=cb)
         bo.save()
         return bo
@@ -493,6 +497,7 @@ class TestBulkOrders(UserTestCaseBase):
     def test_bulk_order_add_form__post__not_superuser(self, mock_send_mail):
         from fixcity.bmabr.models import NYCDOTBulkOrder
         cb = self._make_cb()
+        rack = self._make_rack()
 
         self._login(is_superuser=False)
         response = self.client.post('/bulk_order/', {'cb_gid': cb.pk,
@@ -510,12 +515,14 @@ class TestBulkOrders(UserTestCaseBase):
                          1)
         bo = NYCDOTBulkOrder.objects.get(communityboard=cb)
         self.failIf(bo.approved)
+        self.assertEqual(bo.racks.count(), 0)  # Not approved means no racks yet
 
 
     @mock.patch('fixcity.bmabr.views.send_mail')
     def test_bulk_order_add_form__post__superuser(self, mock_send_mail):
         from fixcity.bmabr.models import NYCDOTBulkOrder
         cb = self._make_cb()
+        rack = self._make_rack()
         self._login(is_superuser=True)
         response = self.client.post('/bulk_order/', {'cb_gid': cb.pk,
                                                      'organization': 'TOPP',
@@ -534,19 +541,24 @@ class TestBulkOrders(UserTestCaseBase):
         self.assertEqual(response['location'],
                          'http://testserver/bulk_order/%d/edit/' % bo.id)
         self.assert_(bo.approved)
+        self.assertEqual(bo.racks.count(), 1)
 
-
-    def test_bulk_order_pdf(self):
+    @mock.patch('fixcity.bmabr.bulkorder.get_map')
+    def test_bulk_order_pdf(self, mock_get_map):
+        HERE = os.path.abspath(os.path.dirname(__file__))
+        img_path = os.path.join(HERE, 'files', 'test_exif.jpg')
+        mock_get_map.return_value = img_path
         bo = self._make_bulk_order()
+        bo.approve()
         response = self.client.get('/bulk_order/%d/order.pdf/' % bo.id)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(mock_get_map.call_count, 1)
         self.assertEqual(response['Content-Type'], 'application/pdf')
 
 
     def test_bulk_order_csv(self):
         bo = self._make_bulk_order()
+        bo.approve()
         response = self.client.get('/bulk_order/%d/order.csv/' % bo.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'text/csv')
-
-

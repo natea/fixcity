@@ -115,11 +115,12 @@ def make_rack_page(rack):
         try:
             the_map = get_map(bounds, size=(image_pixels_x, image_pixels_y),
                               format='jpg')
+            break
         except RuntimeError:
-            if i < tries:
-                continue
-            else:
+            if i == tries -1:
                 raise
+            else:
+                continue
     
     map_row = [Image(the_map, width=image_inches_x, height=image_inches_y)]
 
@@ -173,7 +174,7 @@ def get_map(bbox, size=(400, 256), format='jpg'):
     # Originally copied from the old Almanac grok code,
     # http://svn.opengeo.org/almanac/siteapp/trunk/opengeo/almanac/pdf.py
 
-    import urllib, httplib2, tempfile, os
+    import urllib, httplib2, tempfile
 
     # GMap API Key for opengeo.org - static api doesn't care about origin
     # XXX need to make this configurable and probably get our own!!
