@@ -41,6 +41,8 @@ def make_pdf(bulk_order, outfile):
 
     body = []
 
+    body.append(Paragraph('Bike Rack Bulk Order:\n%s' % str(cb),
+                          stylesheet['h1']))
     body.append(make_rack_table(racks))
 
     for rack in racks:
@@ -62,7 +64,7 @@ def make_rack_table(racks):
                      Paragraph(rack.address, normalStyle),
                      rack.date.date(),
                      Paragraph(rack.title, normalStyle),
-                     rack.email, verified, rack.source])
+                     rack.email, verified, rack.source or 'web'])
 
     rack_listing = Table(rows, 
                          colWidths=[25, 100, 55, 100, 120, 45, 40],
@@ -70,7 +72,9 @@ def make_rack_table(racks):
     rack_listing.setStyle(TableStyle(
             [('ROWBACKGROUNDS', (0, 1), (-1, -1),
               [colors.white, colors.Color(0.9, 0.91, 0.96)],
-              )]))
+              ),
+             ('VALIGN', (0, 1), (-1, -1), 'TOP'),
+             ]))
     return rack_listing
 
 
