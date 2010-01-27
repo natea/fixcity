@@ -5,19 +5,19 @@ register = template.Library()
 
 verification_details = {
     'surface': [
-        "11' wide public widewalk",
-        "3' Utility covers, tree pit edges, grates with hinges",
+        "11' from public sidewalk",
         "Un-cracked concrete surface",
+        "3' clearance from utility covers, tree pit edges, grates with hinges",
         ],
     'objects': [
-        "5' Benches, planters, telephones, mailboxes",
-        "5' Signs, parking meters, lamp posts, standpipes, etc.)",
+        "5' from signs, parking meters, lamp posts, standpipes",
+        "5' from benches, planters, mailboxes",
         ],
     'access': [
-        "15' Crosswalks &#038; special curb areas: bus stops, taxi stands, hotel loading zones Franchised structures: sidewalk cafes, bus &#038; bike shelters, toilets, newstands",
-        "8' Fire hydrants",
-        "5' Building entrances &#038; driveways",
-        "3' Hatches &#038; subway entrances  (railings, stairs, elevators, etc.)",
+        "15' from crosswalks, bus stops, taxi stands, hotel loading zones, sidewalk cafes, bus &#038; bike shelters",
+        "8' from fire hydrants",
+        "5' from building entrances &#038; driveways",
+        "3' from hatches &#038; subway entrances",
         ],
     }
 
