@@ -3,29 +3,53 @@ from south.db import db
 from django.db import models
 from fixcity.bmabr.models import *
 
-import os
-
-HERE = os.path.abspath(os.path.dirname(__file__))
-
 class Migration:
     
     def forwards(self, orm):
+
+        # Adding model 'Neighborhood'
+        db.create_table(u'gis_neighborhoods', (
+            ('gid', orm['bmabr.neighborhood:gid']),
+            ('objectid', orm['bmabr.neighborhood:objectid']),
+            ('name', orm['bmabr.neighborhood:name']),
+            ('borough', orm['bmabr.neighborhood:borough']),
+            ('city', orm['bmabr.neighborhood:city']),
+            ('state', orm['bmabr.neighborhood:state']),
+            ('the_geom', orm['bmabr.neighborhood:the_geom']),
+        ))
+        db.send_create_signal('bmabr', ['Neighborhood'])
         
-        # Adding model 'NYCStreet'
-        sql_path = os.path.abspath(
-            os.path.join(HERE, '..', '..', 'data', 'shps', 'nyc_streets',
-                         'gis_nycstreets.sql.gz'))
-        import gzip
-        z = gzip.GzipFile(sql_path)
-        db.execute_many(z.read())
-        db.send_create_signal('bmabr', ['NYCStreet'])
-    
+        # Adding model 'NYCDOTBulkOrder'
+        db.create_table('bmabr_nycdotbulkorder', (
+            ('id', orm['bmabr.nycdotbulkorder:id']),
+            ('communityboard', orm['bmabr.nycdotbulkorder:communityboard']),
+            ('user', orm['bmabr.nycdotbulkorder:user']),
+            ('date', orm['bmabr.nycdotbulkorder:date']),
+            ('organization', orm['bmabr.nycdotbulkorder:organization']),
+            ('rationale', orm['bmabr.nycdotbulkorder:rationale']),
+            ('approved', orm['bmabr.nycdotbulkorder:approved']),
+        ))
+        db.send_create_signal('bmabr', ['NYCDOTBulkOrder'])
+        
+        # Adding ManyToManyField 'Rack.bulk_orders'
+        db.create_table('bmabr_rack_bulk_orders', (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('rack', models.ForeignKey(orm.Rack, null=False)),
+            ('nycdotbulkorder', models.ForeignKey(orm.NYCDOTBulkOrder, null=False))
+        ))
+        
     
     def backwards(self, orm):
         
-        # Deleting model 'NYCStreet'
-        db.delete_table(u'gis_nycstreets')
+        # Deleting model 'Neighborhood'
+        db.delete_table(u'gis_neighborhoods')
         
+        # Deleting model 'NYCDOTBulkOrder'
+        db.delete_table('bmabr_nycdotbulkorder')
+        
+        # Dropping ManyToManyField 'Rack.bulk_orders'
+        db.delete_table('bmabr_rack_bulk_orders')
+
     
     
     models = {
@@ -101,10 +125,23 @@ class Migration:
             'address': ('django.db.models.fields.EmailField', [], {'max_length': '75'}),
             'source_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['bmabr.Source']", 'unique': 'True', 'primary_key': 'True'})
         },
+        'bmabr.neighborhood': {
+            'Meta': {'db_table': "u'gis_neighborhoods'"},
+            'borough': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'city': ('django.db.models.fields.CharField', [], {'default': "'New York City'", 'max_length': '50'}),
+            'gid': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'objectid': ('django.db.models.fields.IntegerField', [], {}),
+            'state': ('django.db.models.fields.CharField', [], {'default': "'NY'", 'max_length': '2', 'null': 'True'}),
+            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {})
+        },
         'bmabr.nycdotbulkorder': {
+            'approved': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
             'communityboard': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.CommunityBoard']"}),
             'date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True'}),
+            'rationale': ('django.db.models.fields.TextField', [], {'null': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
         'bmabr.nycstreet': {
@@ -118,12 +155,12 @@ class Migration:
         },
         'bmabr.rack': {
             'address': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'bulk_orders': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['bmabr.NYCDOTBulkOrder']", 'null': 'True', 'blank': 'True'}),
             'date': ('django.db.models.fields.DateTimeField', [], {}),
             'description': ('django.db.models.fields.CharField', [], {'max_length': '300', 'blank': 'True'}),
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'location': ('django.contrib.gis.db.models.fields.PointField', [], {}),
-            'locked': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
             'photo': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'source': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.Source']", 'null': 'True', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '140'}),

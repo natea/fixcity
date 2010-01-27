@@ -199,7 +199,7 @@ class TestNYCDOTBulkOrder(TestCase):
     def test_racks_get_locked(self):
         bo, rack = self._make_bo_and_rack()
         bo.save()
-        rack.bulk_order.add(bo)
+        rack.bulk_orders.add(bo)
         rack.save()
         # reload to get new state.
         rack = Rack.objects.get(id=rack.id)

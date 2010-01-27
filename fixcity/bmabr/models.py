@@ -49,7 +49,8 @@ class Rack(models.Model):
     # if not set, that means it was submitted from the web
     source = models.ForeignKey('Source', null=True, blank=True)
 
-    bulk_order = models.ManyToManyField('NYCDOTBulkOrder', null=True, blank=True)
+    bulk_orders = models.ManyToManyField('NYCDOTBulkOrder', null=True, blank=True)
+
 
     objects = models.GeoManager()
 
@@ -74,7 +75,7 @@ class Rack(models.Model):
 
     @property
     def locked(self):
-        return bool(self.bulk_order.count())
+        return bool(self.bulk_orders.count())
 
 
 class Source(models.Model):
@@ -232,7 +233,7 @@ class NYCDOTBulkOrder(models.Model):
 
     def approve(self):
         for rack in self.communityboard.racks:
-            rack.bulk_order.add(self)
+            rack.bulk_orders.add(self)
             rack.save()
         self.approved = True
 
@@ -245,7 +246,8 @@ class NYCDOTBulkOrder(models.Model):
         # I find it odd that Django's back-references don't provide a
         # convenience for this already....  self.rack_set.all()
         # returns ALL racks, not just the related ones!
-        return self.rack_set.filter(bulk_order=self)
+        # XXX or does it?
+        return self.rack_set.all() #filter(bulk_orders.=self)
 
 
 class NYCStreet(models.Model):
