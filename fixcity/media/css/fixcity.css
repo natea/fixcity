@@ -604,13 +604,14 @@ position: relative;
 
 /* - */
 #sublede {
-margin: 0 0 15px;
+padding: 0 0 5px;
 }
 
 #sublede .rack-address {
 font-size: 1.4em;
 display: inline;
 padding: 0 1em 0 0;
+margin: 0;
 }
 
 #sublede .edit {
@@ -620,6 +621,11 @@ background: url(/site_media/img/edit-icon.png) 0 50% no-repeat;
 
 #sublede .rack-meta {
 float: right;
+}
+
+#sublede .rack-meta .verified {
+padding: 5px 10px 5px 20px;
+background: url(/site_media/img/tick.png) 0 50% no-repeat;
 }
 
 #sublede .rack-meta .comments,
@@ -661,10 +667,7 @@ background: url(/site_media/img/like-icon-active.png) 100% 50% no-repeat;
 }
 
 #rackinfo .rack-title {
-color: #333;
-margin: 0 0 0.5em;
-font-size: 1em;
-font-weight: bold;
+
 }
 
 
@@ -678,11 +681,13 @@ float: left;
 }
 
 #content form label,
-#content #rackinfo dt {
+#content #rackinfo dt,
+#content .fake-label {
 display: block;
 font-size: 1.2em;
 font-weight: bold;
 margin: 1em 0 0;
+color: #333;
 }
 
 #content form>label:first-child,
@@ -1086,6 +1091,7 @@ width: 10em;
 margin: 0;
 padding: 0;
 list-style-type: none;
+border-bottom: 1px solid #5c8699;
 }
 
 .comment {
@@ -1106,7 +1112,6 @@ font-size: 0.9em;
 
 #add-comment {
 margin-top: 0;
-border-top: 1px solid #5c8699;
 padding-top: 0.535em;
 }
 

@@ -47,6 +47,9 @@ $(document).ready(function() {
 {% score_for_object rack as score %}
 <div id="sublede" class="selfclear">
   <div class="rack-meta">
+    {% if rack.verified %}
+    <span class="verified">This rack is complete</span>
+    {% endif %}
     <a class="comments{% if user.is_authenticated %} comments-active{% endif %}" href="#add-comment" title="Add a comment!"><strong>{{ comment_count }}</strong> comment{{ comment_count|pluralize }}</a>
   {% vote_by_user request.user on rack as user_likes_this_rack %}
   {% can_heart user rack as canheart %}
@@ -60,23 +63,27 @@ $(document).ready(function() {
   <h2 class="rack-address">{{rack.address}}</h2><a class="edit" href="{% url editrack rack.id %}">{% if user.is_authenticated %}Edit this Rack{% else %}Log in to edit{% endif %}</a>
 </div>
 <div id="rackinfo">
-    <h3 class="rack-title">{{rack.title}}</h3>
+   {% if rack.photo %}
+     <img src="{{rack.photo.extra_thumbnails.large}}" />
+   {% else %}
+     <div class="error error-photo">
+       No photos about this request
+     </div>
+  {% endif %}
+    <h3 class="fake-label">Establishment</h3>
+    <div class="rack-title">{{rack.title}}</div>
+    <h3 class="fake-label">Description</h3>
     <div class="rack-description">{{rack.description}}</div>
-    {% if rack.photo %}
-    <img src="{{rack.photo.extra_thumbnails.large}}" />
-    {% else %}
-      <div class="error error-photo">
-        <p>No photos about this request </p>
-      </div>
-   {% endif %}
 
-  <ul id="support-statements">
-  {% for object in statement_query %}
-    <li><a href="{{object.file.url}}">Statement of support</a></li>
-  {% endfor %}
-  </ul>
-
-    <h2>{{comment_count}} comments on this rack</h2>
+  {% if statement_query %}
+    <ul id="support-statements">
+    {% for object in statement_query %}
+      <li><a href="{{object.file.url}}">Statement of support</a></li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  {% if comment_list %}
+    <h5>{{comment_count}} comments on this rack</h5>
     <ul id="comments-list">
       {% for comment in comment_list %}
       <li class="comment">
@@ -89,7 +96,8 @@ $(document).ready(function() {
       </li>
       {% endfor %}
     </ul>
-    <h2 id="add-comment">Leave a comment</h2>
+  {% endif %}
+    <h5 id="add-comment">Leave a comment</h5>
     <!-- {% render_comment_form for rack %} -->
 
     <form action="{{request.path}}" method="POST">
@@ -113,9 +121,8 @@ $(document).ready(function() {
           {{ comment_form.url }}
           {{ comment_form.errors.url }}
 
-       {% endif %}
-
         <label for="id_comment">Comment</label>
+        {% endif %}
         {{ comment_form.comment }}
         {{ comment_form.errors.comment }}
 
