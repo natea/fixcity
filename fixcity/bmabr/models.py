@@ -44,6 +44,11 @@ class Rack(models.Model):
     location = models.PointField(srid=4326)
 
     verified = models.BooleanField(default=False, blank=True)
+    # these represent the parts of a rack that need to be marked for a rack to
+    # be marked as verified/complete
+    verify_surface = models.BooleanField(default=False, blank=True)
+    verify_objects = models.BooleanField(default=False, blank=True)
+    verify_access = models.BooleanField(default=False, blank=True)
 
     # keep track of where the rack was submitted from
     # if not set, that means it was submitted from the web
@@ -283,15 +288,6 @@ class RackForm(ModelForm):
     class Meta:
         model = Rack
 
-    def clean_verified(self):
-        verified = self.cleaned_data.get('verified')
-        errors = []
-        if verified:
-            if not (self.cleaned_data.get('photo')
-                    or (self.is_bound and bool(self.instance.photo))):
-                raise ValidationError(NEED_PHOTO_TO_VERIFY)
-        return verified
-
     def clean_photo(self):
         photo = self.cleaned_data.get('photo')
         if not photo:
@@ -308,6 +304,16 @@ class RackForm(ModelForm):
     def clean(self):
         from django.forms.util import ErrorList
         cleaned_data = self.cleaned_data
+
+        # dynamically calculate the verified status from the requirements
+        if self.is_bound:
+            if (cleaned_data['verify_access'] and
+                cleaned_data['verify_surface'] and
+                cleaned_data['verify_objects']):
+                cleaned_data['verified'] = True
+            else:
+                cleaned_data['verified'] = False
+
         if self.is_bound and self.instance.source:
             return cleaned_data
         if cleaned_data.get('email') or cleaned_data.get('source'):
@@ -327,4 +333,3 @@ class RackForm(ModelForm):
         # know if they forgot the 'source' field.
         # It goes in errors.__all__ so it isn't shown on our web UI.
         raise ValidationError(NEED_SOURCE_OR_EMAIL)
-

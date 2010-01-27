@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load rackverification_tags %}
 {% block title %} FixCity: Add a Bike Rack {% endblock %}
 
 {% block extra_header %}
@@ -77,39 +78,42 @@ jQuery(document).ready(function() {loadMap();});
   </div><!-- /.section -->
   <h2 class="toggler">Step 3: Verification / Details <small class="optional">(optional)</small></h2>
   <div class="section">
+    {% rack_requirements as requirements %}
+    <p><strong>Please verify that the rack location meets these requirements:</strong></p>
     <fieldset class="verification">
       <div>
-        <input id="dummy1" name="dummy1" type="checkbox" />
-        <h3 class="permissive-clearance"><label for="dummy1">Surface</label></h3>
+        <input id="rackform-surface" name="verify_surface" type="checkbox" />
+        <h3 class="permissive-clearance"><label for="rackform-surface">Surface</label></h3>
         <ul>
-          <li>11' wide public sidewalk</li>
-          <li>3' Utility covers, tree pit edges, grates with hinges</li>
-          <li>Un-cracked concrete surface</li>
+          {% for requirement in requirements.surface %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
         </ul>
       </div>
     </fieldset>
     <fieldset class="verification">
       <div>
-        <input id="dummy2" name="dummy2" type="checkbox" />
-        <h3 class="moderate-clearance"><label for="dummy2">Objects</label></h3>
+        <input id="rackform-objects" name="verify_objects" type="checkbox" />
+        <h3 class="moderate-clearance"><label for="rackform-objects">Objects</label></h3>
         <ul>
-          <li>5' Benches, planters, telephones, mailboxes</li>
-          <li>5' Signs, parking meters, lamp posts, standpipes, etc.)</li>
+          {% for requirement in requirements.objects %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
         </ul>
       </div>
     </fieldset>
     <fieldset class="verification">
       <div>
-        <input id="dummy3" name="dummy3" type="checkbox" />
-        <h3 class="restrictive-clearance"><label for="dummy3">Access</label></h3>
+        <input id="rackform-access" name="verify_access" type="checkbox" />
+        <h3 class="restrictive-clearance"><label for="rackform-access">Access</label></h3>
         <ul>
-          <li>15' Crosswalks &#038; special curb areas: bus stops, taxi stands, hotel loading zones Franchised structures: sidewalk cafes, bus &#038; bike shelters, toilets, newstands</li>
-          <li>8' Fire hydrants</li>
-          <li>5' Building entrances &#038; driveways</li>
-          <li>3' Hatches &#038; subway entrances  (railings, stairs, elevators, etc.)</li>
+          {% for requirement in requirements.access %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
         </ul>
       </div>
     </fieldset>
+    <p>For more information, view detailed <a href="/placement-guide/">Location Guidelines</a></p>
   </div><!-- /.section -->
 
     <input type="hidden" name="date" value="{% now "Y-m-d H:i:s" %}"/>
