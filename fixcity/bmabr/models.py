@@ -144,13 +144,23 @@ class StatementOfSupport(models.Model):
 
 
 class Neighborhood(models.Model):
-    gid = models.IntegerField(primary_key=True)
-    state = models.CharField(max_length=2)
-    county = models.CharField(max_length=43)
-    city = models.CharField(max_length=64)
-    name = models.CharField(max_length=64)
-    regionid = models.IntegerField()
-    the_geom = models.MultiPolygonField() 
+
+    gid = models.AutoField(primary_key=True)
+    objectid = models.IntegerField()
+    name = models.CharField(max_length=100, null=False)
+    # XXX delete these?
+    stacked = models.IntegerField()
+    annoline1 = models.CharField(max_length=50, null=True)
+    annoline2 = models.CharField(max_length=50, null=True)
+    annoline3 = models.CharField(max_length=50, null=True)
+    annoangle = models.DecimalField(max_digits=100, decimal_places=20)
+    # ... XXX
+    borough = models.CharField(max_length=50)
+
+    state = models.CharField(max_length=2, null=True)
+
+    the_geom = models.PointField(srid=4326)
+
 
     objects = models.GeoManager()
 
@@ -219,8 +229,8 @@ class NYCDOTBulkOrder(models.Model):
     communityboard = models.ForeignKey(CommunityBoard)
     user = models.ForeignKey(User)
     date = models.DateTimeField(auto_now=True)
-    organization = models.CharField(max_length=128, blank=False)
-    rationale = models.TextField(blank=False)
+    organization = models.CharField(max_length=128, blank=False, null=True)
+    rationale = models.TextField(blank=False, null=True)
     approved = models.BooleanField(default=False)
 
     def __unicode__(self):

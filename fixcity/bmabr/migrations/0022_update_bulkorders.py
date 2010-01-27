@@ -16,8 +16,7 @@ class Migration:
 
         db.add_column('bmabr_rack', 'bulk_order', orm['bmabr.rack:bulk_order'])
 
-
-        db.delete_column('bmabr_rack', 'locked')
+        #db.delete_column('bmabr_rack', 'locked')
 
     
     def backwards(self, orm):
@@ -106,20 +105,24 @@ class Migration:
         },
         'bmabr.neighborhood': {
             'Meta': {'db_table': "u'gis_neighborhoods'"},
-            'city': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
-            'county': ('django.db.models.fields.CharField', [], {'max_length': '43'}),
-            'gid': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
-            'regionid': ('django.db.models.fields.IntegerField', [], {}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
-            'the_geom': ('django.contrib.gis.db.models.fields.MultiPolygonField', [], {})
+            'annoangle': ('django.db.models.fields.DecimalField', [], {'max_digits': '100', 'decimal_places': '20'}),
+            'annoline1': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
+            'annoline2': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
+            'annoline3': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
+            'borough': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'gid': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'objectid': ('django.db.models.fields.IntegerField', [], {}),
+            'stacked': ('django.db.models.fields.IntegerField', [], {}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True'}),
+            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {})
         },
         'bmabr.nycdotbulkorder': {
             'communityboard': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.CommunityBoard']"}),
             'date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128', 'blank': 'False'}),
-            'rationale': ('django.db.models.fields.TextField', [], {'blank': 'False'}),
+            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128', 'blank': 'False', 'null': 'True'}),
+            'rationale': ('django.db.models.fields.TextField', [], {'blank': 'False', 'null': 'True'}),
             'approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },

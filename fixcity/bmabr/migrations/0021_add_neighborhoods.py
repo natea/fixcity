@@ -14,12 +14,17 @@ class Migration:
         db.start_transaction()
         db.create_table(u'gis_neighborhoods', (
             ('gid', orm['bmabr.neighborhood:gid']),
-            ('state', orm['bmabr.neighborhood:state']),
-            ('county', orm['bmabr.neighborhood:county']),
-            ('city', orm['bmabr.neighborhood:city']),
+            ('objectid', orm['bmabr.neighborhood:objectid']),
             ('name', orm['bmabr.neighborhood:name']),
-            ('regionid', orm['bmabr.neighborhood:regionid']),
+            ('state', orm['bmabr.neighborhood:state']),
+            ('stacked', orm['bmabr.neighborhood:stacked']),
+            ('annoline1', orm['bmabr.neighborhood:annoline1']),
+            ('annoline2', orm['bmabr.neighborhood:annoline2']),
+            ('annoline3', orm['bmabr.neighborhood:annoline3']),
+            ('annoangle', orm['bmabr.neighborhood:annoangle']),
+            ('borough', orm['bmabr.neighborhood:borough']),
             ('the_geom', orm['bmabr.neighborhood:the_geom']),
+
         ))
         db.send_create_signal('bmabr', ['Neighborhood'])
 
@@ -33,10 +38,7 @@ class Migration:
         db.start_transaction()
         sql_path = os.path.abspath(
             os.path.join(HERE, '..', '..', 'sql', 'gis_neighborhoods.sql'))
-        # Originally, the file contained the COPY... FROM STDIN command
-        # followed by the data, but I could not for the life of me get that
-        # to work... always got a psycopg2.extensions.QueryCanceledError.
-        db.execute("copy gis_neighborhoods (gid, state, county, city, name, regionid, the_geom) FROM '%s';" % sql_path)
+        db.execute_many(open(sql_path).read())
         db.commit_transaction()
 
     def backwards(self, orm):
@@ -121,13 +123,18 @@ class Migration:
         },
         'bmabr.neighborhood': {
             'Meta': {'db_table': "u'gis_neighborhoods'"},
-            'city': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
-            'county': ('django.db.models.fields.CharField', [], {'max_length': '43'}),
-            'gid': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
-            'regionid': ('django.db.models.fields.IntegerField', [], {}),
+            'gid': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
-            'the_geom': ('django.contrib.gis.db.models.fields.MultiPolygonField', [], {})
+
+            'objectid': ('django.db.models.fields.IntegerField', [], {}),
+            'stacked': ('django.db.models.fields.IntegerField', [], {}),
+            'annoline1': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
+            'annoline2': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
+            'annoline3': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
+            'annoangle': ('django.db.models.fields.DecimalField', [], {'max_digits': '100', 'decimal_places': '20'}),
+            'borough': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {}),
         },
         'bmabr.nycdotbulkorder': {
             'communityboard': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.CommunityBoard']"}),

@@ -213,6 +213,7 @@ def make_csv(bo, outfile):
     for rack in bo.racks:
         from_st, to_st = cross_streets_for_rack(rack)
         neighborhood = neighborhood_for_rack(rack)
+        print neighborhood
         cb = CommunityBoard.objects.get(the_geom__intersects=rack.location)
         try:
             photo_url = rack.photo.url

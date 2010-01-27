@@ -21,7 +21,7 @@ class RackAdmin(admin.GeoModelAdmin):
                     'verified', 'bulk_order', 'source')
 
 class NeighborhoodAdmin(admin.GeoModelAdmin):
-    list_display = ('name','county')
+    list_display = ('name','borough')
  
 
 class CommunityBoardAdmin(admin.GeoModelAdmin):

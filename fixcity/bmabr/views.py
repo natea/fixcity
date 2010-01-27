@@ -917,6 +917,9 @@ def neighborhood_for_rack(rack):
     neighborhood = Neighborhood.objects.filter(the_geom__contains=rack.location)
     if neighborhood:
         return neighborhood[0].name
+    # XXX for some reason this isn't working for Rack 8 in Williamsburg.
+    # The rack address looks OK; verify the boundaries somehow?
+    print "AAARGH"
     return '<unknown>'
     
     
