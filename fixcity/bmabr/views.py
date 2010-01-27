@@ -920,9 +920,9 @@ def neighborhood_for_rack(rack):
     cursor = connection.cursor()
     cursor.execute("""
       SELECT name FROM gis_neighborhoods
-        WHERE ST_Distance(the_geom, ST_GeomFromText(%r, 4326)) < 1.0
-        ORDER BY ST_Distance(the_geom, ST_GeomFromText(%r, 4326)) LIMIT 1
-   """ % (rack.location.wkt, rack.location.wkt))
+        WHERE ST_DWithin(the_geom, ST_GeomFromText(%r, %d), 1.0)
+        ORDER BY ST_Distance(the_geom, ST_GeomFromText(%r, %d)) LIMIT 1
+   """ % (rack.location.wkt, SRID, rack.location.wkt, SRID))
     row = cursor.fetchone()
     if row is None:
         return '<unknown>'
@@ -932,9 +932,12 @@ def neighborhood_for_rack(rack):
 def cross_streets_for_rack(rack):
     from django.db import connection
     cursor = connection.cursor()
+    # The WHERE clause is an optimization that avoids looking at
+    # any intersections far away.  The third arg was arrived at
+    # empirically.
     cursor.execute(
         """SELECT street, nodeidfrom, nodeidto FROM gis_nycstreets
-        WHERE ST_DWithin(the_geom, ST_PointFromText(%s, %s), .001)
+        WHERE ST_DWithin(the_geom, ST_PointFromText(%s, %s), .003)
         ORDER BY ST_Distance(the_geom, ST_PointFromText(%s, %s))
         LIMIT 1;
         """, [rack.location.wkt, SRID, rack.location.wkt, SRID])
@@ -943,6 +946,9 @@ def cross_streets_for_rack(rack):
         return (None, None)
     else:
         street, nodeidfrom, nodeidto = rack_info
+
+    # Occasionally this fails to find any cross streets when there
+    # really is one.  Don't know why.
 
     cursor.execute(
         """SELECT street FROM gis_nycstreets
