@@ -8,6 +8,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
+from django.core.mail import send_mail
 from django.core.paginator import EmptyPage
 from django.core.paginator import InvalidPage
 from django.core.paginator import Paginator
@@ -15,7 +16,7 @@ from django.core import urlresolvers
 
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator as token_generator
 
 from django.contrib.comments.forms import CommentForm
@@ -37,7 +38,7 @@ from fixcity.bmabr.models import Borough
 from fixcity.bmabr.models import CityRack
 from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import CommunityBoard
-from fixcity.bmabr.models import NYCDOTBulkOrder
+from fixcity.bmabr.models import NYCDOTBulkOrder, BulkOrderForm
 from fixcity.bmabr.models import RackForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
 from fixcity.bmabr.models import Source, TwitterSource, EmailSource
@@ -90,6 +91,14 @@ def index(request):
        context_instance=RequestContext(request)
                               )
 
+def blank_page(request):
+    """ Useful for pages that just need to deplay a flash message and
+    nothing else, eg. after submitting a form where there's no other
+    obvious next page to redirect to.
+    """
+    return render_to_response(
+        'base.html', {}, context_instance=RequestContext(request))
+                      
 @login_required
 def profile(request):
     user = request.user
@@ -740,14 +749,15 @@ def server_error(request, template_name='500.html'):
                                    mimetype="application/xhtml+xml")
 
 def cbs_for_boro(request, boro):
-    """return json results for ajax call to fetch boards for a cb"""
+    """return json results for ajax call to fetch boards for a borough
+    """
     try:
         boro = int(boro)
     except ValueError:
         raise Http404
     borough = get_object_or_404(Borough, gid=boro)
-    board_tuple = [(b.board, b.gid)
-                   for b in CommunityBoard.objects.filter(borough=borough)]
+    board_tuple = [(cb.board, cb.gid)
+                   for cb in CommunityBoard.objects.filter(borough=borough)]
     board_tuple.sort()
     return HttpResponse(json.dumps(board_tuple), mimetype='application/json')
 
@@ -760,103 +770,185 @@ def redirect_rack_urls(request):
 
 
 @permission_required('bmabr.add_nycdotbulkorder')
-def bulk_order_form(request, cb_id):
-    cb = get_object_or_404(CommunityBoard, gid=cb_id)
-    try:
-        bulk_order = NYCDOTBulkOrder.objects.get(communityboard=cb)
-        template = 'bulk_order_edit_form.html',
-    except NYCDOTBulkOrder.DoesNotExist:
-        bulk_order = None
-        template = 'bulk_order_create_form.html'
-
+def bulk_order_edit_form(request, bo_id):
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    cb = bulk_order.communityboard
+    form = BulkOrderForm()
     if request.method == 'POST':
-        if request.POST.get('delete'):
-            template = 'bulk_order_create_form.html',
-            if bulk_order is None:
-                flash_error('Order does not exist', request)
-            else:
-                bulk_order.delete()
-                flash('Bulk order deleted', request)
-        elif bulk_order is None:
-            bulk_order = NYCDOTBulkOrder(user=request.user, communityboard=cb)
-            bulk_order.save()
-            template = 'bulk_order_edit_form.html'
+        post = request.POST.copy()
+        cb_gid = request.POST.get('cb_gid')
+        post = request.POST.copy()
+        post[u'communityboard'] = cb_gid
+        post[u'user'] = request.user.pk
+        form = BulkOrderForm(post)
+        if form.is_valid():
+            form.save()
         else:
-            flash_error("There is already a bulk order for this CB.", request)
+            flash_error('Please correct the following errors.', request)
+
     return render_to_response(
-        template,
+        'bulk_order_edit_form.html',
         {'request': request,
          'bulk_order': bulk_order,
          'cb': cb,
+         'form': form,
          },
         context_instance=RequestContext(request)
         )
 
-def bulk_order_csv(request, cb_id):
-    cb = get_object_or_404(CommunityBoard, gid=cb_id)
-    bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
+@login_required
+def bulk_order_add_form(request):
+    cb = None
+    form = BulkOrderForm()
+    if request.method == 'POST':
+        cb_gid = request.POST.get('cb_gid')
+        post = request.POST.copy()
+        post[u'communityboard'] = cb_gid
+        post[u'user'] = request.user.pk
+        form = BulkOrderForm(post)
+        if form.is_valid():
+            bulk_order = NYCDOTBulkOrder.objects.filter(communityboard=cb_gid)
+            if bulk_order:
+                flash_error("There is already a bulk order for this CB.", request)
+            else:
+                bulk_order = form.save()
+                if request.user.has_perm('bmabr.add_nycdotbulkorder'):
+                    flash("Bulk order created! Follow the directions below to complete it.", request)
+                    bulk_order.approve()
+                    bulk_order.save()
+                    return HttpResponseRedirect(
+                        urlresolvers.reverse(bulk_order_edit_form,
+                                             kwargs={'bo_id': bulk_order.id}))
+                
+                else:
+                    flash("Thanks for your request. "
+                          "The site admins will check out your request and "
+                          "get back to you soon!",
+                          request
+                          )
+                    subject = 'New bulk order request needs approval'
+                    approval_uri = request.build_absolute_uri(
+                        urlresolvers.reverse(
+                            bulk_order_approval_form, args=[bulk_order.id]))
+                    body = """
+A new bulk order has been submitted.
+To approve this user and this order, go to:
+%s
+""" % approval_uri
+                    send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
+                              settings.BULK_ORDER_APPROVAL_EMAIL,
+                              fail_silently=False)
+                    return HttpResponseRedirect(urlresolvers.reverse(blank_page))
+        else:
+            flash_error('Please correct the following errors.', request)
+    return render_to_response(
+        'bulk_order_add_form.html',
+        {'request': request,
+         'cb': cb,
+         'form': form,
+         },
+        context_instance=RequestContext(request)
+        )
+
+@permission_required('auth.change_user')
+def bulk_order_approval_form(request, bo_id):
+    bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    if request.method == 'POST':
+        bo.approve()
+        bo.save()
+        group = Group.objects.get(name='bulk_ordering')
+        bo.user.groups.add(group)
+        bo.user.save()
+        subject = 'Your bulk order has been approved for submission to the DOT'
+        body = """
+Thanks for your bulk order request. Our site admins have given
+you approval to submit this bulk order to the NYC Department of
+Transportation.
+
+To finish your bulk order, follow this link:
+%s
+""" % request.build_absolute_uri(urlresolvers.reverse(
+                bulk_order_edit_form, kwargs={'bo_id': bo.id}))
+
+        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
+                  [bo.user.email],
+                  fail_silently=False)
+
+    return render_to_response('bulk_order_approval_form.html',
+       {'request':request,
+        'bulk_order': bo,
+        'cb': bo.communityboard,
+        },
+       context_instance=RequestContext(request))
+    
+
+def bulk_order_csv(request, bo_id):
+    from fixcity.bmabr import bulkorder
+
+    bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    cb = bo.communityboard
     response = HttpResponse(mimetype='text/csv')
-    date = bulk_order.date.replace(microsecond=0)
-    filename = "%s_%s.csv" % (str(cb).replace(' ', '-'), date.isoformat('-'))
+    filename = bulkorder.make_filename(bo, 'csv')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
-    import csv
-    csv_writer = csv.writer(response)
-    for rack in bulk_order.racks:
-        csv_writer.writerow([rack.id, rack.title, rack.address,
-                             cross_streets_for_rack(rack),
-                             ])
+    bulkorder.make_csv(bo, response)
     return response
 
-def bulk_order_pdf(request, cb_id):
-    cb = get_object_or_404(CommunityBoard, gid=cb_id)
-    bulk_order = get_object_or_404(NYCDOTBulkOrder, communityboard=cb)
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.units import inch
-
+def bulk_order_pdf(request, bo_id):
+    from fixcity.bmabr import bulkorder
+    bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
     response = HttpResponse(mimetype='application/pdf')
-    date = bulk_order.date.replace(microsecond=0)
-    filename = "%s_%s.pdf" % (str(cb).replace(' ', '-'), date.isoformat('-'))
+    filename = bulkorder.make_filename(bo, 'pdf')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
-    pdf = canvas.Canvas(response)
-
-    textobject = pdf.beginText()
-    textobject.setTextOrigin(inch, 7*inch)
-
-    lines = []
-    for rack in bulk_order.racks:
-        lines.append(', '.join([str(rack.id), rack.title, rack.address]))
-    textobject.textLines(lines, trim=1)
-    pdf.drawText(textobject)
-
-    # Close the PDF object cleanly, and we're done.
-    pdf.showPage()
-    pdf.save()
-
+    bulkorder.make_pdf(bo, response)
     return response
 
+
+def bulk_order_zip(request, bo_id):
+    from fixcity.bmabr import bulkorder
+    bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    response = HttpResponse(mimetype='application/zip')
+    filename = bulkorder.make_filename(bo, 'zip')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    bulkorder.make_zip(bo, response)
+    return response
 
 def neighborhood_for_rack(rack):
-    from fixcity.bmabr.models import Neighborhood
-    neighborhood = Neighborhood.objects.filter(the_geom__contains=rack.location)
-    if neighborhood:
-        return neighborhood[0].name
-    return '<unknown>'
+    # Unfortunately, django doesn't support ordering by sql functions.
+    # http://code.djangoproject.com/ticket/5293
+    # So we'll use raw SQL.
+    from django.db import connection
+    cursor = connection.cursor()
+    cursor.execute("""
+      SELECT name FROM gis_neighborhoods
+        WHERE ST_DWithin(the_geom, ST_GeomFromText(%r, %d), 1.0)
+        ORDER BY ST_Distance(the_geom, ST_GeomFromText(%r, %d)) LIMIT 1
+   """ % (rack.location.wkt, SRID, rack.location.wkt, SRID))
+    row = cursor.fetchone()
+    if row is None:
+        return '<unknown>'
+    return row[0]
     
     
 def cross_streets_for_rack(rack):
     from django.db import connection
     cursor = connection.cursor()
+    # The WHERE clause is an optimization that avoids looking at
+    # any intersections far away.  The third arg was arrived at
+    # empirically.
     cursor.execute(
         """SELECT street, nodeidfrom, nodeidto FROM gis_nycstreets
-        WHERE ST_DWithin(the_geom, ST_PointFromText(%s, %s), .001)
+        WHERE ST_DWithin(the_geom, ST_PointFromText(%s, %s), .003)
         ORDER BY ST_Distance(the_geom, ST_PointFromText(%s, %s))
         LIMIT 1;
         """, [rack.location.wkt, SRID, rack.location.wkt, SRID])
     rack_info = cursor.fetchone()
     if rack_info is None:
-        return "(no cross streets found; not in NYC?)"
+        return (None, None)
     else:
         street, nodeidfrom, nodeidto = rack_info
+
+    # Occasionally this fails to find any cross streets when there
+    # really is one.  Don't know why.
 
     cursor.execute(
         """SELECT street FROM gis_nycstreets
@@ -873,4 +965,4 @@ def cross_streets_for_rack(rack):
     next_cross_street = cursor.fetchone()
     if next_cross_street is not None:
         next_cross_street = next_cross_street[0]
-    return "between %s and %s" % (previous_cross_street, next_cross_street)
+    return (previous_cross_street, next_cross_street)

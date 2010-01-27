@@ -2,51 +2,32 @@
 from south.db import db
 from django.db import models
 from fixcity.bmabr.models import *
-import os
-
-HERE = os.path.abspath(os.path.dirname(__file__))
 
 class Migration:
     
     def forwards(self, orm):
         
-        # Adding model 'Neighborhood'
-        db.start_transaction()
-        db.create_table(u'gis_neighborhoods', (
-            ('gid', orm['bmabr.neighborhood:gid']),
-            ('objectid', orm['bmabr.neighborhood:objectid']),
-            ('name', orm['bmabr.neighborhood:name']),
-            ('state', orm['bmabr.neighborhood:state']),
-            ('stacked', orm['bmabr.neighborhood:stacked']),
-            ('annoline1', orm['bmabr.neighborhood:annoline1']),
-            ('annoline2', orm['bmabr.neighborhood:annoline2']),
-            ('annoline3', orm['bmabr.neighborhood:annoline3']),
-            ('annoangle', orm['bmabr.neighborhood:annoangle']),
-            ('borough', orm['bmabr.neighborhood:borough']),
-            ('the_geom', orm['bmabr.neighborhood:the_geom']),
+        # Adding field 'NYCDOTBulkOrder.organization'
+        db.add_column('bmabr_nycdotbulkorder', 'organization', orm['bmabr.nycdotbulkorder:organization'])
+        
+        db.add_column('bmabr_nycdotbulkorder', 'rationale', orm['bmabr.nycdotbulkorder:rationale'])
 
-        ))
-        db.send_create_signal('bmabr', ['Neighborhood'])
+        db.add_column('bmabr_nycdotbulkorder', 'approved', orm['bmabr.nycdotbulkorder:approved'])
 
-        db.commit_transaction()
+        db.add_column('bmabr_rack', 'bulk_order', orm['bmabr.rack:bulk_order'])
 
-        db.start_transaction()
-        db.execute_deferred_sql()  # This is needed to set up the_geom.
-        db.commit_transaction()
+        #db.delete_column('bmabr_rack', 'locked')
 
-        # Now we can populate the table.
-        db.start_transaction()
-        sql_path = os.path.abspath(
-            os.path.join(HERE, '..', '..', 'sql', 'gis_neighborhoods.sql'))
-        db.execute_many(open(sql_path).read())
-        db.execute("UPDATE gis_neighborhoods SET state = 'NY'")
-        db.commit_transaction()
-
+    
     def backwards(self, orm):
         
-        # Deleting model 'Neighborhood'
-        db.delete_table(u'gis_neighborhoods')
-        
+        # Deleting field 'NYCDOTBulkOrder.organization'
+        db.delete_column('bmabr_nycdotbulkorder', 'organization')
+        db.delete_column('bmabr_nycdotbulkorder', 'rationale')
+        db.delete_column('bmabr_nycdotbulkorder', 'approved')
+        db.delete_column('bmabr_rack', 'bulk_order_id')
+
+        #db.add_column('bmabr_rack', 'locked', orm['bmabr.rack:locked'])
     
     
     models = {
@@ -124,23 +105,25 @@ class Migration:
         },
         'bmabr.neighborhood': {
             'Meta': {'db_table': "u'gis_neighborhoods'"},
-            'gid': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True'}),
-
-            'objectid': ('django.db.models.fields.IntegerField', [], {}),
-            'stacked': ('django.db.models.fields.IntegerField', [], {}),
+            'annoangle': ('django.db.models.fields.DecimalField', [], {'max_digits': '100', 'decimal_places': '20'}),
             'annoline1': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
             'annoline2': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
             'annoline3': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True'}),
-            'annoangle': ('django.db.models.fields.DecimalField', [], {'max_digits': '100', 'decimal_places': '20'}),
             'borough': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {}),
+            'gid': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'objectid': ('django.db.models.fields.IntegerField', [], {}),
+            'stacked': ('django.db.models.fields.IntegerField', [], {}),
+            'state': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True'}),
+            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {})
         },
         'bmabr.nycdotbulkorder': {
             'communityboard': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.CommunityBoard']"}),
             'date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128', 'blank': 'False', 'null': 'True'}),
+            'rationale': ('django.db.models.fields.TextField', [], {'blank': 'False', 'null': 'True'}),
+            'approved': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
         'bmabr.nycstreet': {
@@ -159,9 +142,10 @@ class Migration:
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'location': ('django.contrib.gis.db.models.fields.PointField', [], {}),
-            'locked': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
             'photo': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'source': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.Source']", 'null': 'True', 'blank': 'True'}),
+            'bulk_order': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.NYCDOTBulkOrder']", 'null': 'True', 'blank': 'True'}),
+
             'title': ('django.db.models.fields.CharField', [], {'max_length': '140'}),
             'user': ('django.db.models.fields.CharField', [], {'max_length': '20', 'blank': 'True'}),
             'verified': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'})

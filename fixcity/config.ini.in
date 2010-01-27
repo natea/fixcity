@@ -7,6 +7,9 @@ SECRET_KEY = YOU MUST CHANGE THIS
 
 DEFAULT_FROM_EMAIL = foo@example.com
 
+# Who approves bulk order requests?
+BULK_ORDER_APPROVAL_EMAIL = 
+
 GOOGLE_ANALYTICS_KEY =
 
 # This is for uploaded files. 

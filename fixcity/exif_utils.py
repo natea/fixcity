@@ -27,21 +27,6 @@ def rotate_image_by_exif(img):
     purposes.  We could use something like
     http://ebiznisz.hu/python-jpegtran/ if we change our minds about
     that.
-
-    XXX Now we just need to write migration code like so:
-
->>> from fixcity.bmabr.utils import *
->>> from fixcity.bmabr.models import *
->>> r  = Rack.objects.get(id=163)
->>> r.photo.path
-'/home/pw/builds/fixcity/builds/20091211/src/fixcity/fixcity/uploads/images/racks/IMG_0080.JPG'
->>> rotated = rotate_image_by_exif(Image.open(r.photo.path))
->>> rotated
-<PIL.Image.Image instance at 0x2c01dd0>
->>> rotated.show()
-
-    XXX what to do on upload? and where to do it? a clean method?
-    
     """
     exif_info = get_exif_info(img)
     # We rotate regarding to the EXIF orientation information

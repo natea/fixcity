@@ -28,6 +28,9 @@ MANAGERS = ADMINS
 
 DEFAULT_FROM_EMAIL = config.get('main', 'DEFAULT_FROM_EMAIL')
 
+BULK_ORDER_APPROVAL_EMAIL = [e.strip() for e in 
+                             config.get('main', 'BULK_ORDER_APPROVAL_EMAIL').split(',')]
+
 DATABASE_ENGINE = config.get('db', 'DATABASE_ENGINE')
 DATABASE_NAME = config.get('db', 'DATABASE_NAME')
 DATABASE_USER = config.get('db', 'DATABASE_USER')
@@ -195,6 +198,7 @@ COVERAGE_MODULES = ['fixcity.bmabr.views', 'fixcity.bmabr.models',
                     'fixcity.flash_messages',
                     'fixcity.bmabr.templatetags.recaptcha_tags',
                     'fixcity.bmabr.templatetags.google_analytics',
+                    'fixcity.bmabr.bulkorder',
                     ]
 
 try:

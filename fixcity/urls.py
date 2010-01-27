@@ -10,6 +10,8 @@ urlpatterns = patterns(
     '',
     (r'^$', 'fixcity.bmabr.views.index'),
 
+    (r'^blank/$', 'fixcity.bmabr.views.blank_page'),
+
     # Account URL overrides.
     # Note these go first because django just iterates over these
     # patterns and uses the FIRST match.
@@ -23,7 +25,7 @@ urlpatterns = patterns(
 
     (r'^geocode/$', 'fixcity.bmabr.views.geocode'),
     (r'^reverse/$', 'fixcity.bmabr.views.reverse_geocode'),
-    (r'^cbs/(?P<boro>\w+)$', 'fixcity.bmabr.views.cbs_for_boro'),
+    (r'^cbs/(?P<boro>\w+)/$', 'fixcity.bmabr.views.cbs_for_boro'),
 
     url(r'racks/$','fixcity.bmabr.views.racks_index', name='listracks'),
 
@@ -39,13 +41,15 @@ urlpatterns = patterns(
 
     (r'racks/all.kml$', 'fixcity.bmabr.views.rack_all_kml'),
     (r'racks/requested.kml$', 'fixcity.bmabr.views.rack_requested_kml'),
-    # XXX doesn't look like anybody is using this particular url
-    # is there a reason why we'd need a layer to have all boards?
-    #(r'communityboards.kml','fixcity.bmabr.views.community_board_kml'),
 
-    (r'^communityboard/(?P<cb_id>\d+)/bulk_order/order.csv/$', 'fixcity.bmabr.views.bulk_order_csv'),
-    (r'^communityboard/(?P<cb_id>\d+)/bulk_order/order.pdf/$', 'fixcity.bmabr.views.bulk_order_pdf'),
-    (r'^communityboard/(?P<cb_id>\d+)/bulk_order/$', 'fixcity.bmabr.views.bulk_order_form'),
+    # Bulk order URLs
+    (r'^bulk_order/(?P<bo_id>\d+)/order.csv/$', 'fixcity.bmabr.views.bulk_order_csv'),
+    (r'^bulk_order/(?P<bo_id>\d+)/order.pdf/$', 'fixcity.bmabr.views.bulk_order_pdf'),
+    (r'^bulk_order/(?P<bo_id>\d+)/order.zip/$', 'fixcity.bmabr.views.bulk_order_zip'),
+    (r'^bulk_order/$', 'fixcity.bmabr.views.bulk_order_add_form'),
+    (r'^bulk_order/(?P<bo_id>\d+)/approve/$', 'fixcity.bmabr.views.bulk_order_approval_form'),
+    (r'^bulk_order/(?P<bo_id>\d+)/edit/$', 'fixcity.bmabr.views.bulk_order_edit_form'),
+
     (r'communityboard/(?P<cb_id>\d+).kml','fixcity.bmabr.views.community_board_kml'),
     (r'borough/(?P<boro_id>\d+).kml', 'fixcity.bmabr.views.borough_kml'),
     (r'^cityracks.kml$', 'fixcity.bmabr.views.cityracks_kml'),

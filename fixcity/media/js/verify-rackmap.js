@@ -120,6 +120,17 @@ function loadRacks(params) {
   return racks;
 };
 
+var getParamsFn = function() {
+  var vrfy = $('#filter-form input:radio[name=state]:checked').val();
+  var boroSelect = $('#filter-boro');
+  var cbSelect = $('#filter-cb');
+  return {
+    verified: vrfy,
+    boro: boroSelect.val(),
+    cb: cbSelect.val()
+  };
+};
+
 function loadMap() {
   map = new OpenLayers.Map('verify-map', options);
 
@@ -165,6 +176,69 @@ function loadMap() {
   map.addLayers([osm, racks]);
   map.zoomToExtent(bounds);
 }
+
+var fetchNewDataFn = function(page) {
+    var url = $('#filter-form').attr('action');
+    var params = getParamsFn();
+    if (page) {
+        params.page = page;
+    }
+    $.get(url,
+          params,
+          function(data) {
+              $('#racks').empty().append(data);
+          });
+};
+
+var createOutlinedLayer = function(url) {
+    var style = new OpenLayers.Style({
+            fillOpacity: 0,
+            strokeWidth: 1,
+            strokeColor: "#f35824"
+        });
+    var outlineLayer = new OpenLayers.Layer.Vector("Outline", {
+            projection: map.displayProjection,
+            strategies: [
+                         new OpenLayers.Strategy.Fixed()
+                         ],
+            protocol: new OpenLayers.Protocol.HTTP({
+                    url: url,
+                    params: {},
+                    format: new OpenLayers.Format.KML()
+                }),
+            styleMap: new OpenLayers.StyleMap({
+                    "default": style
+                })
+        });
+    outlineLayer.events.on({
+            loadend: function(evt) {
+                var layer = evt.object;
+                var bounds = layer.getDataExtent();
+                map.zoomToExtent(bounds);
+            }
+        });
+    return outlineLayer;
+};
+
+var updateMapFn = function() {
+    var params = getParamsFn();
+    // remove all non base layers
+    for (var i = map.layers.length-1; i >= 1; i--) {
+        map.removeLayer(map.layers[i]);
+    }
+    // and an additional layer for the outline of the boro/cb
+    var url;
+    if (params.cb == "0") {
+        // borough query
+        url = '/borough/' + params.boro + '.kml';
+    } else {
+        url = '/communityboard/' + params.cb + '.kml';
+    }
+    map.addLayer(createOutlinedLayer(url));
+    // the layer for all racks
+    map.addLayer(loadRacks(params));
+};
+
 
 function updateFilterBehaviors() {
   var boroSelect = $('#filter-boro');
