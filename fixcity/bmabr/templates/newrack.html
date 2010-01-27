@@ -78,6 +78,7 @@ jQuery(document).ready(function() {loadMap();});
   <h2 class="toggler">Step 3: Verification / Details <small class="optional">(optional)</small></h2>
   <div class="section">
     {% rack_requirements as requirements %}
+    <p><strong>Please verify that the rack location meets these requirements:</strong></p>
     <fieldset class="verification">
       <div>
         <input id="rackform-surface" name="vrfy_surface" type="checkbox" />
@@ -111,6 +112,7 @@ jQuery(document).ready(function() {loadMap();});
         </ul>
       </div>
     </fieldset>
+    <p>For more information, view detailed <a href="/placement-guide/">Location Guidelines</a></p>
   </div><!-- /.section -->
 
     <input type="hidden" name="date" value="{% now "Y-m-d H:i:s" %}"/>
