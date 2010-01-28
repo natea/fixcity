@@ -629,22 +629,22 @@ background: url(/site_media/img/tick.png) 0 50% no-repeat;
 }
 
 #sublede .rack-meta .comments,
-#sublede .rack-meta .likes,
-#sublede .rack-meta .likes-active {
+#sublede .rack-meta .rack-likes,
+#sublede .rack-meta .rack-likes-active {
 padding: 5px 20px 5px 0;
 color: #333;
 text-decoration: none;
 }
 
 #sublede .rack-meta a.comments:hover,
-#sublede .rack-meta a.likes:hover,
-#sublede .rack-meta a.likes-active:hover {
+#sublede .rack-meta a.rack-likes:hover,
+#sublede .rack-meta a.rack-likes-active:hover {
 text-decoration: underline;
 }
 
 #sublede .rack-meta .comments strong,
-#sublede .rack-meta .likes strong,
-#sublede .rack-meta .likes-active strong {
+#sublede .rack-meta .rack-likes strong,
+#sublede .rack-meta .rack-likes-active strong {
 color: #44c5f5;
 }
 
@@ -658,11 +658,11 @@ margin: 0 10px 0 0;
 background: url(/site_media/img/comment-icon-add.png) 100% 50% no-repeat;
 }
 
-#sublede .rack-meta .likes {
+#sublede .rack-meta .rack-likes {
 background: url(/site_media/img/like-icon-inactive.png) 100% 50% no-repeat;
 }
 
-#sublede .rack-meta .likes-active {
+#sublede .rack-meta .rack-likes-active {
 background: url(/site_media/img/like-icon-active.png) 100% 50% no-repeat;
 }
 

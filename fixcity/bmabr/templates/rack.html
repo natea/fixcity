@@ -28,10 +28,6 @@ if (jQuery.browser.msie) {
 } else {
 jQuery(document).ready(function() {loadMap(false);});
 }
-
-$(document).ready(function() {
-  $(".rack-meta a.likes").voteify({'rackID': {{rack.id}}});
-});
 //]]>
 </script>
 {% endblock %}
@@ -54,9 +50,9 @@ $(document).ready(function() {
   {% vote_by_user request.user on rack as user_likes_this_rack %}
   {% can_heart user rack as canheart %}
   {% if canheart %}
-    <a class="likes{% if user_likes_this_rack %} likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a>
+    <a class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a>
   {% else %}
-    <span class="likes{% if user_likes_this_rack %} likes-active{% endif %}" ><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</span>
+    <span class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" ><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</span>
   {% endif %}
 
   </div>
@@ -154,3 +150,12 @@ $(document).ready(function() {
 </div><!-- /#suggest -->
 
 {% endblock %} 
+{% block extra_footer %}
+<script type="text/javascript">
+//<![CDATA[
+  jQuery(document).ready(function($) {
+    $('.rack-meta a.rack-likes').voteify({'rackID': {{rack.id}}});
+  });
+//]]>
+</script>
+{% endblock %}
