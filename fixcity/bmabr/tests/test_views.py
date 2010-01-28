@@ -445,7 +445,7 @@ class TestBulkOrderViews(UserTestCaseBase):
         self.assertEqual(response.status_code, 302)
         self.failUnless(response.has_header('location'))
         self.assertEqual(response['location'],
-                         'http://testserver/accounts/login/?next=/bulk_order/999/edit/')
+                         'http://testserver/accounts/login/?next=%2Fbulk_order%2F999%2Fedit%2F')
         
     def test_bulk_order_edit_form__missing(self):
         self._login(is_superuser=True)
