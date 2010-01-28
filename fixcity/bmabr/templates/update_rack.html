@@ -40,9 +40,9 @@ jQuery(document).ready(function() {loadMap();});
   {% vote_by_user request.user on rack as user_likes_this_rack %}
   {% can_heart user rack as canheart %}
   {% if canheart %}
-    <a class="likes{% if user_likes_this_rack %} likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a>
+    <a class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a>
   {% else %}
-    <span class="likes{% if user_likes_this_rack %} likes-active{% endif %}" ><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</span>
+    <span class="rack-likes{% if user_likes_this_rack %} rack-likes-active{% endif %}" ><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</span>
   {% endif %}
   </div>
 </div>
@@ -171,6 +171,7 @@ jQuery(document).ready(function() {loadMap();});
     $('input#statement').change(function( objEvent ){$('#fakestatementinput').val($(this).val());});
     expandOnce('#statement-wrap', 'Add Statement of Support');
     $('textarea#description').maxLength(300);
+    $('.rack-meta a.rack-likes').voteify({'rackID': {{rack.id}}});
 });
 //]]>
 </script>
