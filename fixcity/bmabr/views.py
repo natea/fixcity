@@ -59,7 +59,6 @@ import sys
 import traceback
 import urllib
 
-GKEY=settings.GKEY
 SRID=4326
 
 # XXX Need to figure out what order we really want these in.
@@ -110,6 +109,8 @@ def profile(request):
        context_instance=RequestContext(request)
                               )
 
+_geocoder = geocoders.Google(settings.GOOGLE_MAPS_KEY)
+
 def _geocode(text):
     # Cache a bit, since that's easier than ensuring that our AJAX
     # code doesn't call it with the same params a bunch of times.
@@ -117,7 +118,7 @@ def _geocode(text):
     key = ('_geocode', text)
     result = cache.get(key)
     if result is None:
-        result = list(geocoders.Google(GKEY).geocode(text, exactly_one=False))
+        result = list(_geocoder.geocode(text, exactly_one=False))
         cache.set(key, result, 60 * 10)
     return result
 
@@ -135,7 +136,7 @@ def reverse_geocode(request):
     key = ('reverse_geocode', point)
     result = cache.get(key)
     if result is None:
-        (new_place,new_point) = geocoders.Google(GKEY).reverse(point)
+        (new_place,new_point) = geocoders.Google(settings.GOOGLE_MAPS_KEY).reverse(point)
         result = new_place
         cache.set(key, result, 60 * 10)
     return HttpResponse(result)

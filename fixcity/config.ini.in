@@ -12,6 +12,8 @@ BULK_ORDER_APPROVAL_EMAIL =
 
 GOOGLE_ANALYTICS_KEY =
 
+GOOGLE_MAPS_KEY =
+
 # This is for uploaded files. 
 # It's probably advisable to use an absolute path outside your source tree
 # so you don't have to remember to copy them if you do a new build.

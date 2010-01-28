@@ -84,6 +84,8 @@ ADMIN_MEDIA_PREFIX = '/media/'
 
 GOOGLE_ANALYTICS_KEY = config.get('main', 'GOOGLE_ANALYTICS_KEY')
 
+GOOGLE_MAPS_KEY = config.get('main', 'GOOGLE_MAPS_KEY')
+
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = config.get('main', 'SECRET_KEY')
 
@@ -219,6 +221,3 @@ handler.setFormatter(formatter)
 logger = logging.getLogger('')
 logger.addHandler(handler) 
 logger.setLevel(logging.DEBUG)
-
-# XXX move this to config.ini
-GKEY="ABQIAAAApLR-B_RMiEN2UBRoEWYPlhTmTlZhMVUZVOGFgSe6Omf4DswcaBSLmUPer5a9LF8EEWHK6IrMgA62bg"

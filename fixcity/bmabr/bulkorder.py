@@ -178,7 +178,7 @@ def get_map(bbox, size=(400, 256), format='jpg'):
 
     # GMap API Key for opengeo.org - static api doesn't care about origin
     url = 'http://maps.google.com/staticmap'
-    key = settings.GKEY
+    key = settings.GOOGLE_MAPS_KEY
 
     center = ((bbox[2] + bbox[0]) / 2, (bbox[3] + bbox[1]) / 2)
     span = (bbox[2] - bbox[0], bbox[3] - bbox[1])
