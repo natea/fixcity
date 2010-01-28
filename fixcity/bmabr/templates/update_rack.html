@@ -1,4 +1,8 @@
 {% extends "base.html" %}
+{% load voting_tags %}
+{% load comments %}
+{% load rackheart_tags %}
+{% load rackverification_tags %}
 {% block title %} FixCity: Edit Bike Rack {% endblock %}
 
 {% block extra_header %}
@@ -30,6 +34,18 @@ jQuery(document).ready(function() {loadMap();});
 
 
 {% block content %}
+<div id="sublede" class="selfclear">
+  <div class="rack-meta">
+    <a class="comments{% if user.is_authenticated %} comments-active{% endif %}" href="#add-comment" title="Add a comment!"><strong>{{ comment_count }}</strong> comment{{ comment_count|pluralize }}</a>
+  {% vote_by_user request.user on rack as user_likes_this_rack %}
+  {% can_heart user rack as canheart %}
+  {% if canheart %}
+    <a class="likes{% if user_likes_this_rack %} likes-active{% endif %}" href="#" title="Like this rack!"><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</a>
+  {% else %}
+    <span class="likes{% if user_likes_this_rack %} likes-active{% endif %}" ><strong>{{ score.score }}</strong> like{{ score.score|pluralize }}</span>
+  {% endif %}
+  </div>
+</div>
 <form id="addrack-form" action="." method="POST" enctype="multipart/form-data">
   <h2 class="toggler">Step 1: Locate <small class="required">(required)</small></h2>
   <div class="section">
@@ -77,39 +93,42 @@ jQuery(document).ready(function() {loadMap();});
   </div><!-- /.section -->
   <h2 class="toggler">Step 3: Verification / Details <small class="optional">(optional)</small></h2>
   <div class="section">
+    {% rack_requirements as requirements %}
+    <p><strong>Please verify that the rack location meets these requirements:</strong></p>
     <fieldset class="verification">
       <div>
-        <input id="dummy1" name="dummy1" type="checkbox" />
-        <h3 class="permissive-clearance"><label for="dummy1">Surface</label></h3>
+        <input id="rackform-surface" name="verify_surface" type="checkbox"{% if request.POST.verify_surface or rack.verify_surface %} checked="true"{%endif%} />
+        <h3 class="permissive-clearance"><label for="rackform-surface">Surface</label></h3>
         <ul>
-          <li>11' wide public sidewalk</li>
-          <li>3' Utility covers, tree pit edges, grates with hinges</li>
-          <li>Un-cracked concrete surface</li>
+          {% for requirement in requirements.surface %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </fieldset>
+      <fieldset class="verification">
+      <div>
+        <input id="rackform-objects" name="verify_objects" type="checkbox"{% if request.POST.verify_objects or rack.verify_objects %} checked="true"{%endif%} />
+        <h3 class="moderate-clearance"><label for="rackform-objects">Objects</label></h3>
+        <ul>
+          {% for requirement in requirements.objects %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
         </ul>
       </div>
     </fieldset>
     <fieldset class="verification">
       <div>
-        <input id="dummy2" name="dummy2" type="checkbox" />
-        <h3 class="moderate-clearance"><label for="dummy2">Objects</label></h3>
+        <input id="rackform-access" name="verify_access" type="checkbox"{% if request.POST.verify_access or rack.verify_access %} checked="true"{%endif%} />
+        <h3 class="restrictive-clearance"><label for="rackform-access">Access</label></h3>
         <ul>
-          <li>5' Benches, planters, telephones, mailboxes</li>
-          <li>5' Signs, parking meters, lamp posts, standpipes, etc.)</li>
+          {% for requirement in requirements.access %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
         </ul>
       </div>
     </fieldset>
-    <fieldset class="verification">
-      <div>
-        <input id="dummy3" name="dummy3" type="checkbox" />
-        <h3 class="restrictive-clearance"><label for="dummy3">Access</label></h3>
-        <ul>
-          <li>15' Crosswalks &#038; special curb areas: bus stops, taxi stands, hotel loading zones Franchised structures: sidewalk cafes, bus &#038; bike shelters, toilets, newstands</li>
-          <li>8' Fire hydrants</li>
-          <li>5' Building entrances &#038; driveways</li>
-          <li>3' Hatches &#038; subway entrances  (railings, stairs, elevators, etc.)</li>
-        </ul>
-      </div>
-    </fieldset>
+    <p>For more information, view detailed <a href="/placement-guide/">Location Guidelines</a></p>
   </div><!-- /.section -->
 
     <!-- XXX Do we want to update date on edit? -->
@@ -123,17 +142,6 @@ jQuery(document).ready(function() {loadMap();});
     site. -->
     <input type="hidden" id="geocoded" name="geocoded" value="0" />
     <div id="verified-wrap">
-     <label for="verified">Verified</label>
-    
-    {% if rack.verified %}
-     <input type="checkbox" name="verified" checked="checked" />
-    {% else %}
-      {% if rack.photo and rack.location %}
-        <input type="checkbox" name="verified" />
-      {% else %}
-        <input type="checkbox" name="verified" readonly="readonly" />
-      {% endif %}
-    {% endif %}
     {{ form.verified.errors }}
     </div>
 

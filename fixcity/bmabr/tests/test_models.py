@@ -49,26 +49,11 @@ class TestRack(TestCase):
 class TestRackForm(TestCase):
 
     data = {'email': 'foo@bar.org',
-            'verified': False,
             'title': 'A rack',
             'date': EPOCH,
             'location': Point(1.0, 2.0, SRID),
             'address': 'noplace in particular',
             }
-
-    def test_rack_form_clean_verified__false(self):
-        data = self.data.copy()
-        form = RackForm(data, {})
-        self.assertEqual(form.is_valid(), True)
-        self.assertEqual(form.clean_verified(), False)
-
-    def test_rack_form_clean_verified__true(self):
-        data = self.data.copy()
-        data['verified'] = True
-        form = RackForm(data, {})
-        self.assertEqual(form.is_valid(), False)
-        self.assertEqual(form.errors.get('verified'),
-                         ["You can't mark a rack as verified unless it has a photo"])
 
     def test_rack_form_clean_photo(self):
         from fixcity.exif_utils import get_exif_info
@@ -138,7 +123,23 @@ class TestRackForm(TestCase):
         form.cleaned_data['source'] = 'something'
         self.assertEqual(form.cleaned_data, form.clean())
 
-        
+    def test_rack_form_bound__verified(self):
+        data = self.data.copy()
+        data['verify_access'] = 'on'
+        data['verify_objects'] = 'on'
+        data['verify_surface'] = 'on'
+
+        form = RackForm(data, {})
+        form.is_bound = True
+        self.assertEqual(form.is_valid(), True)
+        self.assertEqual(form.cleaned_data['verified'], True)
+
+    def test_rack_form_bound__unverified(self):
+        data = self.data.copy()
+        form = RackForm(data, {})
+        form.is_bound = True
+        self.assertEqual(form.is_valid(), True)
+        self.assertEqual(form.cleaned_data['verified'], False)
 
 class TestSource(TestCase):
 
