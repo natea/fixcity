@@ -195,6 +195,7 @@ def get_map(bbox, size=(400, 256), format='jpg'):
     if response.status != 200:
         raise RuntimeError("Response %s while retrieving %s" % (response.status, url))
     # would be nice to deal directly with image data instead of writing first
+    # XXX this means we need a cron job or similar to clean up old files in $TMP
     tmp, path = tempfile.mkstemp('.%s' % format)
     os.write(tmp, data)
     os.close(tmp)
