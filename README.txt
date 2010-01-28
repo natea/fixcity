@@ -11,7 +11,8 @@ http://openplans.org.
 
 The canonical source code is at http://github.com/slinkp/fixcity
 
-The project wiki and bug tracker live at http://projects.openplans.org/fixcity
+The project wiki is at https://projects.openplans.org/fixcity/wiki
+and the bug tracker is at https://projects.openplans.org/fixcity/report
 
 What's In a Name?
 =================
