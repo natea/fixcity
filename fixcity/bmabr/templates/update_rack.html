@@ -36,7 +36,7 @@ jQuery(document).ready(function() {loadMap();});
 {% block content %}
 <div id="sublede" class="selfclear">
   <div class="rack-meta">
-    <a class="comments{% if user.is_authenticated %} comments-active{% endif %}" href="#add-comment" title="Add a comment!"><strong>{{ comment_count }}</strong> comment{{ comment_count|pluralize }}</a>
+    <a class="comments{% if user.is_authenticated %} comments-active{% endif %}" href="/racks/{{rack.id}}/#add-comment" title="Add a comment!"><strong>{{ comment_count }}</strong> comment{{ comment_count|pluralize }}</a>
   {% vote_by_user request.user on rack as user_likes_this_rack %}
   {% can_heart user rack as canheart %}
   {% if canheart %}
