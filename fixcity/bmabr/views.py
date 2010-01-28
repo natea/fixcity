@@ -462,7 +462,6 @@ def votes(request, rack_id):
     user = request.user
     rack = get_object_or_404(Rack, id=rack_id)
     result = {}
-    add_html = False
     if request.method == 'POST':
         user_voted = Vote.objects.get_for_user(rack, request.user)
         if user_voted is not None:
@@ -471,12 +470,8 @@ def votes(request, rack_id):
             result['error'] = u"You can't vote on a rack you suggested."
         else:
             Vote.objects.record_vote(rack, request.user, 1)
-            add_html = True
     votes = Vote.objects.get_score(rack)
     result['votes'] = votes['score']
-    if add_html:
-        span_html = '<span class="rack-likes rack-likes-active"><strong>%s</strong></span>' % votes['score']
-        result['html'] = span_html
     status = 'error' in result and 400 or 200
     response = HttpResponse(content_type='application/json', status=status)
     response.write(json.dumps(result))
