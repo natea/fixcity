@@ -1,14 +1,29 @@
 BikeRaction aka BuildMeABikeRack aka Fixcity
 ============================================
 
+This is the code behind http://fixcity.org/ , a site that aims to help
+get bike racks built in New York City, by allowing ordinary people to
+combine efforts and get bulk orders submitted to the NYC Department of
+Transportation.
+
+It was built by TOPP Labs, a division of The Open Planning Project,
+http://openplans.org.
+
+The canonical source code is at http://github.com/slinkp/fixcity
+
+The project wiki and bug tracker live at http://projects.openplans.org/fixcity
+
+What's In a Name?
+=================
+
 This project has been through several names already. Sorry :)
 
 If you see "bmabr" in code, it's just an acronym for "Build Me A Bike
-Rack". Don't worry about it.
+Rack", one of the older names. Don't worry about it...
 
 
-The canonical source code is at http://github.com/iwillig/fixcity
-
+INSTALLATION
+=============
 
 Prerequisites
 =============
@@ -75,7 +90,7 @@ get started:
 
   cd fixcity
   ./manage.py syncdb
-
+  ./manage.py migrate
 
  5) Visit the /admin/sites/site UI to change the domain name and
     display name of the website. These are used eg. in account
