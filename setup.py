@@ -41,6 +41,7 @@ setup(name='fixcity',
       url="http://www.plope.com/software/ExternalEditor",
       zip_safe=False,
       scripts=[],
+      license='AGPL',
       packages=find_packages(),
       dependency_links=[
         'http://geopy.googlecode.com/svn/branches/reverse-geocode#egg=geopy-dev',

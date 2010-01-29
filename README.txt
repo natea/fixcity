@@ -23,6 +23,14 @@ If you see "bmabr" in code, it's just an acronym for "Build Me A Bike
 Rack", one of the older names. Don't worry about it...
 
 
+License
+=======
+
+
+Released under the terms of the GNU Affero General Public License (GNU
+AGPL). See COPYING.txt for details.
+
+
 INSTALLATION
 =============
 
