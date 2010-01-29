@@ -391,7 +391,7 @@ class TestVotes(UserTestCaseBase):
         self._login()
         response = self.client.post('/racks/%d/votes/' % rack.id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '{"votes": 1, "html": "<span class=\\"rack-likes rack-likes-active\\"><strong>1</strong></span>"}')
+        self.assertEqual(response.content, '{"votes": 1}')
 
 
 class TestBulkOrderViews(UserTestCaseBase):

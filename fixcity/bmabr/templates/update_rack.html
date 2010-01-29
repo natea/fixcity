@@ -170,8 +170,8 @@ jQuery(document).ready(function() {loadMap();});
     $('input#browse').change(function( objEvent ){$('#fakebrowseinput').val($(this).val());});
     $('input#statement').change(function( objEvent ){$('#fakestatementinput').val($(this).val());});
     expandOnce('#statement-wrap', 'Add Statement of Support');
-    $('textarea#description').maxLength(300);
     $('.rack-meta a.rack-likes').voteify({'rackID': {{rack.id}}});
+    $('textarea#description').maxLength(300);
 });
 //]]>
 </script>
