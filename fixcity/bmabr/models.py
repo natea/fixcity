@@ -152,7 +152,7 @@ class StatementOfSupport(models.Model):
 
 class Neighborhood(models.Model):
 
-    gid = models.AutoField(primary_key=True)
+    gid = models.IntegerField(primary_key=True)
     objectid = models.IntegerField()
     name = models.CharField(max_length=100, null=False)
 
@@ -231,6 +231,16 @@ class NYCDOTBulkOrder(models.Model):
     date = models.DateTimeField(auto_now=True)
     organization = models.CharField(max_length=128, blank=False, null=True)
     rationale = models.TextField(blank=False, null=True)
+
+    # status_choices = (
+    #     ('new', 'New'),
+    #     ('approved', 'Approved for Submission'),
+    #     ('pending', 'Pending Approval by DOT'),
+    #     ('completed', 'Completed'),
+    #     )
+    # status = models.TextField(null=False, choices=status_choices,
+    #                           default=status_choices[0][0])
+
     approved = models.BooleanField(default=False)
 
     def __unicode__(self):

@@ -7,9 +7,6 @@ class Migration:
     
     def forwards(self, orm):
         
-        # Deleting field 'Neighborhood.county'
-        db.delete_column(u'gis_neighborhoods', 'county')
-        
         # Changing field 'NYCDOTBulkOrder.rationale'
         # (to signature: django.db.models.fields.TextField(null=True))
         db.alter_column('bmabr_nycdotbulkorder', 'rationale', orm['bmabr.nycdotbulkorder:rationale'])
@@ -29,17 +26,9 @@ class Migration:
         # Changing field 'Neighborhood.state'
         # (to signature: django.db.models.fields.CharField(max_length=2, null=True))
         db.alter_column(u'gis_neighborhoods', 'state', orm['bmabr.neighborhood:state'])
-        
-        # Changing field 'Neighborhood.gid'
-        # (to signature: django.db.models.fields.AutoField(primary_key=True))
-        db.alter_column(u'gis_neighborhoods', 'gid', orm['bmabr.neighborhood:gid'])
-        
     
     
     def backwards(self, orm):
-        
-        # Adding field 'Neighborhood.county'
-        db.add_column(u'gis_neighborhoods', 'county', orm['bmabr.neighborhood:county'])
         
         # Changing field 'NYCDOTBulkOrder.rationale'
         # (to signature: django.db.models.fields.TextField())
@@ -60,10 +49,6 @@ class Migration:
         # Changing field 'Neighborhood.state'
         # (to signature: django.db.models.fields.CharField(max_length=2))
         db.alter_column(u'gis_neighborhoods', 'state', orm['bmabr.neighborhood:state'])
-        
-        # Changing field 'Neighborhood.gid'
-        # (to signature: django.db.models.fields.IntegerField(primary_key=True))
-        db.alter_column(u'gis_neighborhoods', 'gid', orm['bmabr.neighborhood:gid'])
         
     
     
@@ -144,7 +129,7 @@ class Migration:
             'Meta': {'db_table': "u'gis_neighborhoods'"},
             'borough': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'city': ('django.db.models.fields.CharField', [], {'default': "'New York City'", 'max_length': '50'}),
-            'gid': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'gid': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'objectid': ('django.db.models.fields.IntegerField', [], {}),
             'state': ('django.db.models.fields.CharField', [], {'default': "'NY'", 'max_length': '2', 'null': 'True'}),

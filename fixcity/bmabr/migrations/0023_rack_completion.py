@@ -93,7 +93,6 @@ class Migration:
             'Meta': {'db_table': "u'gis_neighborhoods'"},
             'borough': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
-            'county': ('django.db.models.fields.CharField', [], {'max_length': '43'}),
             'gid': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
             'objectid': ('django.db.models.fields.IntegerField', [], {}),
