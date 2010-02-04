@@ -91,13 +91,14 @@ class Migration:
         },
         'bmabr.neighborhood': {
             'Meta': {'db_table': "u'gis_neighborhoods'"},
+            'borough': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
             'county': ('django.db.models.fields.CharField', [], {'max_length': '43'}),
             'gid': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
-            'regionid': ('django.db.models.fields.IntegerField', [], {}),
+            'objectid': ('django.db.models.fields.IntegerField', [], {}),
             'state': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
-            'the_geom': ('django.contrib.gis.db.models.fields.MultiPolygonField', [], {})
+            'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {})
         },
         'bmabr.nycdotbulkorder': {
             'approved': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
@@ -120,7 +121,7 @@ class Migration:
         'bmabr.rack': {
             'access': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
             'address': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'bulk_order': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.NYCDOTBulkOrder']", 'null': 'True', 'blank': 'True'}),
+            'bulk_orders': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['bmabr.NYCDOTBulkOrder']", 'null': 'True', 'blank': 'True'}),
             'date': ('django.db.models.fields.DateTimeField', [], {}),
             'description': ('django.db.models.fields.CharField', [], {'max_length': '300', 'blank': 'True'}),
             'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
