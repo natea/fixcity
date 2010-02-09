@@ -40,7 +40,7 @@ urlpatterns = patterns(
      # KML URLs
 
     (r'racks/all.kml$', 'fixcity.bmabr.views.rack_all_kml'),
-    (r'racks/requested.kml$', 'fixcity.bmabr.views.rack_requested_kml'),
+    (r'racks/search.kml$', 'fixcity.bmabr.views.rack_search_kml'),
 
     # Bulk order URLs
     (r'^bulk_order/(?P<bo_id>\d+)/order.csv/$', 'fixcity.bmabr.views.bulk_order_csv'),

@@ -299,21 +299,21 @@ class TestKMLViews(TestCase):
         super(TestKMLViews, self).tearDown()
         clear_cache()
                 
-    def test_rack_requested_kml__empty(self):
-        kml = self.client.get('/racks/requested.kml').content
+    def test_rack_search_kml__empty(self):
+        kml = self.client.get('/racks/search.kml').content
         # This is maybe a bit goofy; we parse the output to test it
         tree = lxml.objectify.fromstring(kml)
         placemarks = tree.Document.getchildren()
         self.assertEqual(len(placemarks), 0)
 
         
-    def test_rack_requested_kml__one(self):
+    def test_rack_search_kml__one(self):
         rack = Rack(address='148 Lafayette St, New York NY',
                     title='TOPP', date=datetime.utcfromtimestamp(0),
                     email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
                     )
         rack.save()
-        kml = self.client.get('/racks/requested.kml').content
+        kml = self.client.get('/racks/search.kml').content
         tree = lxml.objectify.fromstring(kml)
         placemarks = tree.Document.getchildren()
         self.assertEqual(len(placemarks), 1)
@@ -322,6 +322,53 @@ class TestKMLViews(TestCase):
         self.assertEqual(placemark.address, rack.address)
         self.assertEqual(placemark.description, '')
         
+        self.assertEqual(placemark.Point.coordinates, '20.0,20.0,0')
+
+        # Argh. Searching child elements for specific attribute values
+        # is making my head hurt. xpath should help, but I couldn't
+        # find the right expression. Easier to extract them into a
+        # dict.
+        data = {}
+        for d in placemark.ExtendedData.Data:
+            data[d.attrib['name']] = d.value
+
+        self.assertEqual(data['page_number'], 1)
+        self.assertEqual(data['num_pages'], 1)
+        self.assertEqual(data['source'], 'web')
+        self.assertEqual(data['date'], 'Jan. 1, 1970')
+        self.assertEqual(data['votes'], 0)
+
+
+    def test_rack_search_kml__by_status(self):
+        rack = Rack(address='148 Lafayette St, New York NY',
+                    title='TOPP', date=datetime.utcfromtimestamp(0),
+                    email='john@doe.net', location=Point(20.0, 20.0, srid=SRID),
+                    )
+        rack.save()
+
+        for status in ('new', 'pending', 'verified', 'completed'):
+            # Searching with the wrong rack status yields no results.
+            rack.status = 'THIS DOES NOT MATCH'
+            rack.save()
+            kml = self.client.get('/racks/search.kml?status=%s' % status).content
+            tree = lxml.objectify.fromstring(kml)
+            placemarks = tree.Document.getchildren()
+            self.assertEqual(len(placemarks), 0)
+
+            # Now try with the rack status set.
+            rack.status = status
+            rack.save()
+            kml = self.client.get('/racks/search.kml?status=%s' % status).content
+            tree = lxml.objectify.fromstring(kml)
+            placemarks = tree.Document.getchildren()
+            
+            self.assertEqual(len(placemarks), 1)
+
+        placemark = tree.Document.Placemark
+        self.assertEqual(placemark.name, rack.title)
+        self.assertEqual(placemark.address, rack.address)
+        self.assertEqual(placemark.description, '')
+
         self.assertEqual(placemark.Point.coordinates, '20.0,20.0,0')
 
         # Argh. Searching child elements for specific attribute values

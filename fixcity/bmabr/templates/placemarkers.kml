@@ -25,6 +25,10 @@
       {% if rack.verified %}
         <Data name="verified"><value>true</value></Data>
       {% endif %}
+ 
+      {% if rack.status %}
+        <Data name="status"><value>{{rack.status}}</value></Data>
+      {% endif %}
 
         <Data name="page_number"><value>{{page.number}}</value></Data>
 

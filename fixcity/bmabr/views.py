@@ -517,8 +517,9 @@ def rack_all_kml(request):
 
 # Cache hits are likely in a few cases: initial load of page;
 # or clicking pagination links; or zooming in/out.
-@cache_page(60 * 10)
-def rack_requested_kml(request):
+#@cache_page(60 * 10)
+def rack_search_kml(request):
+    racks = Rack.objects.all()
     try:
         page_number = int(request.REQUEST.get('page_number', '1'))
     except ValueError:
@@ -527,18 +528,20 @@ def rack_requested_kml(request):
         page_size = int(request.REQUEST.get('page_size', sys.maxint))
     except ValueError:
         page_size = sys.maxint
+    
+    status = request.GET.get('status')
+    if status:
+        racks = racks.filter(status=status)
+
     # Get bounds from request.
     bbox = request.REQUEST.get('bbox')
     if bbox:
         bbox = [float(n) for n in bbox.split(',')]
         assert len(bbox) == 4
         geom = Polygon.from_bbox(bbox)
-        racks = Rack.objects.filter(location__within=geom)
-    else:
-        racks = Rack.objects.all()
+        racks = racks.filter(location__within=geom)
     cb = request.GET.get('cb')
     boro = request.GET.get('boro')
-    verified = request.GET.get('verified')
     board = None
     borough = None
     if cb is not None:
@@ -553,11 +556,6 @@ def rack_requested_kml(request):
             racks = racks.filter(location__within=borough.the_geom)
         except (CommunityBoard.DoesNotExist, ValueError):
             pass
-    if verified is not None:
-        if verified == 'verified':
-            racks = racks.filter(verified=True)
-        elif verified == 'unverified':
-            racks = racks.filter(verified=False)
     racks = racks.order_by(*DEFAULT_RACK_ORDER)
     paginator = Paginator(racks, page_size)
     page_number = min(page_number, paginator.num_pages)

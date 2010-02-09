@@ -33,7 +33,7 @@ function loadRacks(params) {
     strategies: [
     new OpenLayers.Strategy.Fixed(), new OpenLayers.Strategy.Cluster()],
     protocol: new OpenLayers.Protocol.HTTP({
-      url: "/racks/requested.kml",
+      url: "/racks/search.kml",
       params: params,
       format: new OpenLayers.Format.KML()
     }),
