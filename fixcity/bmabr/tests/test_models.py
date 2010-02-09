@@ -175,27 +175,43 @@ class TestNYCDOTBulkOrder(TestCase):
         bo.delete()
         rack.delete()
 
-    def test_approval_adds_racks(self):
+    def test_submission_adds_racks(self):
         bo, rack = self._make_bo_and_rack()
         bo.save()
         cb = bo.communityboard
-        # Initially the bulk order has no racks, even though the
-        # communityboard does.
+        # Initially the bulk order has all racks from the cb.
         self.assertEqual(set(cb.racks), set([rack]))
-        self.assertEqual(set(bo.racks), set())
-        self.failIf(bo.approved)
-        # Approving marks all racks in the CB as locked for this bulk order.
+        self.assertEqual(set(bo.racks), set([rack]))
+        self.assertEqual(bo.status, 'new')
+        # Approving has no effect...
         bo.approve()
         bo.save()
         self.assertEqual(set(bo.racks), set([rack]))
         self.assertEqual(set(bo.racks), set(cb.racks))
-        self.assert_(bo.approved)
-        # But gahhh. Django core devs think it's reasonable to chase
+        self.assertEqual(bo.status, 'approved')
+        # Gahhh. Django core devs think it's reasonable to chase
         # down all your references to a changed instance and reload
         # them by re-looking up the object by ID. Otherwise the state
         # in memory is out of date. (django ticket 901)
         rack = Rack.objects.get(id=rack.id)
+        self.failIf(rack.locked)
+        
+        # Submission locks them...
+        bo.submit()
+        self.assertEqual(bo.status, 'pending')
+        rack = Rack.objects.get(id=rack.id)
         self.assert_(rack.locked)
+        self.assertEqual(set(bo.racks), set(cb.racks))
+
+        # ... and even if you move a rack away from its cb,
+        # it's still associated with this order.
+        rack.location = 'POINT (100.0 100.0)'
+        rack.save()
+        rack = Rack.objects.get(id=rack.id)
+        self.assertEqual(set(bo.racks), set([rack]))
+        self.assertEqual(set(cb.racks), set())
+        
+
 
     def test_racks_get_locked(self):
         bo, rack = self._make_bo_and_rack()
@@ -206,16 +222,17 @@ class TestNYCDOTBulkOrder(TestCase):
         rack = Rack.objects.get(id=rack.id)
         self.assert_(rack.locked)
 
-    def test_new_racks_not_added_to_existing_approved_order(self):
+    def test_new_racks_not_added_to_pending_order(self):
         bo, rack = self._make_bo_and_rack()
-        cb = bo.communityboard
         bo.save()
-        bo.approve()
-        # New racks are not added to an already-saved bulk order.
+        bo.submit()
+        self.assertEqual(bo.racks.count(), 1)
+        self.assertEqual(bo.status, 'pending')
         rack2 = Rack(location='POINT (7.0 7.0)', date=EPOCH)
         rack2.save()
         self.failIf(rack2 in set(bo.racks))
         self.failIf(rack2.locked)
+        self.assertEqual(bo.racks.count(), 1)
 
     def test_deletion_unlocks_racks(self):
         bo, rack = self._make_bo_and_rack()

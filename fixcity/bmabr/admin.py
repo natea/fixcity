@@ -34,7 +34,7 @@ class BoroughAdmin(admin.GeoModelAdmin):
 
 class NYCDOTBulkOrderAdmin(admin.ModelAdmin):
     inlines = [AttachmentInlines]
-    list_display = ('communityboard', 'user', 'date')
+    list_display = ('communityboard', 'user', 'date', 'organization', 'status')
 
 
 admin.site.register(StatementOfSupport, StatementOfSupportAdmin)

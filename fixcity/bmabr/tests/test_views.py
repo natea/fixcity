@@ -514,8 +514,8 @@ class TestBulkOrderViews(UserTestCaseBase):
         self.assertEqual(len(NYCDOTBulkOrder.objects.filter(communityboard=cb)),
                          1)
         bo = NYCDOTBulkOrder.objects.get(communityboard=cb)
-        self.failIf(bo.approved)
-        self.assertEqual(bo.racks.count(), 0)  # Not approved means no racks yet
+        self.assertEqual(bo.status, 'new')
+        self.assertEqual(bo.racks.count(), 1)
 
 
     @mock.patch('fixcity.bmabr.views.send_mail')
@@ -540,7 +540,7 @@ class TestBulkOrderViews(UserTestCaseBase):
         bo = NYCDOTBulkOrder.objects.get(communityboard=cb)
         self.assertEqual(response['location'],
                          'http://testserver/bulk_order/%d/edit/' % bo.id)
-        self.assert_(bo.approved)
+        self.assertEqual(bo.status, 'approved')
         self.assertEqual(bo.racks.count(), 1)
 
     @mock.patch('fixcity.bmabr.bulkorder.get_map')

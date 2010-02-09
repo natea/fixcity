@@ -6,22 +6,31 @@ from fixcity.bmabr.models import *
 class Migration:
     
     def forwards(self, orm):
-        for rack in orm.Rack.objects.all():
-            if rack.verified:
-                rack.verify_surface = True
-                rack.verify_objects = True
-                rack.verify_access = True
-                rack.save()
+        
+        # Deleting field 'NYCDOTBulkOrder.approved'
+        db.delete_column('bmabr_nycdotbulkorder', 'approved')
+        
+        # Changing field 'NYCDOTBulkOrder.status'
+        # (to signature: django.db.models.fields.TextField(blank=True))
+        db.alter_column('bmabr_nycdotbulkorder', 'status', orm['bmabr.nycdotbulkorder:status'])
+        
     
     
     def backwards(self, orm):
-        "Backwards migration doesn't matter very much here"
+        
+        # Adding field 'NYCDOTBulkOrder.approved'
+        db.add_column('bmabr_nycdotbulkorder', 'approved', orm['bmabr.nycdotbulkorder:approved'])
+        
+        # Changing field 'NYCDOTBulkOrder.status'
+        # (to signature: django.db.models.fields.TextField())
+        db.alter_column('bmabr_nycdotbulkorder', 'status', orm['bmabr.nycdotbulkorder:status'])
+        
     
     
     models = {
         'auth.group': {
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '80'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '80', 'unique': 'True'}),
             'permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'blank': 'True'})
         },
         'auth.permission': {
@@ -44,7 +53,7 @@ class Migration:
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'blank': 'True'}),
-            'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
+            'username': ('django.db.models.fields.CharField', [], {'max_length': '30', 'unique': 'True'})
         },
         'bmabr.borough': {
             'Meta': {'db_table': "u'gis_boroughs'"},
@@ -94,20 +103,20 @@ class Migration:
         'bmabr.neighborhood': {
             'Meta': {'db_table': "u'gis_neighborhoods'"},
             'borough': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'city': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
+            'city': ('django.db.models.fields.CharField', [], {'default': "'New York City'", 'max_length': '50'}),
             'gid': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'objectid': ('django.db.models.fields.IntegerField', [], {}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
+            'state': ('django.db.models.fields.CharField', [], {'default': "'NY'", 'max_length': '2', 'null': 'True'}),
             'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {})
         },
         'bmabr.nycdotbulkorder': {
-            'approved': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
             'communityboard': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.CommunityBoard']"}),
             'date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'rationale': ('django.db.models.fields.TextField', [], {}),
+            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True'}),
+            'rationale': ('django.db.models.fields.TextField', [], {'null': 'True'}),
+            'status': ('django.db.models.fields.TextField', [], {'default': "'new'", 'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
         'bmabr.nycstreet': {

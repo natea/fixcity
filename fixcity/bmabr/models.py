@@ -232,25 +232,30 @@ class NYCDOTBulkOrder(models.Model):
     organization = models.CharField(max_length=128, blank=False, null=True)
     rationale = models.TextField(blank=False, null=True)
 
-    # status_choices = (
-    #     ('new', 'New'),
-    #     ('approved', 'Approved for Submission'),
-    #     ('pending', 'Pending Approval by DOT'),
-    #     ('completed', 'Completed'),
-    #     )
-    # status = models.TextField(null=False, choices=status_choices,
-    #                           default=status_choices[0][0])
+    status_choices = (
+        ('new', 'New'),
+        ('approved', 'Approved for Submission'),
+        ('pending', 'Pending Approval by DOT'),
+        ('completed', 'Completed'),
+        )
 
-    approved = models.BooleanField(default=False)
+    status = models.TextField(null=False, blank=True, choices=status_choices,
+                              default=status_choices[0][0])
 
     def __unicode__(self):
         return u'Bulk order for %s' % self.communityboard
 
-    def approve(self):
+    def submit(self):
         for rack in self.communityboard.racks:
             rack.bulk_orders.add(self)
             rack.save()
-        self.approved = True
+        self.status = 'pending'
+        self.save()
+
+    def approve(self):
+        # xxx convenience, can go away
+        self.status = 'approved'
+        self.save()
 
     def delete(self, *args, **kw):
         self.rack_set.clear()
@@ -258,12 +263,14 @@ class NYCDOTBulkOrder(models.Model):
 
     @property
     def racks(self):
-        # I find it odd that Django's back-references don't provide a
-        # convenience for this already....  self.rack_set.all()
-        # returns ALL racks, not just the related ones!
-        # XXX or does it?
+        # WHen not submitted yet, we want all racks in the CB.  When
+        # submitted, we want to freeze the racks from the CB at that
+        # time.
+        if self.status in ('new', 'approved'):
+            return self.communityboard.racks
         return self.rack_set.all() #filter(bulk_orders.=self)
 
+        
 
 class NYCStreet(models.Model):
 
@@ -287,6 +294,13 @@ class NYCStreet(models.Model):
 class BulkOrderForm(ModelForm):
     class Meta:
         model = NYCDOTBulkOrder
+
+    def clean_status(self):
+        status = self.cleaned_data.get('status')
+        if not status:
+            status = NYCDOTBulkOrder.status_choices[0][0]
+        return status
+        
 
 
 class SupportForm(ModelForm):
