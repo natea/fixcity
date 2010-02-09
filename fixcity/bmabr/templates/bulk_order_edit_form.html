@@ -58,19 +58,22 @@
 
 </div>
 
-<form id="bulk-order-submit-to-dot" action="." method="POST"
-    enctype="multipart/form-data">
+<form id="bulk-order-submit-to-dot" action="submit-to-dot" method="POST">
   {% ifequal bulk_order.status "approved" %}
     <input type="hidden" name="next_state" value="pending" />
     <input type="submit" value="SUBMIT TO DOT" />
+    <!-- TODO: unhide this when the user clicks that button, and add a
+    another button for confirmation?  or we could have a separate confirmation page.  -->
+    <div style="display: none;">Do you really want to submit this to the DOT?</div>
+
   {% endifequal %}
   {% ifequal bulk_order.status "pending" %}
+    <form id="bulk-order-submit-to-dot" action="." method="POST">
     {% if request.user.is_superuser %}
       <input type="hidden" name="next_state" value="completed" />
       <input type="submit" value="MARK COMPLETED BY DOT" />
     {% endif %}
   {% endifequal %}
-
 </form>
 
 <div id="verify-map-wrap">
