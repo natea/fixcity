@@ -778,17 +778,38 @@ def bulk_order_edit_form(request, bo_id):
     bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
     cb = bulk_order.communityboard
     form = BulkOrderForm()
+
     if request.method == 'POST':
         post = request.POST.copy()
-        cb_gid = request.POST.get('cb_gid')
-        post = request.POST.copy()
-        post[u'communityboard'] = cb_gid
-        post[u'user'] = request.user.pk
-        form = BulkOrderForm(post)
-        if form.is_valid():
-            form.save()
+        next_state = post.get('next_state')
+        if next_state == 'completed':
+            # The DOT has apparently completed building this order. Yay!!
+            flash(u'Marking bulk order as completed.', request)
+            for rack in bulk_order.racks:
+                rack.status = next_state
+                rack.save()
+            bulk_order.status = next_state
+            bulk_order.save()
+        elif next_state == 'pending':
+            # Submit this to the DOT!
+            flash(u'Your order has been submitted to the DOT. '
+                  u'or rather, it would have been if the code was done!',
+                  request)
+            for rack in bulk_order.racks:
+                rack.status = next_state
+                rack.save()
+            bulk_order.status = next_state
+            bulk_order.save()
         else:
-            flash_error('Please correct the following errors.', request)
+            # Just editing the bulk order.
+            cb_gid = post.get('cb_gid')
+            post[u'communityboard'] = cb_gid
+            post[u'user'] = request.user.pk
+            form = BulkOrderForm(post)
+            if form.is_valid():
+                form.save()
+            else:
+                flash_error('Please correct the following errors.', request)
 
     return render_to_response(
         'bulk_order_edit_form.html',
@@ -796,6 +817,7 @@ def bulk_order_edit_form(request, bo_id):
          'bulk_order': bulk_order,
          'cb': cb,
          'form': form,
+         'status': dict(form.fields['status'].choices).get(bulk_order.status),
          },
         context_instance=RequestContext(request)
         )
@@ -856,6 +878,9 @@ To approve this user and this order, go to:
 
 @permission_required('auth.change_user')
 def bulk_order_approval_form(request, bo_id):
+    """Some privileged users can approve bulk orders created by
+    unprivileged users.
+    """
     bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
     if request.method == 'POST':
         bo.approve()
@@ -884,7 +909,7 @@ To finish your bulk order, follow this link:
         'cb': bo.communityboard,
         },
        context_instance=RequestContext(request))
-    
+
 
 def bulk_order_csv(request, bo_id):
     from fixcity.bmabr import bulkorder

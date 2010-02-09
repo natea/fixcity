@@ -250,8 +250,8 @@ class NYCDOTBulkOrder(models.Model):
         ('completed', 'Completed'),
         )
 
-    status = models.TextField(null=False, blank=True, choices=status_choices,
-                              default=status_choices[0][0])
+    status = models.CharField(max_length=32, null=False, blank=True,
+                              choices=status_choices, default=status_choices[0][0])
 
     def __unicode__(self):
         return u'Bulk order for %s' % self.communityboard

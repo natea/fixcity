@@ -16,6 +16,8 @@
 
   <h2>Package {{cb}} Racks</h2>
 
+  <div>Status: <b>{{ status }}</b></div>
+
   <h2>Instructions:</h2>
   
   <p>
@@ -58,7 +60,17 @@
 
 <form id="bulk-order-submit-to-dot" action="." method="POST"
     enctype="multipart/form-data">
-  <input type="submit" value="SUBMIT TO DOT" />
+  {% ifequal bulk_order.status "approved" %}
+    <input type="hidden" name="next_state" value="pending" />
+    <input type="submit" value="SUBMIT TO DOT" />
+  {% endifequal %}
+  {% ifequal bulk_order.status "pending" %}
+    {% if request.user.is_superuser %}
+      <input type="hidden" name="next_state" value="completed" />
+      <input type="submit" value="MARK COMPLETED BY DOT" />
+    {% endif %}
+  {% endifequal %}
+
 </form>
 
 <div id="verify-map-wrap">

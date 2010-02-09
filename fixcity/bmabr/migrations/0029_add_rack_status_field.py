@@ -108,7 +108,7 @@ class Migration:
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'organization': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True'}),
             'rationale': ('django.db.models.fields.TextField', [], {'null': 'True'}),
-            'status': ('django.db.models.fields.TextField', [], {'default': "'new'", 'blank': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'new'", 'blank': 'True', 'max_length': 32}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
         'bmabr.nycstreet': {
