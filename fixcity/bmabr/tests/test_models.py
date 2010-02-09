@@ -132,14 +132,14 @@ class TestRackForm(TestCase):
         form = RackForm(data, {})
         form.is_bound = True
         self.assertEqual(form.is_valid(), True)
-        self.assertEqual(form.cleaned_data['verified'], True)
+        self.assertEqual(form.cleaned_data['status'], 'verified')
 
     def test_rack_form_bound__unverified(self):
         data = self.data.copy()
         form = RackForm(data, {})
         form.is_bound = True
         self.assertEqual(form.is_valid(), True)
-        self.assertEqual(form.cleaned_data['verified'], False)
+        self.assertEqual(form.cleaned_data['status'], 'new')
 
 class TestSource(TestCase):
 
