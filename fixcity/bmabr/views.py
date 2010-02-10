@@ -788,20 +788,8 @@ def bulk_order_edit_form(request, bo_id):
                 rack.save()
             bulk_order.status = next_state
             bulk_order.save()
-        elif next_state == 'pending':
-            # Submit this to the DOT!
-            flash(u'Your order has been submitted to the DOT. '
-                  u'or rather, it would have been if the code was done!',
-                  request)
-            for rack in bulk_order.racks:
-                rack.status = next_state
-                rack.save()
-            bulk_order.status = next_state
-            bulk_order.save()
         else:
-            # Just editing the bulk order.
-            cb_gid = post.get('cb_gid')
-            post[u'communityboard'] = cb_gid
+            post[u'communityboard'] = post.get('cb_gid')
             post[u'user'] = request.user.pk
             form = BulkOrderForm(post)
             if form.is_valid():
@@ -816,6 +804,28 @@ def bulk_order_edit_form(request, bo_id):
          'cb': cb,
          'form': form,
          'status': dict(form.fields['status'].choices).get(bulk_order.status),
+         },
+        context_instance=RequestContext(request)
+        )
+
+@permission_required('bmabr.add_nycdotbulkorder')
+def bulk_order_submit_form(request, bo_id):
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    next_state = request.POST.get('next_state')
+    if request.method == 'POST' and next_state == 'pending':
+        # Submit this to the DOT!
+        flash(u'Your order has been submitted to the DOT. '
+              u'or rather, it would have been if the code was done!',
+              request)
+        for rack in bulk_order.racks:
+            rack.status = next_state
+            rack.save()
+        bulk_order.status = next_state
+        bulk_order.save()
+    return render_to_response(
+        'bulk_order_submit_form.html',
+        {'request': request,
+         'bulk_order': bulk_order,
          },
         context_instance=RequestContext(request)
         )

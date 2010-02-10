@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %} FixCity: Submit Bulk Order {% endblock %}
+
+{% block extra_header %}
+
+<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js"></script>
+
+<script type="text/javascript" src="/site_media/js/verify-rackmap.js">
+</script>
+
+{% endblock %}
+
+
+{% block content %}
+{% load attachments_tags %}
+
+<h2>Package {{cb}} Racks</h2>
+
+<p>
+  Once you submit an order, the racks will be uneditable.  Other users
+  will be able to create additional bulk orders in the same community
+  board but they will not include racks previously submitted. This
+  form will be sent to City Racks at the NYCDOT for processing. The
+  NYCDOT rack placement cycle may take up to six months.
+</p>
+
+{% ifequal bulk_order.status "pending" %}
+ <p>status:  pending.</p>
+{% else %}
+ <form action="." method="POST">
+
+  Your Name: <input type="text" name="name" />
+  <br/>
+  Your Email: <input type="text" name="email" value="{{request.user.email}}" />
+  <br />
+  Organization: <input type="text" name="organization" value="{{bulk_order.organization}}" />
+  <br/>
+  Community Board: <b>{{cb}}</b>
+  <br/>
+  To: <b>City Racks NYCDOT</b>
+  <br />
+  Message: <textarea name="message"></textarea>
+
+  <br />
+  <input type="hidden" name="next_state" value="pending" />
+  <input type="submit" value="SEND" />
+ </form>
+{% endifequal %}
+
+<div class="attachments">
+ <h3>Documents attached to this bulk order</h3>
+  {% get_attachments_for bulk_order as "bo_attachments" %}
+  {% if bo_attachments %}
+    <ul>
+    {% for attachment in bo_attachments %}
+     <li>
+        <a href="{{ attachment.attachment_file.url }}">{{ attachment.filename }}</a>
+        {% attachment_delete_link attachment %}
+     </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    No attachments.
+  {% endif %}
+
+
+</div>
+
+<div id="verify-map-wrap">
+  <div id="verify-map"><div id="map-legend" class="pngfix"></div></div>
+</div>
+
+<div>
+ <a href="../order.csv/">Download bulk order as a CSV</a>
+ <br/>
+ <a href="../order.pdf/">Download bulk order as a PDF</a>
+ <br />
+ <a href="../order.zip/">Download a zip of all supporting documents</a>
+
+</div>
+
+
+{% endblock %}
+
+
+{% block extra_footer %}
+<script type="text/javascript">
+//<![CDATA[
+
+  // Override the params function to hardcode cb & borough
+
+  var getParamsFn = function() {
+    return {
+     verified: 'all',
+    boro: {{ cb.borough.gid }},
+    cb: {{ cb.gid }}
+    };
+  };
+
+  jQuery(document).ready(function($) {
+    updateMapFn();
+  });
+//]]>
+</script>
+{% endblock %}

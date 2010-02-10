@@ -49,6 +49,7 @@ urlpatterns = patterns(
     (r'^bulk_order/$', 'fixcity.bmabr.views.bulk_order_add_form'),
     (r'^bulk_order/(?P<bo_id>\d+)/approve/$', 'fixcity.bmabr.views.bulk_order_approval_form'),
     (r'^bulk_order/(?P<bo_id>\d+)/edit/$', 'fixcity.bmabr.views.bulk_order_edit_form'),
+    (r'^bulk_order/(?P<bo_id>\d+)/submit/$', 'fixcity.bmabr.views.bulk_order_submit_form'),
 
     (r'communityboard/(?P<cb_id>\d+).kml','fixcity.bmabr.views.community_board_kml'),
     (r'borough/(?P<boro_id>\d+).kml', 'fixcity.bmabr.views.borough_kml'),
