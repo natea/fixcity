@@ -13,7 +13,7 @@
 
 {% block content %}
 {% load attachments_tags %}
-
+<div class="formwrap">
 <h2>Package {{cb}} Racks</h2>
 
 <p>
@@ -27,30 +27,27 @@
 {% ifequal bulk_order.status "pending" %}
  <p>status:  pending.</p>
 {% else %}
- <form action="." method="POST">
-
-  Your Name: <input type="text" name="name" />
-  <br/>
-  Your Email: <input type="text" name="email" value="{{request.user.email}}" />
-  <br />
-  Organization: <input type="text" name="organization" value="{{bulk_order.organization}}" />
-  <br/>
-  Community Board: <b>{{cb}}</b>
-  <br/>
-  To: <b>City Racks NYCDOT</b>
-  <br />
-  Message: <textarea name="message"></textarea>
-
-  <br />
+ 
+ <form action="." method="POST" id="bulk-submit">
+   <div class="fake-label">Community Board: <strong>{{cb}}</strong></div>
+   <label for="name">Your Name</label>
+   <input id="name" name="name" class="required" type="text" value="{{request.user.name}}" />
+   <label for="email">Your Email</label>
+   <input id="email" name="email" class="required" type="text" value="{{request.user.email}}" />
+   <label for="organization">Organization</label>
+   <input id="organization" name="organization" class="required" type="text" value="{{bulk_order.organization}}" />
+   <div class="fake-label">To: <strong>City Racks NYCDOT</strong></div>
+   <label for="message">Message</label>
+   <textarea name="message"></textarea>
   <input type="hidden" name="next_state" value="pending" />
-  <input type="submit" value="SEND" />
+  <input type="submit" value="Send this Bulk Order to DOT" />
  </form>
 {% endifequal %}
 
 <div class="attachments">
- <h3>Documents attached to this bulk order</h3>
   {% get_attachments_for bulk_order as "bo_attachments" %}
   {% if bo_attachments %}
+    <strong>Documents attached to this request:</strong>
     <ul>
     {% for attachment in bo_attachments %}
      <li>
@@ -65,20 +62,18 @@
 
 
 </div>
-
+</div><!-- /.formwrap -->
 <div id="verify-map-wrap">
   <div id="verify-map"><div id="map-legend" class="pngfix"></div></div>
+  <div>
+   <a href="../order.csv/">Download bulk order as a CSV</a>
+   <br/>
+   <a href="../order.pdf/">Download bulk order as a PDF</a>
+   <br />
+   <a href="../order.zip/">Download a zip of all supporting documents</a>
+
+  </div>
 </div>
-
-<div>
- <a href="../order.csv/">Download bulk order as a CSV</a>
- <br/>
- <a href="../order.pdf/">Download bulk order as a PDF</a>
- <br />
- <a href="../order.zip/">Download a zip of all supporting documents</a>
-
-</div>
-
 
 {% endblock %}
 
