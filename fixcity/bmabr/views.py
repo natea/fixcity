@@ -532,11 +532,21 @@ def rack_search_kml(request):
         page_size = int(request.REQUEST.get('page_size', sys.maxint))
     except ValueError:
         page_size = sys.maxint
-    
+
     status = request.GET.get('status')
     if status:
         racks = racks.filter(status=status)
 
+    # XXX This seems like something worth encapsulating some way other
+    # than a property on the model, since we can't filter on properties.
+    verified = request.GET.get('verified')
+    if verified == 'verified':
+        racks = racks.filter(verify_surface=True, verify_objects=True,
+                             verify_access=True)
+    elif verified == 'unverified':
+        racks = racks.exclude(verify_surface=True)
+        racks = racks.exclude(verify_objects=True)
+        racks = racks.exclude(verify_access=True)
     # Get bounds from request.
     bbox = request.REQUEST.get('bbox')
     if bbox:
