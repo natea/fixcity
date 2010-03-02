@@ -31,6 +31,8 @@ DEFAULT_FROM_EMAIL = config.get('main', 'DEFAULT_FROM_EMAIL')
 BULK_ORDER_APPROVAL_EMAIL = [e.strip() for e in 
                              config.get('main', 'BULK_ORDER_APPROVAL_EMAIL').split(',')]
 
+BULK_ORDER_SUBMISSION_EMAIL = config.get('main', 'BULK_ORDER_SUBMISSION_EMAIL')
+
 DATABASE_ENGINE = config.get('db', 'DATABASE_ENGINE')
 DATABASE_NAME = config.get('db', 'DATABASE_NAME')
 DATABASE_USER = config.get('db', 'DATABASE_USER')
@@ -219,5 +221,5 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
 logger = logging.getLogger('')
-logger.addHandler(handler) 
+logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)

@@ -10,6 +10,9 @@ DEFAULT_FROM_EMAIL = foo@example.com
 # Who approves bulk order requests?
 BULK_ORDER_APPROVAL_EMAIL = 
 
+# Where do finished bulk orders get emailed to?
+BULK_ORDER_SUBMISSION_EMAIL =
+
 GOOGLE_ANALYTICS_KEY =
 
 GOOGLE_MAPS_KEY =

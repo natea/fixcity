@@ -258,7 +258,7 @@ def make_zip(bulk_order, outfile):
     # Workaround for permissions bug, see http://bugs.python.org/issue3394
     info.external_attr = 0660 << 16L
     zf.writestr(info, pdf.getvalue())
-    
+
     csv = StringIO()
     make_csv(bulk_order, csv)
     name = make_filename(bulk_order, 'csv')
@@ -274,9 +274,9 @@ def make_zip(bulk_order, outfile):
         # but you can't call that when output is a stringio instance
         # because zf.write() apparently needs to call seek().
         zf.writestr(info, open(path).read())
-        
+
     zf.close()
-    
+
 
 
 def make_filename(bulk_order, extension):
@@ -285,4 +285,4 @@ def make_filename(bulk_order, extension):
     name = "%s_%s.%s" % (str(cb).replace(' ', '-'), date.isoformat('-'),
                          extension)
     return name
-    
+

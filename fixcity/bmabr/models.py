@@ -91,8 +91,8 @@ class Rack(models.Model):
 
     @property
     def locked(self):
+        # Rack is 'locked' iff it's explicitly attached to a bulk order.
         return bool(self.bulk_orders.count())
-
 
 class Source(models.Model):
     """base class representing the source of where a rack was submitted from"""
@@ -257,10 +257,14 @@ class NYCDOTBulkOrder(models.Model):
         return u'Bulk order for %s' % self.communityboard
 
     def submit(self):
+        next_status = 'pending'
         for rack in self.communityboard.racks:
+            # We have to iterate here, can't call queryset.update() with a
+            # many-to-many field.
             rack.bulk_orders.add(self)
+            rack.status = next_status
             rack.save()
-        self.status = 'pending'
+        self.status = next_status
         self.save()
 
     def approve(self):
@@ -281,7 +285,6 @@ class NYCDOTBulkOrder(models.Model):
             return self.communityboard.racks
         return self.rack_set.all() #filter(bulk_orders.=self)
 
-        
 
 class NYCStreet(models.Model):
 

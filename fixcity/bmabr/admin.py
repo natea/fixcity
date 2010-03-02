@@ -16,13 +16,26 @@ class StatementOfSupportAdmin(admin.GeoModelAdmin):
 class StatementInline(oldAdmin.StackedInline):
     model = StatementOfSupport
 
+# Use nice boolean graphics for these properties.
+def _locked(rack):
+    return rack.locked
+_locked.boolean = True
+_locked.short_description = 'Locked'
+
+def _verified(rack):
+    return rack.verified
+_verified.boolean = True
+_verified.short_description = 'Verified'
+
+
 class RackAdmin(admin.GeoModelAdmin):
+
     list_display = ('id', 'address', 'location', 'date', 'user', 'email',
-                    'verified', 'locked', 'source')
+                    _verified, _locked, 'source')
 
 class NeighborhoodAdmin(admin.GeoModelAdmin):
     list_display = ('name','borough')
- 
+
 
 class CommunityBoardAdmin(admin.GeoModelAdmin):
     list_display = ('borough','board','gid')

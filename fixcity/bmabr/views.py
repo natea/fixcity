@@ -8,6 +8,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
+from django.core.mail import EmailMessage
 from django.core.mail import send_mail
 from django.core.paginator import EmptyPage
 from django.core.paginator import InvalidPage
@@ -34,6 +35,7 @@ from django.template import Context, loader
 
 from django.views.decorators.cache import cache_page
 
+from fixcity.bmabr import bulkorder
 from fixcity.bmabr.models import Borough
 from fixcity.bmabr.models import CityRack
 from fixcity.bmabr.models import Rack
@@ -54,6 +56,8 @@ from recaptcha.client import captcha
 
 from voting.models import Vote
 
+import cStringIO
+import datetime
 import logging
 import sys
 import traceback
@@ -684,9 +688,7 @@ def activate(request, activation_key,
     # Post-activation: Modify anonymous racks.
     context_instance['activation_key'] = activation_key
     if account:
-        for rack in Rack.objects.filter(email=account.email, user=u''):
-            rack.user = account.username
-            rack.save()
+        Rack.objects.filter(email=account.email, user=u'').update(user=account.username)
 
     return render_to_response(template_name,
                               { 'account': account,
@@ -783,9 +785,7 @@ def bulk_order_edit_form(request, bo_id):
         if next_state == 'completed':
             # The DOT has apparently completed building this order. Yay!!
             flash(u'Marking bulk order as completed.', request)
-            for rack in bulk_order.racks:
-                rack.status = next_state
-                rack.save()
+            bulk_order.racks.update(status=next_state)
             bulk_order.status = next_state
             bulk_order.save()
         else:
@@ -814,21 +814,61 @@ def bulk_order_submit_form(request, bo_id):
     next_state = request.POST.get('next_state')
     if request.method == 'POST' and next_state == 'pending':
         # Submit this to the DOT!
+        _bulk_order_submit(bulk_order, next_state, request.POST)
         flash(u'Your order has been submitted to the DOT. '
               u'or rather, it would have been if the code was done!',
               request)
-        for rack in bulk_order.racks:
-            rack.status = next_state
-            rack.save()
-        bulk_order.status = next_state
-        bulk_order.save()
     return render_to_response(
         'bulk_order_submit_form.html',
         {'request': request,
          'bulk_order': bulk_order,
+         'cb': bulk_order.communityboard,
          },
         context_instance=RequestContext(request)
         )
+
+def _bulk_order_submit(bo, next_state, postdata):
+    user_message = postdata['message']
+    name = postdata['name']
+    organization = postdata['organization']
+    email = postdata['email']
+    cb = bo.communityboard
+
+    subject = 'New bulk order for bike racks in %s' % bo.communityboard
+    date = datetime.datetime.now().isoformat()
+    user_message = '\n'.join(('====== Begin message from user =====\n',
+                              user_message,
+                              '\n====== End message from user ====='))
+    body = '''This an automatic notification from http://fixcity.org.
+
+A user named %(name)s <%(email)s> from the organization %(organization)s
+has created a new bulk order for %(cb)s.
+
+A zip file is attached to this email, containing:
+
+* A .csv file with information about the requested bike racks.
+  This is suitable for importing into an Excel spreadsheet or eg.
+  an Access database.
+
+* A PDF with photos and information about the requested bike racks.
+
+* Any attachments the user may have added to the bulk order, such as
+  letters of support.
+
+The user included the following message:
+
+%(user_message)s
+    ''' % locals()
+    message = EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL,
+                           [settings.BULK_ORDER_SUBMISSION_EMAIL])
+
+    zipdata = cStringIO.StringIO()
+    bulkorder.make_zip(bo, zipdata)
+    zipdata.seek(0)
+    message.attach(bulkorder.make_filename(bo, 'zip'), zipdata.read(),
+                   'application/zip')
+    bo.submit()
+    message.send(fail_silently=False)
 
 @login_required
 def bulk_order_add_form(request):
