@@ -181,12 +181,8 @@ def racks_index(request):
             boro = Borough.brooklyn()
         racks = racks.filter(location__within=boro.the_geom)
     vrfy = request.GET.get('verified')
-    if vrfy is not None:
-        if vrfy == 'verified':
-            racks = racks.filter(verified=True)
-        elif vrfy == 'unverified':
-            racks = racks.filter(verified=False)
-    racks = racks.order_by(*DEFAULT_RACK_ORDER)
+    racks = filter_by_verified(racks, vrfy)
+
     # set up pagination information
     try:
         cur_page_num = int(request.GET.get('page', '1'))
@@ -518,7 +514,6 @@ def rack_all_kml(request):
     racks = Rack.objects.all()
     return render_to_kml("placemarkers.kml", {'racks' : racks})
 
-
 # Cache hits are likely in a few cases: initial load of page;
 # or clicking pagination links; or zooming in/out.
 #@cache_page(60 * 10)
@@ -537,16 +532,9 @@ def rack_search_kml(request):
     if status:
         racks = racks.filter(status=status)
 
-    # XXX This seems like something worth encapsulating some way other
-    # than a property on the model, since we can't filter on properties.
     verified = request.GET.get('verified')
-    if verified == 'verified':
-        racks = racks.filter(verify_surface=True, verify_objects=True,
-                             verify_access=True)
-    elif verified == 'unverified':
-        racks = racks.exclude(verify_surface=True)
-        racks = racks.exclude(verify_objects=True)
-        racks = racks.exclude(verify_access=True)
+    racks = filter_by_verified(racks, verified)
+
     # Get bounds from request.
     bbox = request.REQUEST.get('bbox')
     if bbox:
@@ -1053,3 +1041,21 @@ def cross_streets_for_rack(rack):
     if next_cross_street is not None:
         next_cross_street = next_cross_street[0]
     return (previous_cross_street, next_cross_street)
+
+def filter_by_verified(racks, verified):
+    """Since 'verified' is really three fields, this needs a bit of
+    encapsulating other than just the rack.verified property, because
+    you can't filter a query set on a property.
+    """
+    if verified == 'verified':
+        racks = racks.filter(verify_surface=True,
+                             verify_objects=True,
+                             verify_access=True)
+    elif verified == 'unverified':
+        from django.db.models import Q
+        racks = racks.filter(Q(verify_surface=False) |
+                             Q(verify_access=False) |
+                             Q(verify_objects=False))
+    # Otherwise assume we want all racks.
+    return racks
+

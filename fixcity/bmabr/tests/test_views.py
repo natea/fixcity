@@ -94,7 +94,7 @@ class TestUtilFunctions(unittest.TestCase):
     def setUp(self):
         clear_cache()
         super(TestUtilFunctions, self).setUp()
-        
+
     def tearDown(self):
         clear_cache()
         super(TestUtilFunctions, self).tearDown()
@@ -104,7 +104,7 @@ class TestUtilFunctions(unittest.TestCase):
         from fixcity.bmabr.management.commands.tweeter import api_factory
         api = api_factory(settings)
         self.assert_(isinstance(api, tweepy.API))
-                     
+
     def test_preprocess_rack_form__noop(self):
         orig_data = {'geocoded': '1'}
         data = orig_data.copy()
@@ -138,7 +138,7 @@ class TestUtilFunctions(unittest.TestCase):
         _preprocess_rack_form(data)
         self.assertEqual(data['user'], 'bob')
 
-        
+
     def test_newrack_no_data(self):
         from fixcity.bmabr.views import _newrack
         from fixcity.bmabr.models import NEED_SOURCE_OR_EMAIL
@@ -186,6 +186,42 @@ class TestUtilFunctions(unittest.TestCase):
         self.assertEqual(result['errors'], {})
         self.failUnless(result.get('message'))
         self.failUnless(result.get('rack'))
+
+    def test_filter_by_verified(self):
+        from fixcity.bmabr.models import Rack
+        from fixcity.bmabr.views import filter_by_verified
+        # If ALL 3 fields are true, we filter it as verified.
+        rack = Rack(address='67 s 3rd st, brooklyn, ny 11211',
+                    title='williamsburg somewhere',
+                    date=datetime.utcfromtimestamp(0),
+                    email='john@doe.net',
+                    location=Point(-73.964858020364, 40.713349294636,
+                                    srid=SRID),
+                    verify_surface=True,
+                    verify_objects=True,
+                    verify_access=True)
+        rack.save()
+        query = Rack.objects.all()
+        self.assertEqual(1, filter_by_verified(query, 'verified').count())
+        self.assertEqual(0, filter_by_verified(query, 'unverified').count())
+
+        # If ANY of those fields are false, the rack is unverified.
+        rack.verify_surface = False
+        rack.save()
+        self.assertEqual(0, filter_by_verified(query, 'verified').count())
+        self.assertEqual(1, filter_by_verified(query, 'unverified').count())
+
+        rack.verify_surface = True
+        rack.verify_access = False
+        rack.save()
+        self.assertEqual(0, filter_by_verified(query, 'verified').count())
+        self.assertEqual(1, filter_by_verified(query, 'unverified').count())
+
+        rack.verify_access = True
+        rack.verify_objects = False
+        rack.save()
+        self.assertEqual(0, filter_by_verified(query, 'verified').count())
+        self.assertEqual(1, filter_by_verified(query, 'unverified').count())
 
 
 class TestCbsForBoro(TestCase):
@@ -279,7 +315,7 @@ class TestProfile(UserTestCaseBase):
         self._login()
         response = self.client.get('/profile/')
         self.assertEqual(response.status_code, 200)
-        
+
 
 class TestActivation(TestCase):
 
@@ -294,11 +330,10 @@ class TestActivation(TestCase):
 
 class TestKMLViews(TestCase):
 
-        
     def tearDown(self):
         super(TestKMLViews, self).tearDown()
         clear_cache()
-                
+
     def test_rack_search_kml__empty(self):
         kml = self.client.get('/racks/search.kml').content
         # This is maybe a bit goofy; we parse the output to test it
@@ -306,7 +341,7 @@ class TestKMLViews(TestCase):
         placemarks = tree.Document.getchildren()
         self.assertEqual(len(placemarks), 0)
 
-        
+
     def test_rack_search_kml__one(self):
         rack = Rack(address='148 Lafayette St, New York NY',
                     title='TOPP', date=datetime.utcfromtimestamp(0),
@@ -321,7 +356,7 @@ class TestKMLViews(TestCase):
         self.assertEqual(placemark.name, rack.title)
         self.assertEqual(placemark.address, rack.address)
         self.assertEqual(placemark.description, '')
-        
+
         self.assertEqual(placemark.Point.coordinates, '20.0,20.0,0')
 
         # Argh. Searching child elements for specific attribute values
