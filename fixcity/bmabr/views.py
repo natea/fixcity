@@ -118,12 +118,12 @@ _geocoder = geocoders.Google(settings.GOOGLE_MAPS_KEY)
 def _geocode(text):
     # Cache a bit, since that's easier than ensuring that our AJAX
     # code doesn't call it with the same params a bunch of times.
-    text = text.strip()
+    text = ' '.join(text.lower().strip().split())
     key = ('_geocode', text)
     result = cache.get(key)
     if result is None:
         result = list(_geocoder.geocode(text, exactly_one=False))
-        cache.set(key, result, 60 * 10)
+        cache.set(key, result, 60 * 60)
     return result
 
 def geocode(request):
@@ -142,7 +142,7 @@ def reverse_geocode(request):
     if result is None:
         (new_place,new_point) = geocoders.Google(settings.GOOGLE_MAPS_KEY).reverse(point)
         result = new_place
-        cache.set(key, result, 60 * 10)
+        cache.set(key, result, 60 * 60)
     return HttpResponse(result)
 
 def make_paginator(objs, start_page, per_page):
@@ -181,7 +181,8 @@ def racks_index(request):
             boro = Borough.brooklyn()
         racks = racks.filter(location__within=boro.the_geom)
     vrfy = request.GET.get('verified')
-    racks = Rack.objects.filter_by_verified(vrfy, racks)
+    if vrfy:
+        racks = Rack.objects.filter_by_verified(vrfy, racks)
 
     # set up pagination information
     try:
@@ -533,7 +534,8 @@ def rack_search_kml(request):
         racks = racks.filter(status=status)
 
     verified = request.GET.get('verified')
-    racks = Rack.objects.filter_by_verified(verified, racks)
+    if verified:
+        racks = Rack.objects.filter_by_verified(verified, racks)
 
     # Get bounds from request.
     bbox = request.REQUEST.get('bbox')
@@ -813,8 +815,7 @@ def bulk_order_submit_form(request, bo_id):
     if request.method == 'POST' and next_state == 'pending':
         # Submit this to the DOT!
         _bulk_order_submit(bulk_order, next_state, request.POST)
-        flash(u'Your order has been submitted to the DOT. '
-              u'or rather, it would have been if the code was done!',
+        flash(u'Your order has been submitted to the DOT. ',
               request)
     return render_to_response(
         'bulk_order_submit_form.html',

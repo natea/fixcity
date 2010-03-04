@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 version='0.1dev'
 
 install_requires=[
-      'geopy',
+      'geopy>=geopy-0.93-f1',
       'sorl-thumbnail>=3.2.2',
       'django>=1.1.1',
       'django-registration>=0.7',
@@ -44,7 +44,7 @@ setup(name='fixcity',
       license='AGPL',
       packages=find_packages(),
       dependency_links=[
-        'http://geopy.googlecode.com/svn/branches/reverse-geocode#egg=geopy-dev',
+        'http://svn.openplans.org/eggs/geopy-0.93-f1.tar.gz#egg=geopy-0.93-f1',
         'http://dist.repoze.org/PIL-1.1.6.tar.gz#egg=PIL-1.1.6',
         'http://sourceforge.net/projects/ctypes/files/ctypes/1.0.2/ctypes-1.0.2.tar.gz/download#egg=ctypes-1.0.2',
         'https://svn.openplans.org/eggs/httplib2-0.4.0.zip',
