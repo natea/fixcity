@@ -187,42 +187,6 @@ class TestUtilFunctions(unittest.TestCase):
         self.failUnless(result.get('message'))
         self.failUnless(result.get('rack'))
 
-    def test_filter_by_verified(self):
-        from fixcity.bmabr.models import Rack
-        from fixcity.bmabr.views import filter_by_verified
-        # If ALL 3 fields are true, we filter it as verified.
-        rack = Rack(address='67 s 3rd st, brooklyn, ny 11211',
-                    title='williamsburg somewhere',
-                    date=datetime.utcfromtimestamp(0),
-                    email='john@doe.net',
-                    location=Point(-73.964858020364, 40.713349294636,
-                                    srid=SRID),
-                    verify_surface=True,
-                    verify_objects=True,
-                    verify_access=True)
-        rack.save()
-        query = Rack.objects.all()
-        self.assertEqual(1, filter_by_verified(query, 'verified').count())
-        self.assertEqual(0, filter_by_verified(query, 'unverified').count())
-
-        # If ANY of those fields are false, the rack is unverified.
-        rack.verify_surface = False
-        rack.save()
-        self.assertEqual(0, filter_by_verified(query, 'verified').count())
-        self.assertEqual(1, filter_by_verified(query, 'unverified').count())
-
-        rack.verify_surface = True
-        rack.verify_access = False
-        rack.save()
-        self.assertEqual(0, filter_by_verified(query, 'verified').count())
-        self.assertEqual(1, filter_by_verified(query, 'unverified').count())
-
-        rack.verify_access = True
-        rack.verify_objects = False
-        rack.save()
-        self.assertEqual(0, filter_by_verified(query, 'verified').count())
-        self.assertEqual(1, filter_by_verified(query, 'unverified').count())
-
 
 class TestCbsForBoro(TestCase):
 

@@ -45,6 +45,41 @@ class TestRack(TestCase):
             location=point)
         self.assertEqual(rack.verified, False)
 
+    def test_filter_by_verified(self):
+        from fixcity.bmabr.models import Rack
+        # If ALL 3 fields are true, we filter it as verified.
+        rack = Rack(address='67 s 3rd st, brooklyn, ny 11211',
+                    title='williamsburg somewhere',
+                    date=EPOCH,
+                    email='john@doe.net',
+                    location=Point(-73.964858020364, 40.713349294636,
+                                    srid=SRID),
+                    verify_surface=True,
+                    verify_objects=True,
+                    verify_access=True)
+        rack.save()
+        self.assertEqual(1, Rack.objects.filter_by_verified('verified').count())
+        self.assertEqual(0, Rack.objects.filter_by_verified('unverified').count())
+
+        # If ANY of those fields are false, the rack is unverified.
+        rack.verify_surface = False
+        rack.save()
+        self.assertEqual(0, Rack.objects.filter_by_verified('verified').count())
+        self.assertEqual(1, Rack.objects.filter_by_verified('unverified').count())
+
+        rack.verify_surface = True
+        rack.verify_access = False
+        rack.save()
+        self.assertEqual(0, Rack.objects.filter_by_verified('verified').count())
+        self.assertEqual(1, Rack.objects.filter_by_verified('unverified').count())
+
+        rack.verify_access = True
+        rack.verify_objects = False
+        rack.save()
+        self.assertEqual(0, Rack.objects.filter_by_verified('verified').count())
+        self.assertEqual(1, Rack.objects.filter_by_verified('unverified').count())
+
+
 
 class TestRackForm(TestCase):
 

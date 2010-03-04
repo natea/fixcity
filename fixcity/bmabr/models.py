@@ -27,6 +27,28 @@ class CommunityBoard(models.Model):
 
 
 
+class RackManager(models.GeoManager):
+
+    def filter_by_verified(self, verified, racks=None):
+        """Since 'verified' is really three fields, this needs a bit
+        of encapsulating other than just the rack.verified property,
+        because you can't filter a query set on a property.
+        """
+        if racks is None:
+            racks = self.all()
+        if verified == 'verified':
+            racks = racks.filter(verify_surface=True,
+                                 verify_objects=True,
+                                 verify_access=True)
+        elif verified == 'unverified':
+            from django.db.models import Q
+            racks = racks.filter(Q(verify_surface=False) |
+                                 Q(verify_access=False) |
+                                 Q(verify_objects=False))
+        # Otherwise assume we want all racks.
+        return racks
+
+
 class Rack(models.Model):
     address = models.CharField(max_length=200)
     title = models.CharField(max_length=140)
@@ -68,7 +90,7 @@ class Rack(models.Model):
     bulk_orders = models.ManyToManyField('NYCDOTBulkOrder', null=True, blank=True)
 
 
-    objects = models.GeoManager()
+    objects = RackManager()
 
     def __unicode__(self):
         return self.address

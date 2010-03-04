@@ -181,7 +181,7 @@ def racks_index(request):
             boro = Borough.brooklyn()
         racks = racks.filter(location__within=boro.the_geom)
     vrfy = request.GET.get('verified')
-    racks = filter_by_verified(racks, vrfy)
+    racks = Rack.objects.filter_by_verified(vrfy, racks)
 
     # set up pagination information
     try:
@@ -533,7 +533,7 @@ def rack_search_kml(request):
         racks = racks.filter(status=status)
 
     verified = request.GET.get('verified')
-    racks = filter_by_verified(racks, verified)
+    racks = Rack.objects.filter_by_verified(verified, racks)
 
     # Get bounds from request.
     bbox = request.REQUEST.get('bbox')
@@ -1041,21 +1041,3 @@ def cross_streets_for_rack(rack):
     if next_cross_street is not None:
         next_cross_street = next_cross_street[0]
     return (previous_cross_street, next_cross_street)
-
-def filter_by_verified(racks, verified):
-    """Since 'verified' is really three fields, this needs a bit of
-    encapsulating other than just the rack.verified property, because
-    you can't filter a query set on a property.
-    """
-    if verified == 'verified':
-        racks = racks.filter(verify_surface=True,
-                             verify_objects=True,
-                             verify_access=True)
-    elif verified == 'unverified':
-        from django.db.models import Q
-        racks = racks.filter(Q(verify_surface=False) |
-                             Q(verify_access=False) |
-                             Q(verify_objects=False))
-    # Otherwise assume we want all racks.
-    return racks
-
