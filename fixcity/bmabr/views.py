@@ -33,8 +33,6 @@ from django.contrib.gis.shortcuts import render_to_kml
 
 from django.template import Context, loader
 
-from django.views.decorators.cache import cache_page
-
 from fixcity.bmabr import bulkorder
 from fixcity.bmabr.models import Borough
 from fixcity.bmabr.models import CityRack
