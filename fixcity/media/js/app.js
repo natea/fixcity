@@ -150,7 +150,12 @@ jQuery.fn.maxLength = function (len) {
     //get the value of the textarea
     var val = textarea.val();
     //get the length of the current text selection
-    var selected = Math.abs(textarea.attr('selectionStart') - textarea.attr('selectionEnd'));
+    var selected=0;
+    try {
+	    selected = Math.abs(textarea.attr('selectionStart') - textarea.attr('selectionEnd'));
+	  } catch(err) {
+	    // textArea not currently displayed or otherwise causing selection to fail
+	  }
     selected = isNaN(selected) ? 0 : selected;
     //if this is the maximum length
     if (val.length == len && selected < 1) return false;
