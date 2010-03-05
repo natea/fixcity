@@ -26,6 +26,7 @@ install_requires=[
       'recaptcha-client',
       'lxml',
       'reportlab',
+#      'django_compressor',
       ]
 
 import sys

@@ -8,8 +8,7 @@
 {% block title %} FixCity: Rack Detail {% endblock %} 
 
 {% block extra_header %} 
-<script src="/site_media/openlayers/OpenLayers.js"></script>
-<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js"></script>
+<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js?refresh={{ refresh_token }}"></script>
 <script type="text/javascript">
   // Settings needed by rackmap.js.
   var pointRadius = "10";
@@ -19,7 +18,7 @@
     map.setCenter(geom.getBounds().getCenterLonLat(), 16);
   };
 </script>
-<script type="text/javascript" src="/site_media/js/rackmap.js"></script>
+<script type="text/javascript" src="/site_media/js/rackmap.js?refresh={{ refresh_token }}"></script>
 
 <script type="text/javascript">
 //<![CDATA[

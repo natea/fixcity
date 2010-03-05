@@ -66,6 +66,9 @@ SRID=4326
 # XXX Need to figure out what order we really want these in.
 DEFAULT_RACK_ORDER = ('-date', '-id')
 
+def media_refresh_context(request):
+    return {'refresh_token': settings.MEDIA_REFRESH_TOKEN}
+
 def user_context(request):
     # Complicated a bit because AnonymousUser doesn't have some attributes.
     user = request.user

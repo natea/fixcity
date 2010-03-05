@@ -195,3 +195,25 @@ jQuery.fn.maxLength = function (len) {
   //trigger a keypress event so that the limit will be enforced
   this.keypress();
 };
+
+var rack_icon_url = function(feature) {
+  var n = feature.cluster.length;
+  var all_pending = true;
+  var all_verified = true;
+  for (var i = 0; i < n; i++) {
+    if (feature.cluster[i].attributes.status.value != 'pending') {
+      all_pending = false;
+    }
+    if (feature.cluster[i].attributes.verified == null) {
+      all_verified = false;
+    }
+  }
+  if ( all_pending ) {
+    return "/site_media/img/rack-pending-icon.png";
+  } else if ( all_verified) {
+    return "/site_media/img/rack-verified-icon.png";
+  } else {
+    return "/site_media/img/rack-icon.png";
+  }
+};
+

@@ -18,6 +18,7 @@ except IOError:
     raise
 
 DEBUG = config.getboolean('main', 'DEBUG')
+
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -83,6 +84,9 @@ MEDIA_URL = '/uploads/'
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = '/media/'
+
+#COMPRESS_URL = '/site_media/'
+#COMPRESS_ROOT = STATIC_DOC_ROOT
 
 GOOGLE_ANALYTICS_KEY = config.get('main', 'GOOGLE_ANALYTICS_KEY')
 
@@ -174,6 +178,7 @@ INSTALLED_APPS = (
     'voting',
     'pagination',
     'attachments',
+#    'compressor',
 )
 
 
@@ -184,6 +189,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.media",
     "django.core.context_processors.request",
     "fixcity.bmabr.views.user_context",
+    "fixcity.bmabr.views.media_refresh_context",
     "djangoflash.context_processors.flash",
     )
 
@@ -211,6 +217,13 @@ except:
     # fall back to default behavior, which works on some systems
     # (notably not ubuntu, hence the need for a config option)
     pass
+
+# This is a query string added (manually) to a bunch of static
+# resource URLs.  I tried and failed to get django-compress working;
+# it seemed to work, all CSS loaded, but most of the styles failed to
+# actually get used.
+MEDIA_REFRESH_TOKEN = config.get('main', 'MEDIA_REFRESH_TOKEN')
+
 
 # Logging?
 import logging

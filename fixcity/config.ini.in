@@ -36,6 +36,10 @@ SERVICE_FAILURE_EMAIL = admin@example.com
 # This is the URL where scripts can post new racks.
 RACK_POSTING_URL = http://localhost:8000/racks/
 
+# Update this to today's date every time you deploy.
+MEDIA_REFRESH_TOKEN = 2010-03-04
+
+
 [bitly]
 user =
 api_key =
