@@ -99,7 +99,7 @@ get started:
 
   cd fixcity
   ./manage.py syncdb
-  ./manage.py migrate
+  ./manage.py migrate bmabr
 
  5) Visit the /admin/sites/site UI to change the domain name and
     display name of the website. These are used eg. in account
