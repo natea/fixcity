@@ -56,39 +56,16 @@ class EmailParser(object):
         self.email_from = None
         self.id = None
 
-        # XXX Cull stuff that just stores a value, we should just
-        # store all the parameters instead.
-        if parameters.has_key('debug'):
-            self.DEBUG = int(parameters['debug'])
-        else:
-            self.DEBUG = 0
-
-        if parameters.has_key('drop_alternative_html_version'):
-            self.DROP_ALTERNATIVE_HTML_VERSION = int(parameters['drop_alternative_html_version'])
-        else:
-            self.DROP_ALTERNATIVE_HTML_VERSION = 0
-
-        if parameters.has_key('strip_signature'):
-            self.STRIP_SIGNATURE = int(parameters['strip_signature'])
-        else:
-            self.STRIP_SIGNATURE = 0
-
-        if parameters.has_key('binhex'):
-            self.BINHEX = parameters['binhex']
-        else:
-            self.BINHEX = 'warn'
-
-        if parameters.has_key('applesingle'):
-            self.APPLESINGLE = parameters['applesingle']
-        else:
-            self.APPLESINGLE = 'warn'
-
-        if parameters.has_key('appledouble'):
-            self.APPLEDOUBLE = parameters['appledouble']
-        else:
-            self.APPLEDOUBLE = 'warn'
-
-        self.MAX_ATTACHMENT_SIZE = int(parameters.get('max-attachment-size', -1))
+        for key, default, typecast in (
+            ('debug', 0, int),
+            ('drop_alternative_html_version', 0, int),
+            ('strip_signature', 0, int),
+            ('binhex', 'warn', str),
+            ('applesingle', 'warn', str),
+            ('appledouble', 'warn', str),
+            ('max-attachment-size', -1, int),
+            ):
+            self.parameters[key] = typecast(self.parameters.get(key, default))
 
 
     def _make_logfile(self, suffix='.handle_mailin'):
@@ -213,7 +190,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         Create a new rack
         """
         msg = self.msg
-        if self.DEBUG:
+        if self.parameters['debug']:
             print "TD: new_rack"
 
         message_parts = self.get_message_parts()
@@ -234,7 +211,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                     email=self.email_addr,
                     )
 
-        if self.parameters.get('dry-run') and self.DEBUG:
+        if self.parameters.get('dry-run') and self.parameters['debug']:
             print "TD: would save rack here"
             return
 
@@ -268,7 +245,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 )
             return
 
-        if self.DEBUG:
+        if self.parameters['debug']:
             print "TD: server responded with:\n%s" % content
 
         if response.status >= 500:
@@ -317,7 +294,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             response, content = http.request(photo_url, 'POST',
                                              headers=headers, body=body)
             # XXX handle errors
-            if self.DEBUG:
+            if self.parameters['debug']:
                 print "TD: result from photo upload:"
                 print content
         # XXX need to add links per
@@ -339,7 +316,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
     def parse(self, s):
         self.msg = email.message_from_string(s)
         if not self.msg:
-            if self.DEBUG:
+            if self.parameters['debug']:
                 print "TD: This is not a valid email message format"
             return
 
@@ -350,7 +327,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         message_parts = self.unique_attachment_names(message_parts)
         body_text = self.body_text(message_parts)
 
-        if self.DEBUG > 1:        # save the entire e-mail message text
+        if self.parameters['debug'] > 1:        # save the entire e-mail message text
             self.save_email_for_debug(self.msg)
             self.debug_body(body_text)
             self.debug_attachments(message_parts)
@@ -406,7 +383,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         ALTERNATIVE_MULTIPART = False
 
         for part in msg.walk():
-            if self.DEBUG:
+            if self.parameters['debug']:
                 print 'TD: Message part: Main-Type: %s' % part.get_content_maintype()
                 print 'TD: Message part: Content-Type: %s' % part.get_content_type()
 
@@ -421,10 +398,10 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 #
                 # Special handling for BinHex attachments. Options are drop (leave out with no warning), warn (and leave out), and keep
                 #
-                if self.BINHEX == 'warn':
+                if self.parameters['binhex'] == 'warn':
                     message_parts.append("'''A BinHex attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
                     continue
-                elif self.BINHEX == 'drop':
+                elif self.parameters['binhex'] == 'drop':
                     continue
 
             elif part.get_content_type() == 'application/applefile':
@@ -433,16 +410,16 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 #
 
                 if part in appledouble_parts:
-                    if self.APPLEDOUBLE == 'warn':
+                    if self.parameters['appledouble'] == 'warn':
                         message_parts.append("'''The resource fork of an attachment named '%s' was removed.'''" % part.get_filename())
                         continue
-                    elif self.APPLEDOUBLE == 'strip':
+                    elif self.parameters['appledouble'] == 'strip':
                         continue
                 else:
-                    if self.APPLESINGLE == 'warn':
+                    if self.parameters['applesingle'] == 'warn':
                         message_parts.append("'''An AppleSingle attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
                         continue
-                    elif self.APPLESINGLE == 'drop':
+                    elif self.parameters['applesingle'] == 'drop':
                         continue
 
             elif part.get_content_type() == 'multipart/appledouble':
@@ -459,7 +436,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             # Skip multipart containers
             #
             if part.get_content_maintype() == 'multipart':
-                if self.DEBUG:
+                if self.parameters['debug']:
                     print "TD: Skipping multipart container"
                 continue
 
@@ -467,9 +444,9 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             inline = self.inline_part(part)
 
             # Drop HTML message
-            if ALTERNATIVE_MULTIPART and self.DROP_ALTERNATIVE_HTML_VERSION:
+            if ALTERNATIVE_MULTIPART and self.parameters['drop_alternative_html_version']:
                 if part.get_content_type() == 'text/html':
-                    if self.DEBUG:
+                    if self.parameters['debug']:
                         print "TD: Skipping alternative HTML message"
 
                     ALTERNATIVE_MULTIPART = False
@@ -477,7 +454,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
             # Inline text parts are where the body is
             if part.get_content_type() == 'text/plain' and inline:
-                if self.DEBUG:
+                if self.parameters['debug']:
                     print 'TD:               Inline body part'
 
                 # Try to decode, if fails then do not decode
@@ -489,7 +466,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 format = email.Utils.collapse_rfc2231_value(part.get_param('Format', 'fixed')).lower()
                 delsp = email.Utils.collapse_rfc2231_value(part.get_param('DelSp', 'no')).lower()
 
-                if self.STRIP_SIGNATURE:
+                if self.parameters['strip_signature']:
                     body_text = self.strip_signature(body_text)
 
                 # Get contents charset (iso-8859-15 if not defined in mail headers)
@@ -509,7 +486,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
                 message_parts.append('%s' %ubody_text)
             else:
-                if self.DEBUG:
+                if self.parameters['debug']:
                     print 'TD:               Filename: %s' % part.get_filename()
 
                 message_parts.append((part.get_filename(), part))
@@ -566,7 +543,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 num += 1
                 unique_filename = "%s-%s%s" % (filename, num, ext)
 
-            if self.DEBUG:
+            if self.parameters['debug']:
                 print 'TD: Attachment with filename %s will be saved as %s' % (filename, unique_filename)
 
             attachment_names.add(unique_filename)
@@ -599,7 +576,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         """
         # Get Maxium attachment size
         #
-        max_size = self.MAX_ATTACHMENT_SIZE
+        max_size = self.parameters['max-attachment-size']
         status   = ''
         results = {}
 
@@ -647,7 +624,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         If notify_admin_body is non-empty, it will be added to the body
         sent to the admin.
         """
-        if self.DEBUG:
+        if self.parameters['debug']:
             print "TD: Bouncing message to %s" % self.email_addr
         body += '\n\n------------ original message follows ---------\n\n'
         # TO DO: use attachments rather than inline.
