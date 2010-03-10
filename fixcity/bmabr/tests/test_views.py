@@ -187,6 +187,11 @@ class TestUtilFunctions(unittest.TestCase):
         self.failUnless(result.get('message'))
         self.failUnless(result.get('rack'))
 
+    def test_make_absolute_url(self):
+        from fixcity.bmabr.views import make_absolute_url
+        self.assertEqual(make_absolute_url('foo'), 'http://example.com/foo')
+        self.assertEqual(make_absolute_url('/foo'), 'http://example.com/foo')
+
 
 class TestCbsForBoro(TestCase):
 

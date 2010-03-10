@@ -31,6 +31,8 @@ from django.contrib.gis.geos.point import Point
 from django.contrib.gis.geos.polygon import Polygon
 from django.contrib.gis.shortcuts import render_to_kml
 
+from django.contrib.sites.models import Site
+
 from django.template import Context, loader
 
 from fixcity.bmabr import bulkorder
@@ -154,6 +156,15 @@ def make_paginator(objs, start_page, per_page):
     except (EmptyPage, InvalidPage):
         page = paginator.page(paginator.num_pages)
     return (page, paginator)
+
+
+def make_absolute_url(url):
+    # As suggested per http://docs.djangoproject.com/en/dev/ref/contrib/sites/#getting-the-current-domain-for-full-urls
+    # but it doesn't distinguish HTTP vs. HTTPS.
+    url = url.lstrip('/')
+    domain = Site.objects.get_current().domain
+    return 'http://%s/%s' % (domain, url)
+    
 
 def racks_index(request):
     # might be creating a new rack...
@@ -839,34 +850,48 @@ def _bulk_order_submit(bo, next_state, postdata):
     user_message = '\n'.join(('====== Begin message from user =====\n',
                               user_message,
                               '\n====== End message from user ====='))
+    csv_url = make_absolute_url(
+        urlresolvers.reverse('fixcity.bmabr.views.bulk_order_csv',
+                             kwargs={'bo_id': bo.id}))
+    zip_url = make_absolute_url(
+        urlresolvers.reverse('fixcity.bmabr.views.bulk_order_zip',
+                             kwargs={'bo_id': bo.id}))
+    pdf_url = make_absolute_url(
+        urlresolvers.reverse('fixcity.bmabr.views.bulk_order_pdf',
+                             kwargs={'bo_id': bo.id}))
+
     body = '''This an automatic notification from http://fixcity.org.
 
 A user named %(name)s <%(email)s> from the organization %(organization)s
 has created a new bulk order for %(cb)s.
 
-A zip file is attached to this email, containing:
+You may download a Zip file with all information about this bulk order
+from here: %(zip_url)s
 
-* A .csv file with information about the requested bike racks.
+The zip file contains:
+
+* A PDF with photos (when provided) and information about all the
+  requested bike racks.  (You can also download the PDF separately
+  here: %(pdf_url)s)
+
+* A .CSV file with information about the requested bike racks.
   This is suitable for importing into an Excel spreadsheet or eg.
   an Access database.
+  (You can also download the CSV separately here:
+   %(csv_url)s)
 
-* A PDF with photos and information about the requested bike racks.
+* Any attachments the requesting user may have added to the bulk
+  order, such as letters of support.
 
-* Any attachments the user may have added to the bulk order, such as
-  letters of support.
-
-The user included the following message:
+The user included the following message with their order:
 
 %(user_message)s
     ''' % locals()
+
+
     message = EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL,
                            [settings.BULK_ORDER_SUBMISSION_EMAIL])
 
-    zipdata = cStringIO.StringIO()
-    bulkorder.make_zip(bo, zipdata)
-    zipdata.seek(0)
-    message.attach(bulkorder.make_filename(bo, 'zip'), zipdata.read(),
-                   'application/zip')
     bo.submit()
     message.send(fail_silently=False)
 
