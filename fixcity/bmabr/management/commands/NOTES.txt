@@ -1,0 +1,27 @@
+
+refactor this stuff...
+https://projects.openplans.org/fixcity/ticket/159
+
+General pattern, maybe a Template Method kind of thing:
+
+* get ID of last processed input
+
+* get new data since last ID
+
+* for each:
+  - parse or adapt data
+  - create new rack:
+    * create a source (seeclickfix only... should be done server-side)
+    * on user error:
+      - adapt errors to source-specific format
+      - send msg
+    * on exception:
+      - adapt errors to source-specific format
+      - send msg
+      - email admins
+    * save ID as last processed item, unless server is down
+      (or some other retryable failure)
+
+
+
+
