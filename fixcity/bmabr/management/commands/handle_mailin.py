@@ -63,26 +63,6 @@ class EmailParser(object):
         else:
             self.DEBUG = 0
 
-        if parameters.has_key('email_quote'):
-            self.EMAIL_QUOTE = str(parameters['email_quote'])
-        else:
-            self.EMAIL_QUOTE = '> '
-
-        if parameters.has_key('email_header'):
-            self.EMAIL_HEADER = int(parameters['email_header'])
-        else:
-            self.EMAIL_HEADER = 0
-
-        if parameters.has_key('reply_all'):
-            self.REPLY_ALL = int(parameters['reply_all'])
-        else:
-            self.REPLY_ALL = 0
-
-        if parameters.has_key('rack_update'):
-            self.RACK_UPDATE = int(parameters['rack_update'])
-        else:
-            self.RACK_UPDATE = 0
-
         if parameters.has_key('drop_alternative_html_version'):
             self.DROP_ALTERNATIVE_HTML_VERSION = int(parameters['drop_alternative_html_version'])
         else:
