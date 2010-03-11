@@ -55,7 +55,7 @@ class TwitterFetcher(object):
                         more_tweets = tweet_func(count=max_per_page, page=page, since_id=since_id)
                     else:
                         more_tweets = tweet_func(count=max_per_page, page=page)
-                except tweepy.error.TweepError:
+                except (socket.error, tweepy.error.TweepError):
                     # 50x errors from Twitter are not interesting.
                     # Just give up and hope Twitter's back by the next time
                     # we run.

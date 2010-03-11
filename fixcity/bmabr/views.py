@@ -8,13 +8,16 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
+from django.core.mail import EmailMessage
+from django.core.mail import send_mail
 from django.core.paginator import EmptyPage
 from django.core.paginator import InvalidPage
 from django.core.paginator import Paginator
 from django.core import urlresolvers
 
+from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth.tokens import default_token_generator as token_generator
 
 from django.contrib.comments.forms import CommentForm
@@ -28,14 +31,16 @@ from django.contrib.gis.geos.point import Point
 from django.contrib.gis.geos.polygon import Polygon
 from django.contrib.gis.shortcuts import render_to_kml
 
+from django.contrib.sites.models import Site
+
 from django.template import Context, loader
 
-from django.views.decorators.cache import cache_page
-
+from fixcity.bmabr import bulkorder
 from fixcity.bmabr.models import Borough
 from fixcity.bmabr.models import CityRack
 from fixcity.bmabr.models import Rack
 from fixcity.bmabr.models import CommunityBoard
+from fixcity.bmabr.models import NYCDOTBulkOrder, BulkOrderForm
 from fixcity.bmabr.models import RackForm, SupportForm
 from fixcity.bmabr.models import StatementOfSupport
 from fixcity.bmabr.models import Source, TwitterSource, EmailSource
@@ -51,16 +56,20 @@ from recaptcha.client import captcha
 
 from voting.models import Vote
 
+import cStringIO
+import datetime
 import logging
 import sys
 import traceback
+import urllib
 
-cb_metric = 50.00
-GKEY="ABQIAAAApLR-B_RMiEN2UBRoEWYPlhTmTlZhMVUZVOGFgSe6Omf4DswcaBSLmUPer5a9LF8EEWHK6IrMgA62bg"
 SRID=4326
 
 # XXX Need to figure out what order we really want these in.
 DEFAULT_RACK_ORDER = ('-date', '-id')
+
+def media_refresh_context(request):
+    return {'refresh_token': settings.MEDIA_REFRESH_TOKEN}
 
 def user_context(request):
     # Complicated a bit because AnonymousUser doesn't have some attributes.
@@ -88,6 +97,14 @@ def index(request):
        context_instance=RequestContext(request)
                               )
 
+def blank_page(request):
+    """ Useful for pages that just need to deplay a flash message and
+    nothing else, eg. after submitting a form where there's no other
+    obvious next page to redirect to.
+    """
+    return render_to_response(
+        'base.html', {}, context_instance=RequestContext(request))
+                      
 @login_required
 def profile(request):
     user = request.user
@@ -99,15 +116,17 @@ def profile(request):
        context_instance=RequestContext(request)
                               )
 
+_geocoder = geocoders.Google(settings.GOOGLE_MAPS_KEY)
+
 def _geocode(text):
     # Cache a bit, since that's easier than ensuring that our AJAX
     # code doesn't call it with the same params a bunch of times.
-    text = text.strip()
+    text = ' '.join(text.lower().strip().split())
     key = ('_geocode', text)
     result = cache.get(key)
     if result is None:
-        result = list(geocoders.Google(GKEY).geocode(text, exactly_one=False))
-        cache.set(key, result, 60 * 10)
+        result = list(_geocoder.geocode(text, exactly_one=False))
+        cache.set(key, result, 60 * 60)
     return result
 
 def geocode(request):
@@ -124,9 +143,9 @@ def reverse_geocode(request):
     key = ('reverse_geocode', point)
     result = cache.get(key)
     if result is None:
-        (new_place,new_point) = geocoders.Google(GKEY).reverse(point)
+        (new_place,new_point) = geocoders.Google(settings.GOOGLE_MAPS_KEY).reverse(point)
         result = new_place
-        cache.set(key, result, 60 * 10)
+        cache.set(key, result, 60 * 60)
     return HttpResponse(result)
 
 def make_paginator(objs, start_page, per_page):
@@ -137,6 +156,15 @@ def make_paginator(objs, start_page, per_page):
     except (EmptyPage, InvalidPage):
         page = paginator.page(paginator.num_pages)
     return (page, paginator)
+
+
+def make_absolute_url(url):
+    # As suggested per http://docs.djangoproject.com/en/dev/ref/contrib/sites/#getting-the-current-domain-for-full-urls
+    # but it doesn't distinguish HTTP vs. HTTPS.
+    url = url.lstrip('/')
+    domain = Site.objects.get_current().domain
+    return 'http://%s/%s' % (domain, url)
+    
 
 def racks_index(request):
     # might be creating a new rack...
@@ -153,7 +181,7 @@ def racks_index(request):
     if board_gid != 0:
         # racks for a particular community board
         cb = get_object_or_404(CommunityBoard, gid=board_gid)
-        racks = racks.filter(location__within=cb.the_geom)
+        racks = cb.racks
     else:
         try:
             boro_gid = int(request.GET.get('boro', '0'))
@@ -165,12 +193,9 @@ def racks_index(request):
             boro = Borough.brooklyn()
         racks = racks.filter(location__within=boro.the_geom)
     vrfy = request.GET.get('verified')
-    if vrfy is not None:
-        if vrfy == 'verified':
-            racks = racks.filter(verified=True)
-        elif vrfy == 'unverified':
-            racks = racks.filter(verified=False)
-    racks = racks.order_by(*DEFAULT_RACK_ORDER)
+    if vrfy:
+        racks = Rack.objects.filter_by_verified(vrfy, racks)
+
     # set up pagination information
     try:
         cur_page_num = int(request.GET.get('page', '1'))
@@ -361,7 +386,10 @@ def support(request, rack_id):
 @login_required
 def rack_edit(request,rack_id):
     rack = get_object_or_404(Rack, id=rack_id)
-    if request.method == 'POST':
+    form = RackForm()
+    if rack.locked:
+        flash_error('This rack is locked and cannot be edited.', request)
+    elif request.method == 'POST':
         # For now, preserve the original creator.
         request.POST[u'email'] = rack.email
         request.POST[u'user'] = rack.user
@@ -374,8 +402,6 @@ def rack_edit(request,rack_id):
                 urlresolvers.reverse(rack_edit, kwargs={'rack_id': rack.id}))
         else:
             flash_error('Please correct the following errors.', request)
-    else:
-        form = RackForm()
 
     # Who created this rack?
     if rack.user == request.user.username or rack.email == request.user.email:
@@ -401,13 +427,10 @@ def rack_view(request, rack_id):
         comment_form = _add_comment(request, rack)
     else:
         comment_form = ReCaptchaCommentForm(rack)
-    user_likes_this_rack = Vote.objects.get_for_user(rack, request.user) > 0
     return render_to_response(
         'rack.html', {
             'rack': rack,
             'statement_query': statement_query,
-            'user_suggested_this_rack': rack.user == context['user'].username,
-            'user_likes_this_rack': user_likes_this_rack,
             'comment_form': comment_form,
             },
         context_instance=context)
@@ -451,14 +474,20 @@ def votes(request, rack_id):
     # AJAX back-end for getting / incrementing votes on a rack.
     user = request.user
     rack = get_object_or_404(Rack, id=rack_id)
+    result = {}
     if request.method == 'POST':
-        if rack.user == user.username:
-            flash_error(u"You can't vote on a rack you suggested.", request)
+        user_voted = Vote.objects.get_for_user(rack, request.user)
+        if user_voted is not None:
+            result['error'] = u"Already voted on rack"
+        elif rack.user == user.username:
+            result['error'] = u"You can't vote on a rack you suggested."
         else:
             Vote.objects.record_vote(rack, request.user, 1)
     votes = Vote.objects.get_score(rack)
-    response = HttpResponse(content_type='application/json')
-    response.write(json.dumps({'votes': votes['score']}))
+    result['votes'] = votes['score']
+    status = 'error' in result and 400 or 200
+    response = HttpResponse(content_type='application/json', status=status)
+    response.write(json.dumps(result))
     return response
 
 
@@ -498,11 +527,11 @@ def rack_all_kml(request):
     racks = Rack.objects.all()
     return render_to_kml("placemarkers.kml", {'racks' : racks})
 
-
 # Cache hits are likely in a few cases: initial load of page;
 # or clicking pagination links; or zooming in/out.
-@cache_page(60 * 10)
-def rack_requested_kml(request):
+#@cache_page(60 * 10)
+def rack_search_kml(request):
+    racks = Rack.objects.all()
     try:
         page_number = int(request.REQUEST.get('page_number', '1'))
     except ValueError:
@@ -511,18 +540,24 @@ def rack_requested_kml(request):
         page_size = int(request.REQUEST.get('page_size', sys.maxint))
     except ValueError:
         page_size = sys.maxint
+
+    status = request.GET.get('status')
+    if status:
+        racks = racks.filter(status=status)
+
+    verified = request.GET.get('verified')
+    if verified:
+        racks = Rack.objects.filter_by_verified(verified, racks)
+
     # Get bounds from request.
     bbox = request.REQUEST.get('bbox')
     if bbox:
         bbox = [float(n) for n in bbox.split(',')]
         assert len(bbox) == 4
         geom = Polygon.from_bbox(bbox)
-        racks = Rack.objects.filter(location__within=geom)
-    else:
-        racks = Rack.objects.all()
+        racks = racks.filter(location__within=geom)
     cb = request.GET.get('cb')
     boro = request.GET.get('boro')
-    verified = request.GET.get('verified')
     board = None
     borough = None
     if cb is not None:
@@ -537,11 +572,6 @@ def rack_requested_kml(request):
             racks = racks.filter(location__within=borough.the_geom)
         except (CommunityBoard.DoesNotExist, ValueError):
             pass
-    if verified is not None:
-        if verified == 'verified':
-            racks = racks.filter(verified=True)
-        elif verified == 'unverified':
-            racks = racks.filter(verified=False)
     racks = racks.order_by(*DEFAULT_RACK_ORDER)
     paginator = Paginator(racks, page_size)
     page_number = min(page_number, paginator.num_pages)
@@ -670,9 +700,7 @@ def activate(request, activation_key,
     # Post-activation: Modify anonymous racks.
     context_instance['activation_key'] = activation_key
     if account:
-        for rack in Rack.objects.filter(email=account.email, user=u''):
-            rack.user = account.username
-            rack.save()
+        Rack.objects.filter(email=account.email, user=u'').update(user=account.username)
 
     return render_to_response(template_name,
                               { 'account': account,
@@ -729,14 +757,15 @@ def server_error(request, template_name='500.html'):
                                    mimetype="application/xhtml+xml")
 
 def cbs_for_boro(request, boro):
-    """return json results for ajax call to fetch boards for a cb"""
+    """return json results for ajax call to fetch boards for a borough
+    """
     try:
         boro = int(boro)
     except ValueError:
         raise Http404
     borough = get_object_or_404(Borough, gid=boro)
-    board_tuple = [(b.board, b.gid)
-                   for b in CommunityBoard.objects.filter(borough=borough)]
+    board_tuple = [(cb.board, cb.gid)
+                   for cb in CommunityBoard.objects.filter(borough=borough)]
     board_tuple.sort()
     return HttpResponse(json.dumps(board_tuple), mimetype='application/json')
 
@@ -746,3 +775,296 @@ def redirect_rack_urls(request):
     new_path = '/racks/' + no_rack_path
     from django.http import HttpResponsePermanentRedirect
     return HttpResponsePermanentRedirect(new_path)
+
+
+def bulk_order_edit_form(request, bo_id):
+    if not request.user.has_perm('bmabr.add_nycdotbulkorder'):
+        error = """Only approved users can edit bulk orders. Please
+        <a href="/contact/">contact us</a> to ask for approval."""
+        flash_error(error, request)
+        url = '%s?%s' % (
+            urlresolvers.reverse('django.contrib.auth.views.login'),
+            urllib.urlencode({'next': request.get_full_path()}))
+        return HttpResponseRedirect(url)
+
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    cb = bulk_order.communityboard
+    form = BulkOrderForm()
+
+    if request.method == 'POST':
+        post = request.POST.copy()
+        next_state = post.get('next_state')
+        if next_state == 'completed':
+            # The DOT has apparently completed building this order. Yay!!
+            flash(u'Marking bulk order as completed.', request)
+            bulk_order.racks.update(status=next_state)
+            bulk_order.status = next_state
+            bulk_order.save()
+        else:
+            post[u'communityboard'] = post.get('cb_gid')
+            post[u'user'] = request.user.pk
+            form = BulkOrderForm(post)
+            if form.is_valid():
+                form.save()
+            else:
+                flash_error('Please correct the following errors.', request)
+
+    return render_to_response(
+        'bulk_order_edit_form.html',
+        {'request': request,
+         'bulk_order': bulk_order,
+         'cb': cb,
+         'form': form,
+         'status': dict(form.fields['status'].choices).get(bulk_order.status),
+         },
+        context_instance=RequestContext(request)
+        )
+
+@permission_required('bmabr.add_nycdotbulkorder')
+def bulk_order_submit_form(request, bo_id):
+    bulk_order = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    next_state = request.POST.get('next_state')
+    if request.method == 'POST' and next_state == 'pending':
+        # Submit this to the DOT!
+        _bulk_order_submit(bulk_order, next_state, request.POST)
+        flash(u'Your order has been submitted to the DOT. ',
+              request)
+    return render_to_response(
+        'bulk_order_submit_form.html',
+        {'request': request,
+         'bulk_order': bulk_order,
+         'cb': bulk_order.communityboard,
+         },
+        context_instance=RequestContext(request)
+        )
+
+def _bulk_order_submit(bo, next_state, postdata):
+    user_message = postdata['message']
+    name = postdata['name']
+    organization = postdata['organization']
+    email = postdata['email']
+    cb = bo.communityboard
+
+    subject = 'New bulk order for bike racks in %s' % bo.communityboard
+    date = datetime.datetime.now().isoformat()
+    user_message = '\n'.join(('====== Begin message from user =====\n',
+                              user_message,
+                              '\n====== End message from user ====='))
+    csv_url = make_absolute_url(
+        urlresolvers.reverse('fixcity.bmabr.views.bulk_order_csv',
+                             kwargs={'bo_id': bo.id}))
+    zip_url = make_absolute_url(
+        urlresolvers.reverse('fixcity.bmabr.views.bulk_order_zip',
+                             kwargs={'bo_id': bo.id}))
+    pdf_url = make_absolute_url(
+        urlresolvers.reverse('fixcity.bmabr.views.bulk_order_pdf',
+                             kwargs={'bo_id': bo.id}))
+
+    body = '''This an automatic notification from http://fixcity.org.
+
+A user named %(name)s <%(email)s> from the organization %(organization)s
+has created a new bulk order for %(cb)s.
+
+You may download a Zip file with all information about this bulk order
+from here: %(zip_url)s
+
+The zip file contains:
+
+* A PDF with photos (when provided) and information about all the
+  requested bike racks.  (You can also download the PDF separately
+  here: %(pdf_url)s)
+
+* A .CSV file with information about the requested bike racks.
+  This is suitable for importing into an Excel spreadsheet or eg.
+  an Access database.
+  (You can also download the CSV separately here:
+   %(csv_url)s)
+
+* Any attachments the requesting user may have added to the bulk
+  order, such as letters of support.
+
+The user included the following message with their order:
+
+%(user_message)s
+    ''' % locals()
+
+
+    message = EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL,
+                           [settings.BULK_ORDER_SUBMISSION_EMAIL])
+
+    bo.submit()
+    message.send(fail_silently=False)
+
+@login_required
+def bulk_order_add_form(request):
+    cb = None
+    form = BulkOrderForm()
+    if request.method == 'POST':
+        cb_gid = request.POST.get('cb_gid')
+        post = request.POST.copy()
+        post[u'communityboard'] = cb_gid
+        post[u'user'] = request.user.pk
+        form = BulkOrderForm(post)
+        if form.is_valid():
+            bulk_order = NYCDOTBulkOrder.objects.filter(communityboard=cb_gid)
+            if bulk_order:
+                flash_error("There is already a bulk order for this CB.", request)
+            else:
+                bulk_order = form.save()
+                if request.user.has_perm('bmabr.add_nycdotbulkorder'):
+                    flash("Bulk order created! Follow the directions below to complete it.", request)
+                    bulk_order.approve()
+                    bulk_order.save()
+                    return HttpResponseRedirect(
+                        urlresolvers.reverse(bulk_order_edit_form,
+                                             kwargs={'bo_id': bulk_order.id}))
+                
+                else:
+                    flash("Thanks for your request. "
+                          "The site admins will check out your request and "
+                          "get back to you soon!",
+                          request
+                          )
+                    subject = 'New bulk order request needs approval'
+                    approval_uri = request.build_absolute_uri(
+                        urlresolvers.reverse(
+                            bulk_order_approval_form, args=[bulk_order.id]))
+                    body = """
+A new bulk order has been submitted.
+To approve this user and this order, go to:
+%s
+""" % approval_uri
+                    send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
+                              settings.BULK_ORDER_APPROVAL_EMAIL,
+                              fail_silently=False)
+                    return HttpResponseRedirect(urlresolvers.reverse(blank_page))
+        else:
+            flash_error('Please correct the following errors.', request)
+    return render_to_response(
+        'bulk_order_add_form.html',
+        {'request': request,
+         'cb': cb,
+         'form': form,
+         },
+        context_instance=RequestContext(request)
+        )
+
+@permission_required('auth.change_user')
+def bulk_order_approval_form(request, bo_id):
+    """Some privileged users can approve bulk orders created by
+    unprivileged users.
+    """
+    bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    if request.method == 'POST':
+        bo.approve()
+        bo.save()
+        group = Group.objects.get(name='bulk_ordering')
+        bo.user.groups.add(group)
+        bo.user.save()
+        subject = 'Your bulk order has been approved for submission to the DOT'
+        body = """
+Thanks for your bulk order request. Our site admins have given
+you approval to submit this bulk order to the NYC Department of
+Transportation.
+
+To finish your bulk order, follow this link:
+%s
+""" % request.build_absolute_uri(urlresolvers.reverse(
+                bulk_order_edit_form, kwargs={'bo_id': bo.id}))
+
+        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL,
+                  [bo.user.email],
+                  fail_silently=False)
+
+    return render_to_response('bulk_order_approval_form.html',
+       {'request':request,
+        'bulk_order': bo,
+        'cb': bo.communityboard,
+        },
+       context_instance=RequestContext(request))
+
+
+def bulk_order_csv(request, bo_id):
+    from fixcity.bmabr import bulkorder
+
+    bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    cb = bo.communityboard
+    response = HttpResponse(mimetype='text/csv')
+    filename = bulkorder.make_filename(bo, 'csv')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    bulkorder.make_csv(bo, response)
+    return response
+
+def bulk_order_pdf(request, bo_id):
+    from fixcity.bmabr import bulkorder
+    bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    response = HttpResponse(mimetype='application/pdf')
+    filename = bulkorder.make_filename(bo, 'pdf')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    bulkorder.make_pdf(bo, response)
+    return response
+
+
+def bulk_order_zip(request, bo_id):
+    from fixcity.bmabr import bulkorder
+    bo = get_object_or_404(NYCDOTBulkOrder, id=bo_id)
+    response = HttpResponse(mimetype='application/zip')
+    filename = bulkorder.make_filename(bo, 'zip')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    bulkorder.make_zip(bo, response)
+    return response
+
+def neighborhood_for_rack(rack):
+    # Unfortunately, django doesn't support ordering by sql functions.
+    # http://code.djangoproject.com/ticket/5293
+    # So we'll use raw SQL.
+    from django.db import connection
+    cursor = connection.cursor()
+    cursor.execute("""
+      SELECT name FROM gis_neighborhoods
+        WHERE ST_DWithin(the_geom, ST_GeomFromText(%r, %d), 1.0)
+        ORDER BY ST_Distance(the_geom, ST_GeomFromText(%r, %d)) LIMIT 1
+   """ % (rack.location.wkt, SRID, rack.location.wkt, SRID))
+    row = cursor.fetchone()
+    if row is None:
+        return '<unknown>'
+    return row[0]
+    
+    
+def cross_streets_for_rack(rack):
+    from django.db import connection
+    cursor = connection.cursor()
+    # The WHERE clause is an optimization that avoids looking at
+    # any intersections far away.  The third arg was arrived at
+    # empirically.
+    cursor.execute(
+        """SELECT street, nodeidfrom, nodeidto FROM gis_nycstreets
+        WHERE ST_DWithin(the_geom, ST_PointFromText(%s, %s), .003)
+        ORDER BY ST_Distance(the_geom, ST_PointFromText(%s, %s))
+        LIMIT 1;
+        """, [rack.location.wkt, SRID, rack.location.wkt, SRID])
+    rack_info = cursor.fetchone()
+    if rack_info is None:
+        return (None, None)
+    else:
+        street, nodeidfrom, nodeidto = rack_info
+
+    # Occasionally this fails to find any cross streets when there
+    # really is one.  Don't know why.
+
+    cursor.execute(
+        """SELECT street FROM gis_nycstreets
+        WHERE nodeidto = %s AND street != %s
+        """, [nodeidfrom, street])
+    previous_cross_street = cursor.fetchone()
+    if previous_cross_street is not None:
+        previous_cross_street = previous_cross_street[0]
+
+    cursor.execute(
+        """SELECT street FROM gis_nycstreets
+        WHERE nodeidfrom = %s AND street != %s
+        """, [nodeidto, street])
+    next_cross_street = cursor.fetchone()
+    if next_cross_street is not None:
+        next_cross_street = next_cross_street[0]
+    return (previous_cross_street, next_cross_street)

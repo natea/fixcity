@@ -18,6 +18,7 @@ except IOError:
     raise
 
 DEBUG = config.getboolean('main', 'DEBUG')
+
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -27,6 +28,11 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DEFAULT_FROM_EMAIL = config.get('main', 'DEFAULT_FROM_EMAIL')
+
+BULK_ORDER_APPROVAL_EMAIL = [e.strip() for e in 
+                             config.get('main', 'BULK_ORDER_APPROVAL_EMAIL').split(',')]
+
+BULK_ORDER_SUBMISSION_EMAIL = config.get('main', 'BULK_ORDER_SUBMISSION_EMAIL')
 
 DATABASE_ENGINE = config.get('db', 'DATABASE_ENGINE')
 DATABASE_NAME = config.get('db', 'DATABASE_NAME')
@@ -79,7 +85,12 @@ MEDIA_URL = '/uploads/'
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = '/media/'
 
+#COMPRESS_URL = '/site_media/'
+#COMPRESS_ROOT = STATIC_DOC_ROOT
+
 GOOGLE_ANALYTICS_KEY = config.get('main', 'GOOGLE_ANALYTICS_KEY')
+
+GOOGLE_MAPS_KEY = config.get('main', 'GOOGLE_MAPS_KEY')
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = config.get('main', 'SECRET_KEY')
@@ -166,6 +177,8 @@ INSTALLED_APPS = (
     'django_flash_templatetag',
     'voting',
     'pagination',
+    'attachments',
+#    'compressor',
 )
 
 
@@ -176,6 +189,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.media",
     "django.core.context_processors.request",
     "fixcity.bmabr.views.user_context",
+    "fixcity.bmabr.views.media_refresh_context",
     "djangoflash.context_processors.flash",
     )
 
@@ -194,6 +208,7 @@ COVERAGE_MODULES = ['fixcity.bmabr.views', 'fixcity.bmabr.models',
                     'fixcity.flash_messages',
                     'fixcity.bmabr.templatetags.recaptcha_tags',
                     'fixcity.bmabr.templatetags.google_analytics',
+                    'fixcity.bmabr.bulkorder',
                     ]
 
 try:
@@ -202,6 +217,13 @@ except:
     # fall back to default behavior, which works on some systems
     # (notably not ubuntu, hence the need for a config option)
     pass
+
+# This is a query string added (manually) to a bunch of static
+# resource URLs.  I tried and failed to get django-compress working;
+# it seemed to work, all CSS loaded, but most of the styles failed to
+# actually get used.
+MEDIA_REFRESH_TOKEN = config.get('main', 'MEDIA_REFRESH_TOKEN')
+
 
 # Logging?
 import logging
@@ -212,5 +234,5 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
 logger = logging.getLogger('')
-logger.addHandler(handler) 
+logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)

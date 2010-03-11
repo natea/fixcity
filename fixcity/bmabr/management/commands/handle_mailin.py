@@ -5,6 +5,10 @@ typically via stdin.
 To hook this up with postfix, set up an alias along the lines of:
 
 myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin -u http://MYDOMAIN/racks/ --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
+
+You will want a cron job or something that cleans up the --debug-dir directory
+(defaults to your TMP directory).
+
 '''
 
 # based on email2trac.py, which is Copyright (C) 2002 under the GPL v2 or later
@@ -34,10 +38,11 @@ from django.utils import simplejson as json
 
 from django.conf import settings
 
+
 class EmailParser(object):
 
     msg = None
-    
+
     def __init__(self, parameters):
 
         # Save parameters
@@ -51,14 +56,27 @@ class EmailParser(object):
         self.email_from = None
         self.id = None
 
-        if parameters.has_key('debug'):
-            self.DEBUG = int(parameters['debug'])
-        else:
-            self.DEBUG = 0
+        for key, default, typecast in (
+            ('debug', 0, int),
+            ('drop_alternative_html_version', 0, int),
+            ('strip_signature', 0, int),
+            ('binhex', 'warn', str),
+            ('applesingle', 'warn', str),
+            ('appledouble', 'warn', str),
+            ('max-attachment-size', -1, int),
+            ):
+            self.parameters[key] = typecast(self.parameters.get(key, default))
 
 
-        self.MAX_ATTACHMENT_SIZE = int(parameters.get('max-attachment-size', -1))
-
+    def _make_logfile(self, suffix='.handle_mailin'):
+        """where to put dumps of messages for debugging"""
+        logdir = self.parameters.get('debug_dir') or tempfile.gettempdir()
+        try:
+            os.makedirs(logdir)
+        except OSError:
+            if not os.path.isdir(logdir):
+                raise
+        return tempfile.mktemp(suffix, dir=logdir)
 
     def email_to_unicode(self, message_str):
         """
@@ -93,7 +111,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return str
 
     def debug_body(self, message_body):
-        body_file = tempfile.mktemp('.handle_mailin')
+        body_file = self._make_logfile()
 
         print 'TD: writing body (%s)' % body_file
         fx = open(body_file, 'wb')
@@ -123,7 +141,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             print 'TD: part%d: Content-Type: %s' % (n, part.get_content_type())
             print 'TD: part%d: filename: %s' % (n, part.get_filename())
 
-            part_file = tempfile.mktemp('.handle_mailin.part%d' % n)
+            part_file = self._make_logfile(suffix='.handle_mailin.part%d' % n)
 
             print 'TD: writing part%d (%s)' % (n,part_file)
             fx = open(part_file, 'wb')
@@ -154,10 +172,9 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         self.author = self.email_addr
 
 
-
     def save_email_for_debug(self, message):
-        msg_file = tempfile.mktemp('.email2trac')
- 
+        msg_file = self._make_logfile()
+
         print 'TD: saving email to %s' % msg_file
         fx = open(msg_file, 'wb')
         fx.write('%s' % message)
@@ -173,7 +190,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         Create a new rack
         """
         msg = self.msg
-        if self.DEBUG:
+        if self.parameters['debug']:
             print "TD: new_rack"
 
         message_parts = self.get_message_parts()
@@ -193,8 +210,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                     got_communityboard=0,   # Ditto.
                     email=self.email_addr,
                     )
-        
-        if self.parameters.get('dry-run') and self.DEBUG:
+
+        if self.parameters.get('dry-run') and self.parameters['debug']:
             print "TD: would save rack here"
             return
 
@@ -214,7 +231,11 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             response, content = http.request(url, 'POST',
                                              headers=headers,
                                              body=jsondata)
-        except socket.error:
+        except (socket.error, AttributeError):
+            # it's absurd that we have to catch AttributeError here,
+            # but apparently that's what httplib 0.5.0 raises because
+            # the socket ends up being None. Lame!
+            # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
             self.bounce(
                 error_subject,
                 "Thanks for trying to suggest a rack.\n"
@@ -224,7 +245,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 )
             return
 
-        if self.DEBUG:
+        if self.parameters['debug']:
             print "TD: server responded with:\n%s" % content
 
         if response.status >= 500:
@@ -273,7 +294,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             response, content = http.request(photo_url, 'POST',
                                              headers=headers, body=body)
             # XXX handle errors
-            if self.DEBUG:
+            if self.parameters['debug']:
                 print "TD: result from photo upload:"
                 print content
         # XXX need to add links per
@@ -295,7 +316,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
     def parse(self, s):
         self.msg = email.message_from_string(s)
         if not self.msg:
-            if self.DEBUG:
+            if self.parameters['debug']:
                 print "TD: This is not a valid email message format"
             return
 
@@ -306,7 +327,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         message_parts = self.unique_attachment_names(message_parts)
         body_text = self.body_text(message_parts)
 
-        if self.DEBUG > 1:        # save the entire e-mail message text
+        if self.parameters['debug'] > 1:        # save the entire e-mail message text
             self.save_email_for_debug(self.msg)
             self.debug_body(body_text)
             self.debug_attachments(message_parts)
@@ -332,7 +353,19 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
         address = address.strip()
         self.new_rack(title, address, spam_msg)
-            
+
+    def strip_signature(self, text):
+        """
+        Strip signature from message, inspired by Mailman software
+        """
+        body = []
+        for line in text.splitlines():
+            if line == '-- ':
+                break
+            body.append(line)
+
+        return ('\n'.join(body))
+
 
     def get_message_parts(self):
         """
@@ -350,7 +383,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         ALTERNATIVE_MULTIPART = False
 
         for part in msg.walk():
-            if self.DEBUG:
+            if self.parameters['debug']:
                 print 'TD: Message part: Main-Type: %s' % part.get_content_maintype()
                 print 'TD: Message part: Content-Type: %s' % part.get_content_type()
 
@@ -361,14 +394,48 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
             ## Check content type
             #
-            if part.get_content_type() == 'multipart/alternative':
+            if part.get_content_type() == 'application/mac-binhex40':
+                #
+                # Special handling for BinHex attachments. Options are drop (leave out with no warning), warn (and leave out), and keep
+                #
+                if self.parameters['binhex'] == 'warn':
+                    message_parts.append("'''A BinHex attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
+                    continue
+                elif self.parameters['binhex'] == 'drop':
+                    continue
+
+            elif part.get_content_type() == 'application/applefile':
+                #
+                # Special handling for the Mac-specific part of AppleDouble/AppleSingle attachments. Options are strip (leave out with no warning), warn (and leave out), and keep
+                #
+
+                if part in appledouble_parts:
+                    if self.parameters['appledouble'] == 'warn':
+                        message_parts.append("'''The resource fork of an attachment named '%s' was removed.'''" % part.get_filename())
+                        continue
+                    elif self.parameters['appledouble'] == 'strip':
+                        continue
+                else:
+                    if self.parameters['applesingle'] == 'warn':
+                        message_parts.append("'''An AppleSingle attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
+                        continue
+                    elif self.parameters['applesingle'] == 'drop':
+                        continue
+
+            elif part.get_content_type() == 'multipart/appledouble':
+                #
+                # If we entering an AppleDouble container, set up appledouble_parts so that we know what to do with its subparts
+                #
+                appledouble_parts = part.get_payload()
+                continue
+            elif part.get_content_type() == 'multipart/alternative':
                 ALTERNATIVE_MULTIPART = True
                 continue
 
             # Skip multipart containers
             #
             if part.get_content_maintype() == 'multipart':
-                if self.DEBUG:
+                if self.parameters['debug']:
                     print "TD: Skipping multipart container"
                 continue
 
@@ -376,9 +443,9 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             inline = self.inline_part(part)
 
             # Drop HTML message
-            if ALTERNATIVE_MULTIPART:
+            if ALTERNATIVE_MULTIPART and self.parameters['drop_alternative_html_version']:
                 if part.get_content_type() == 'text/html':
-                    if self.DEBUG:
+                    if self.parameters['debug']:
                         print "TD: Skipping alternative HTML message"
 
                     ALTERNATIVE_MULTIPART = False
@@ -386,7 +453,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
             # Inline text parts are where the body is
             if part.get_content_type() == 'text/plain' and inline:
-                if self.DEBUG:
+                if self.parameters['debug']:
                     print 'TD:               Inline body part'
 
                 # Try to decode, if fails then do not decode
@@ -397,6 +464,9 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
                 format = email.Utils.collapse_rfc2231_value(part.get_param('Format', 'fixed')).lower()
                 delsp = email.Utils.collapse_rfc2231_value(part.get_param('DelSp', 'no')).lower()
+
+                if self.parameters['strip_signature']:
+                    body_text = self.strip_signature(body_text)
 
                 # Get contents charset (iso-8859-15 if not defined in mail headers)
                 #
@@ -415,7 +485,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
                 message_parts.append('%s' %ubody_text)
             else:
-                if self.DEBUG:
+                if self.parameters['debug']:
                     print 'TD:               Filename: %s' % part.get_filename()
 
                 message_parts.append((part.get_filename(), part))
@@ -472,7 +542,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 num += 1
                 unique_filename = "%s-%s%s" % (filename, num, ext)
 
-            if self.DEBUG:
+            if self.parameters['debug']:
                 print 'TD: Attachment with filename %s will be saved as %s' % (filename, unique_filename)
 
             attachment_names.add(unique_filename)
@@ -483,7 +553,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
     def inline_part(self, part):
         return part.get_param('inline', None, 'Content-Disposition') == '' or not part.has_key('Content-Disposition')
-
 
 
     def body_text(self, message_parts):
@@ -506,10 +575,10 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         """
         # Get Maxium attachment size
         #
-        max_size = self.MAX_ATTACHMENT_SIZE
+        max_size = self.parameters['max-attachment-size']
         status   = ''
         results = {}
-        
+
         for part in message_parts:
             # Skip text body parts
             if not isinstance(part, tuple):
@@ -554,14 +623,14 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         If notify_admin_body is non-empty, it will be added to the body
         sent to the admin.
         """
-        if self.DEBUG:
+        if self.parameters['debug']:
             print "TD: Bouncing message to %s" % self.email_addr
         body += '\n\n------------ original message follows ---------\n\n'
         # TO DO: use attachments rather than inline.
         body += unicode(self.msg.as_string(), errors='ignore')
         if notify_admin:
             admin_subject = 'FixCity handle_mailin bounce! %s' % notify_admin
-            admin_body = 'Bouncing to: %s\n' % self.msg['to']
+            admin_body = 'Bouncing to: %s\n' % self.msg['from']
             admin_body += 'Bounce subject: %r\n' % subject
             admin_body += 'Time: %s\n' % datetime.now().isoformat(' ')
             admin_body += 'Not attaching original body, check the log file.\n'
@@ -570,9 +639,9 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 admin_body += notify_admin_body
             self.notify_admin(admin_subject, admin_body)
         return self.reply(subject, body)
-        
+
     def reply(self, subject, body):
-        send_mail(subject, body, self.msg['to'], [self.email_addr],
+        send_mail(subject, body, self.msg['to'], [self.msg['from']],
                   fail_silently=False)
 
     def notify_admin(self, subject, body):
@@ -580,6 +649,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         if self.msg and self.msg.get('to'):
             from_addr = self.msg['to']
         else:
+            # email might be so fubar that we can't even get addresses from it?
             from_addr = 'racks@fixcity.org'
         send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
 
@@ -590,9 +660,10 @@ def adapt_errors(errors):
     messages appropriately too.
     """
     adapted = {}
+    remove_me = object()
     key_mapping = {
         'title': 'subject',
-        'address': 'subject',
+        'address': remove_me,  # an error here will also show up in 'location'.
         'description': 'body',
         }
 
@@ -616,9 +687,10 @@ def adapt_errors(errors):
     for key, vals in errors.items():
         for val in vals:
             key = key_mapping.get(key, key)
+            if key is remove_me:
+                continue
             val = val_mapping.get((key, val), val)
             adapted[key] = adapted.get(key, ()) + (val,)
-    
     return adapted
 
 
@@ -628,6 +700,8 @@ class Command(BaseCommand):
                     help="Don't save any data.", dest="dry_run"),
         make_option('--debug', type="int", default=0,
                     help="Add some verbosity and save any problematic data."),
+        make_option('--debug-dir', type="str", default=0, action='store',
+                    help="Where to dump mail messages for debugging."),
         make_option('--strip-signature', action="store_true", default=True,
                     help="Remove signatures from incoming mail"),
         make_option('--max-attachment-size', type="int",

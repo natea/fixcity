@@ -5,21 +5,19 @@
 
 {% block extra_header %}
 
-<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js"></script>
+<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js?refresh={{ refresh_token }}"></script>
 
-<script type="text/javascript" src="/site_media/js/verify-rackmap.js">
+<script type="text/javascript" src="/site_media/js/verify-rackmap.js?refresh={{ refresh_token }}">
 </script>
 
 {% endblock %}
 
 {% block lede %}
-<h1>Verify your suggestion and others to see racks on the ground sooner!</h1>
 {% endblock %}
 
 {% block verifyrack %}<a id="verify-rack" class="current" href="{% url fixcity.bmabr.views.racks_index %}">Verify a Rack</a>{% endblock %}
 
 {% block content %}
-
 <div class="verify-map-filters selfclear">
   <form id="filter-form" method="post" action=".">
     <fieldset>

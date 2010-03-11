@@ -1,8 +1,10 @@
 from django.contrib.gis.db import models
+from django.contrib.auth.models import User
 from django.forms import ModelForm, ValidationError
 from sorl.thumbnail.fields import ImageWithThumbnailsField
 
 RACK_IMAGE_LOCATION = 'images/racks/'
+
 
 class CommunityBoard(models.Model):
     gid = models.IntegerField(primary_key=True)
@@ -19,6 +21,33 @@ class CommunityBoard(models.Model):
     def __unicode__(self):
         return "%s Community Board %s" % (self.borough.boroname, self.board)
 
+    @property
+    def racks(self):
+        return Rack.objects.filter(location__intersects=self.the_geom)
+
+
+
+class RackManager(models.GeoManager):
+
+    def filter_by_verified(self, verified, racks=None):
+        """Since 'verified' is really three fields, this needs a bit
+        of encapsulating other than just the rack.verified property,
+        because you can't filter a query set on a property.
+        """
+        if racks is None:
+            racks = self.all()
+        if verified == 'verified':
+            racks = racks.filter(verify_surface=True,
+                                 verify_objects=True,
+                                 verify_access=True)
+        elif verified == 'unverified':
+            from django.db.models import Q
+            racks = racks.filter(Q(verify_surface=False) |
+                                 Q(verify_access=False) |
+                                 Q(verify_objects=False))
+        # Otherwise assume we want all racks.
+        return racks
+
 
 class Rack(models.Model):
     address = models.CharField(max_length=200)
@@ -27,24 +56,41 @@ class Rack(models.Model):
     description = models.CharField(max_length=300, blank=True)
     email = models.EmailField(blank=True)
     photo = ImageWithThumbnailsField(
-                              upload_to=RACK_IMAGE_LOCATION,
-                              thumbnail={'size': (100, 100)},
-                              extra_thumbnails = {
-                                   'large': {'size': (400,400)},
-                                },
-                              blank=True, null=True)
+        upload_to=RACK_IMAGE_LOCATION,
+        thumbnail={'size': (100, 100)},
+        extra_thumbnails={'large': {'size': (400,400)},},
+        blank=True, null=True)
     # We might make this a foreign key to a User eventually, but for now
     # it's optional.
     user = models.CharField(max_length=20, blank=True)
     location = models.PointField(srid=4326)
 
-    verified = models.BooleanField(default=False, blank=True)
+    # these represent the parts of a rack that need to be marked for a rack to
+    # be marked as verified/complete
+    verify_surface = models.BooleanField(default=False, blank=True)
+    verify_objects = models.BooleanField(default=False, blank=True)
+    verify_access = models.BooleanField(default=False, blank=True)
 
+    @property
+    def verified(self):
+        return self.verify_surface and self.verify_objects and self.verify_access
+
+    status_choices = (('new', 'Unverified'),
+                      ('verified', 'Verified'),
+                      ('pending', 'Pending'),  # It's part of a bulk order.
+                      ('completed', 'Completed'))
+
+    status = models.CharField(max_length=20, blank=True, choices=status_choices,
+                              default=status_choices[0][0])
+                              
     # keep track of where the rack was submitted from
     # if not set, that means it was submitted from the web
     source = models.ForeignKey('Source', null=True, blank=True)
 
-    objects = models.GeoManager()
+    bulk_orders = models.ManyToManyField('NYCDOTBulkOrder', null=True, blank=True)
+
+
+    objects = RackManager()
 
     def __unicode__(self):
         return self.address
@@ -59,10 +105,16 @@ class Rack(models.Model):
             return '/site_media/img/default-rack.jpg'
 
     def get_source(self):
+        """ how did this rack get submitted? """
         if self.source:
             return self.source.name
         else:
             return u'web'
+
+    @property
+    def locked(self):
+        # Rack is 'locked' iff it's explicitly attached to a bulk order.
+        return bool(self.bulk_orders.count())
 
 class Source(models.Model):
     """base class representing the source of where a rack was submitted from"""
@@ -131,12 +183,32 @@ class StatementOfSupport(models.Model):
         return self.email
 
 
+class Neighborhood(models.Model):
+
+    gid = models.IntegerField(primary_key=True)
+    objectid = models.IntegerField()
+    name = models.CharField(max_length=100, null=False)
+
+    borough = models.CharField(max_length=50)
+    city = models.CharField(max_length=50, default='New York City')
+    state = models.CharField(max_length=2, null=True, default='NY')
+
+    the_geom = models.PointField(srid=4326)
+
+    objects = models.GeoManager()
+
+    class Meta:
+        db_table = u'gis_neighborhoods'
+        
+    def __unicode__(self):
+        return self.name
+
 class Borough(models.Model):
     gid = models.IntegerField(primary_key=True)
     borocode = models.SmallIntegerField()
     boroname = models.CharField(max_length=32)
-    shape_leng = models.DecimalField(max_digits=1000, decimal_places=1000)
-    shape_area = models.DecimalField(max_digits=1000, decimal_places=1000)
+    shape_leng = models.DecimalField(max_digits=1000, decimal_places=100)
+    shape_area = models.DecimalField(max_digits=1000, decimal_places=100)
     the_geom = models.MultiPolygonField()
     objects = models.GeoManager()
     class Meta:
@@ -155,18 +227,126 @@ NEED_SOURCE_OR_EMAIL = "If email address is not provided, another source must be
 NEED_PHOTO_TO_VERIFY = "You can't mark a rack as verified unless it has a photo"
 NEED_LOGGEDIN_OR_EMAIL = "Email is required if you're not logged in."
 
+class CityRack(models.Model):
+    gid = models.IntegerField(primary_key=True)
+    objectid = models.DecimalField(max_digits=1000, decimal_places=100)
+    address = models.DecimalField(max_digits=1000, decimal_places=100)
+    street_nam = models.CharField(max_length=31)
+    zip_code_1 = models.CharField(max_length=12)
+    from__cros = models.CharField(max_length=22)
+    to__cross = models.CharField(max_length=22)
+    boro_1 = models.CharField(max_length=8)
+    neighborho = models.CharField(max_length=21)
+    side_of_st = models.CharField(max_length=12)
+    small = models.IntegerField()
+    large = models.IntegerField()
+    alt_addres = models.CharField(max_length=31)
+    x = models.DecimalField(max_digits=1000, decimal_places=100)
+    y = models.DecimalField(max_digits=1000, decimal_places=100)
+    id = models.CharField(max_length=13)
+    oppaddress = models.DecimalField(max_digits=1000, decimal_places=100)
+    borocode = models.DecimalField(max_digits=1000, decimal_places=100)
+    c_racksid = models.CharField(max_length=17)
+    rackid = models.CharField(max_length=50)
+    the_geom = models.PointField()
+    objects = models.GeoManager()
+    class Meta:
+        db_table = u'gis_cityracks'
+
+
+class NYCDOTBulkOrder(models.Model):
+    """
+    bulk orders for NYC bike racks
+    """
+
+    communityboard = models.ForeignKey(CommunityBoard)
+    user = models.ForeignKey(User)
+    date = models.DateTimeField(auto_now=True)
+    organization = models.CharField(max_length=128, blank=False, null=True)
+    rationale = models.TextField(blank=False, null=True)
+
+    status_choices = (
+        ('new', 'New'),
+        ('approved', 'Approved for Submission'),
+        ('pending', 'Pending Approval by DOT'),
+        ('completed', 'Completed'),
+        )
+
+    status = models.CharField(max_length=32, null=False, blank=True,
+                              choices=status_choices, default=status_choices[0][0])
+
+    def __unicode__(self):
+        return u'Bulk order for %s' % self.communityboard
+
+    def submit(self):
+        next_status = 'pending'
+        for rack in self.communityboard.racks:
+            # We have to iterate here, can't call queryset.update() with a
+            # many-to-many field.
+            rack.bulk_orders.add(self)
+            rack.status = next_status
+            rack.save()
+        self.status = next_status
+        self.save()
+
+    def approve(self):
+        # xxx convenience, can go away
+        self.status = 'approved'
+        self.save()
+
+    def delete(self, *args, **kw):
+        self.rack_set.clear()
+        super(NYCDOTBulkOrder, self).delete(*args, **kw)
+
+    @property
+    def racks(self):
+        # WHen not submitted yet, we want all racks in the CB.  When
+        # submitted, we want to freeze the racks from the CB at that
+        # time.
+        if self.status in ('new', 'approved'):
+            return self.communityboard.racks
+        return self.rack_set.all() #filter(bulk_orders.=self)
+
+
+class NYCStreet(models.Model):
+
+    # A small subset of the NYC streets database schema
+    # ... maybe not even needed.
+    # converted from http://www.nyc.gov/html/dcp/html/bytes/dwnlion.shtml
+
+    gid = models.IntegerField(primary_key=True)
+    street = models.CharField(max_length=35)
+    nodeidfrom = models.CharField(max_length=7)
+    nodeidto = models.CharField(max_length=7)
+    zipleft = models.CharField(max_length=5)
+    the_geom = models.MultiLineStringField()
+
+    objects = models.GeoManager()
+
+    class Meta:
+        db_table = u'gis_nycstreets'
+
+
+class BulkOrderForm(ModelForm):
+    class Meta:
+        model = NYCDOTBulkOrder
+
+    def clean_status(self):
+        status = self.cleaned_data.get('status')
+        if not status:
+            status = NYCDOTBulkOrder.status_choices[0][0]
+        return status
+        
+
+
+class SupportForm(ModelForm):
+    class Meta:
+        model = StatementOfSupport
+
+
 class RackForm(ModelForm):
     class Meta:
         model = Rack
-
-    def clean_verified(self):
-        verified = self.cleaned_data.get('verified')
-        errors = []
-        if verified:
-            if not (self.cleaned_data.get('photo') or (
-                self.is_bound and bool(self.instance.photo))):
-                raise ValidationError(NEED_PHOTO_TO_VERIFY)
-        return verified
 
     def clean_photo(self):
         photo = self.cleaned_data.get('photo')
@@ -184,6 +364,17 @@ class RackForm(ModelForm):
     def clean(self):
         from django.forms.util import ErrorList
         cleaned_data = self.cleaned_data
+
+        # dynamically calculate the status from the requirements
+        if self.is_bound:
+            if not cleaned_data.get('status'):
+                if (cleaned_data['verify_access'] and
+                    cleaned_data['verify_surface'] and
+                    cleaned_data['verify_objects']):
+                    cleaned_data['status'] = 'verified'
+                else:
+                    cleaned_data['status'] = 'new'
+
         if self.is_bound and self.instance.source:
             return cleaned_data
         if cleaned_data.get('email') or cleaned_data.get('source'):
@@ -203,34 +394,3 @@ class RackForm(ModelForm):
         # know if they forgot the 'source' field.
         # It goes in errors.__all__ so it isn't shown on our web UI.
         raise ValidationError(NEED_SOURCE_OR_EMAIL)
-
-
-class SupportForm(ModelForm):
-    class Meta:
-        model = StatementOfSupport
-
-class CityRack(models.Model):
-    gid = models.IntegerField(primary_key=True)
-    objectid = models.DecimalField(max_digits=1000, decimal_places=1000)
-    address = models.DecimalField(max_digits=1000, decimal_places=1000)
-    street_nam = models.CharField(max_length=31)
-    zip_code_1 = models.CharField(max_length=12)
-    from__cros = models.CharField(max_length=22)
-    to__cross = models.CharField(max_length=22)
-    boro_1 = models.CharField(max_length=8)
-    neighborho = models.CharField(max_length=21)
-    side_of_st = models.CharField(max_length=12)
-    small = models.IntegerField()
-    large = models.IntegerField()
-    alt_addres = models.CharField(max_length=31)
-    x = models.DecimalField(max_digits=1000, decimal_places=1000)
-    y = models.DecimalField(max_digits=1000, decimal_places=1000)
-    id = models.CharField(max_length=13)
-    oppaddress = models.DecimalField(max_digits=1000, decimal_places=1000)
-    borocode = models.DecimalField(max_digits=1000, decimal_places=1000)
-    c_racksid = models.CharField(max_length=17)
-    rackid = models.CharField(max_length=50)
-    the_geom = models.PointField()
-    objects = models.GeoManager()
-    class Meta:
-        db_table = u'gis_cityracks'

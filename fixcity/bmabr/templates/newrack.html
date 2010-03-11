@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% load rackverification_tags %}
 {% block title %} FixCity: Add a Bike Rack {% endblock %}
 
 {% block extra_header %}
 
-<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js"></script>
+<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js?refresh={{ refresh_token }}"></script>
 <script type="text/javascript">
   // Settings needed by rackmap.js.
   var pointRadius = "10";
@@ -20,7 +21,7 @@
     map.setCenter(geom.getBounds().getCenterLonLat(), initial_zoom);
   };
 </script>
-<script type="text/javascript" src="/site_media/js/rackmap.js"></script>
+<script type="text/javascript" src="/site_media/js/rackmap.js?refresh={{ refresh_token }}"></script>
 <script type="text/javascript">
 //<![CDATA[
 if (jQuery.browser.msie) {
@@ -35,19 +36,28 @@ jQuery(document).ready(function() {loadMap();});
 {% block addrack %}<a id="add-rack" class="current" href="{% url newrack %}">Suggest a Rack</a>{% endblock %}
 
 {% block content %}
+<h2>Suggest a new Rack</h2>
 <form id="addrack-form" action="." method="POST" enctype="multipart/form-data">
+  <h2 class="toggler">Step 1: Locate <small class="required">(required)</small></h2>
+  <div class="section">
     <label for="address">Street Address</label>
-    <div class="required"><input id="address" name="address" type="text"
-                                 title="Enter an address or click a point on the map"
-                                 value="{{request.POST.address}}" />
-    <input type="hidden" id="location" name="location" value="{{request.POST.location}}" />
-        {{ form.address.errors }} {{ form.location.errors }} </div>
+    <input id="address" name="address" class="required" type="text" title="Enter an address or click a point on the map" value="{{request.POST.address}}" />
+    <div class="helptext">Enter an address or click a point on the map. <a href="/placement-guide/">Placement Guidelines</a></div>
+    <input type="hidden" id="location" name="location" class="required" value="{{request.POST.location}}" />
+    {{ form.address.errors }} {{ form.location.errors }}
     <label for="title">Establishment</label>
-    <div class="required"><input id="title" name="title" type="text"
-                                 title="What are you trying to get to? i.e. Key Foods, PS 121, restaurants"
-                                 value="{{request.POST.title}}"
-                           />{{ form.title.errors }}</div>
-
+    <input id="title" name="title" class="required" type="text" value="{{request.POST.title}}" />
+    <div class="helptext">Which places will this rack provide Bike Parking for? i.e. Key Foods, PS 121, restaurants…</div>
+    {{ form.title.errors }}
+    <label for="email">Your Email</label>
+    <input id="email" type="text" class="required"name="email" value="{{request.POST.email|default:user_email}}" />
+    <div class="helptext">This will not be shared, but we may wish to contact you.</div>
+    {{ form.email.errors }}
+    <input type="hidden" name="user" value="{{user.username}}" />
+    {{ form.user.errors }}
+  </div><!-- /.section -->
+  <h2 class="toggler">Step 2: Description/Photo <small class="optional">(optional)</small></h2>
+  <div class="section">
     <label for="description">Description</label>
       <textarea id="description" name="description"
                   title="Why are bike racks needed here? Other details?">{{ request.POST.description }}</textarea>
@@ -60,19 +70,52 @@ jQuery(document).ready(function() {loadMap();});
     {{ form.photo.errors }}
 
     <div id="statement-wrap">
-      <label for="statement">Statement of Support <small class="optional">(<a href="/site_media/resources/SupportStatement.pdf">optional</a>)</small></label>
+      <label for="statement">Statement of Support</label>
       <input id="statement" name="statement" type="file" value="" size="20" />
       <div id="fakestatement" class="selfclear"><input name="fakestatementinput" id="fakestatementinput" type="text" title="" /><span class="fakebutton">browse</span></div>
     </div><!-- /#statement-wrap -->
 
-    <label for="email">Your Email</label>
-    <div class="required">
-     <input id="email" type="text" name="email"
-            value="{{request.POST.email|default:user_email}}" title="This will not be shared, but we may wish to contact you." />
-     {{ form.email.errors }}
-     <input type="hidden" name="user" value="{{user.username}}" />
-     {{ form.user.errors }}
-    </div>
+  </div><!-- /.section -->
+  <h2 class="toggler">Step 3: Verification / Details <small class="optional">(optional)</small></h2>
+  <div class="section">
+    {% rack_requirements as requirements %}
+    <p><strong>Please verify that the rack location meets these requirements:</strong></p>
+    <fieldset class="verification">
+      <div>
+        <input id="rackform-surface" name="verify_surface" type="checkbox" />
+        <h3 class="permissive-clearance"><label for="rackform-surface">Surface</label></h3>
+        <ul>
+          {% for requirement in requirements.surface %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </fieldset>
+    <fieldset class="verification">
+      <div>
+        <input id="rackform-objects" name="verify_objects" type="checkbox" />
+        <h3 class="moderate-clearance"><label for="rackform-objects">Objects</label></h3>
+        <ul>
+          {% for requirement in requirements.objects %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </fieldset>
+    <fieldset class="verification">
+      <div>
+        <input id="rackform-access" name="verify_access" type="checkbox" />
+        <h3 class="restrictive-clearance"><label for="rackform-access">Access</label></h3>
+        <ul>
+          {% for requirement in requirements.access %}
+          <li>{{ requirement|safe }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </fieldset>
+    <p>For more information, view detailed <a href="/placement-guide/">Placement Guidelines</a></p>
+  </div><!-- /.section -->
+
     <input type="hidden" name="date" value="{% now "Y-m-d H:i:s" %}"/>
 
     <!-- These flags will trigger server-side processing of location
@@ -93,21 +136,18 @@ jQuery(document).ready(function() {loadMap();});
 	<div id="request-map" class="cityracks">
 	  <div id="map-legend" class="pngfix"></div>
 	</div>
-        {% include "quickcheck.html" %}
 </div><!-- /#suggest -->
 {% endblock %}
 
 {% block lede %}
-<h1>Suggest a new Rack</h1>
 {% endblock %}
 
 {% block extra_footer %}
 <script type="text/javascript">
 //<![CDATA[
   jQuery(document).ready(function($) {
-    $('input#address, input#title, textarea#description, input#email, input#fakebrowseinput').inlineInfoTextify();
-    $('input#browse').change(function( objEvent ){$('#fakebrowseinput').val($(this).val()).removeClass("overlabel");});
-    $('input#statement').change(function( objEvent ){$('#fakestatementinput').val($(this).val()).removeClass("overlabel");});
+    $('input#browse').change(function( objEvent ){$('#fakebrowseinput').val($(this).val());});
+    $('input#statement').change(function( objEvent ){$('#fakestatementinput').val($(this).val());});
     expandOnce('#statement-wrap', 'Add Statement of Support');
     $('textarea#description').maxLength(300);
   });
