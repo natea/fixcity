@@ -1,26 +1,42 @@
+SERVER
+=======
 
-refactor this stuff...
+All you need is:
+
+- a json view at a URL that we can hit to do something.
+
+- it should return a json dict with app-specific info about the result.
+
+- this dict should have an 'errors' key which is a dict of 'fieldname':
+  'errormessage' pairs.
+
+
+CLIENT LIBRARY
+==============
+
+Refactoring as per
 https://projects.openplans.org/fixcity/ticket/159
 
 General pattern, maybe a Template Method kind of thing:
 
 * get ID of last processed input
 
-* get new data since last ID
+* FETCH: get new data since last ID
 
 * for each:
-  - parse or adapt data
-  - create new rack:
+  - ADAPT data to json
+  - SUBMIT json to create new rack:
     * create a source (seeclickfix only... should be done server-side)
-    * on user error:
-      - adapt errors to source-specific format
-      - send msg
-    * on exception:
-      - adapt errors to source-specific format
-      - send msg
-      - email admins
-    * save ID as last processed item, unless server is down
-      (or some other retryable failure)
+  - FEEDBACK:
+    on user error:
+       - adapt errors to source-specific format
+       - send msg
+    on exception:
+       - adapt errors to source-specific format
+       - send msg
+       - email admins
+  - save ID as last processed item, unless server is down
+    (or some other retryable failure)
 
 
 

@@ -183,42 +183,22 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             pass
 
 
-    def new_rack(self, title, address):
+    def submit(self, data):
         """
         Create a new rack
         """
-        msg = self.msg
-        logger.debug('new rack')
 
-        message_parts = self.get_message_parts()
-        message_parts = self.unique_attachment_names(message_parts)
+        photos = data.pop('photo', {})
 
-        description = self.description = self.body_text(message_parts)
-        photos = self.get_photos(message_parts)
-        # We don't bother with microsecond precision because
-        # Django datetime fields can't parse it anyway.
-        now = datetime.fromtimestamp(int(time.time()))
-        data = dict(title=title,
-                    source_type='email',
-                    description=description,
-                    date=now.isoformat(' '),
-                    address=address,
-                    geocoded=0,  # Do server-side location processing.
-                    got_communityboard=0,   # Ditto.
-                    email=self.email_addr,
-                    )
-
-        if self.parameters.get('dry-run') and self.parameters['debug']:
+        if self.parameters.get('dry-run'):
             logger.debug("would save rack here")
             return
 
-        # This is the one thing i apparently can't do
-        # when running as `nobody`.
-        # And getting postfix to run this script as another user
-        # seems to be a PITA.
+        #if i could get postfix to run this as a different user,
+        # i could just do:
         #rack = rackform.save()
+        # ... but nope, we'll use HTTP instead.
 
-        # So instead, let's POST our data to some URL...
         url = settings.RACK_POSTING_URL
         jsondata = json.dumps(data)
         http = httplib2.Http()
@@ -245,6 +225,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         logger.debug("server responded with:\n%s" % content)
 
         if response.status >= 500:
+            # XXX email-specific error msg
             err_msg = (
                 "Thanks for trying to suggest a rack.\n"
                 "We are unfortunately experiencing some difficulties at the\n"
@@ -275,6 +256,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             self.bounce(error_subject, err_msg)
             return
 
+        # Lots of rack-specific stuff below
         parsed_url = urlparse.urlparse(url)
         base_url = parsed_url[0] + '://' + parsed_url[1]
         photo_url = base_url + result['photo_post_url']
@@ -301,7 +283,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         reply += "To verify, go to: %(rack_url)sedit/\n\n"
         if not rack_user:
             # XXX Create an inactive account and add a confirmation link.
-            reply += "To create an account, go to %(base_url)s/accounts/register/ .\n\n"  % locals()
+            reply += "To create an account, go to %(base_url)s/accounts/register/ .\n\n"
         reply += "Thanks!\n\n"
         reply += "- The Open Planning Project & Livable Streets Initiative\n"
         reply = reply % locals()
@@ -343,7 +325,24 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             title = subject
 
         address = address.strip()
-        self.new_rack(title, address)
+        logger.debug('new rack')
+
+        photos = self.get_photos(message_parts)
+
+        # We don't bother with microsecond precision because
+        # Django datetime fields can't parse it anyway.
+        now = datetime.fromtimestamp(int(time.time()))
+        data = dict(title=title,
+                    source_type='email',
+                    description=body_text,
+                    date=now.isoformat(' '),
+                    address=address,
+                    geocoded=0,  # Do server-side location processing.
+                    got_communityboard=0,   # Ditto.
+                    email=self.email_addr,
+                    photos=photos,
+                    )
+        return data
 
     def strip_signature(self, text):
         """
@@ -673,6 +672,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         logger.debug('starting handle')
         parser = EmailParser(options)
+
+        # We support both stdin and named files;
+        # named files are easier for debugging,
+        # and stdin is easier to hook up to postfix.
         did_stdin = False
         for filename in args:
             now = datetime.now().isoformat(' ')
@@ -684,9 +687,12 @@ class Command(BaseCommand):
                 did_stdin = True
             else:
                 thisfile = open(filename)
+
             try:
                 raw_msg = thisfile.read()
-                parser.parse(raw_msg)
+                # XXX separate parse exceptions from submit exceptions
+                info = parser.parse(raw_msg)
+                parser.submit(info)
             except:
                 tb_msg = "Exception at %s follows:\n------------\n" % now
                 tb_msg += traceback.format_exc()
@@ -696,4 +702,5 @@ class Command(BaseCommand):
                     parser.save_email_for_debug(parser.msg)
                 parser.notify_admin('Unexpected traceback in handle_mailin',
                                     tb_msg)
+                logger.error(tb_msg)
                 raise

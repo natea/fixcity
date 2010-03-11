@@ -240,4 +240,4 @@ if not logger.handlers:
 
 logger.setLevel(logging.DEBUG)
 
-LOGGER= logger
+LOGGER = logger
