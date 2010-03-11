@@ -60,11 +60,7 @@ class EmailParser(object):
 
         for key, default, typecast in (
             ('debug', 0, int),
-            ('drop_alternative_html_version', 0, int),
             ('strip_signature', 0, int),
-            ('binhex', 'warn', str),
-            ('applesingle', 'warn', str),
-            ('appledouble', 'warn', str),
             ('max-attachment-size', -1, int),
             ):
             self.parameters[key] = typecast(self.parameters.get(key, default))
@@ -387,39 +383,19 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 appledouble_parts = []
 
             ## Check content type
-            #
+            # Special handling for Mac-specific attachments.
             if part.get_content_type() == 'application/mac-binhex40':
-                #
-                # Special handling for BinHex attachments. Options are drop (leave out with no warning), warn (and leave out), and keep
-                #
-                if self.parameters['binhex'] == 'warn':
-                    message_parts.append("'''A BinHex attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
-                    continue
-                elif self.parameters['binhex'] == 'drop':
-                    continue
-
+                message_parts.append("'''A BinHex attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
+                continue
             elif part.get_content_type() == 'application/applefile':
-                #
-                # Special handling for the Mac-specific part of AppleDouble/AppleSingle attachments. Options are strip (leave out with no warning), warn (and leave out), and keep
-                #
-
                 if part in appledouble_parts:
-                    if self.parameters['appledouble'] == 'warn':
-                        message_parts.append("'''The resource fork of an attachment named '%s' was removed.'''" % part.get_filename())
-                        continue
-                    elif self.parameters['appledouble'] == 'strip':
-                        continue
+                    message_parts.append("'''The resource fork of an attachment named '%s' was removed.'''" % part.get_filename())
+                    continue
                 else:
-                    if self.parameters['applesingle'] == 'warn':
-                        message_parts.append("'''An AppleSingle attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
-                        continue
-                    elif self.parameters['applesingle'] == 'drop':
-                        continue
-
+                    message_parts.append("'''An AppleSingle attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
+                    continue
             elif part.get_content_type() == 'multipart/appledouble':
-                #
                 # If we entering an AppleDouble container, set up appledouble_parts so that we know what to do with its subparts
-                #
                 appledouble_parts = part.get_payload()
                 continue
             elif part.get_content_type() == 'multipart/alternative':
@@ -427,7 +403,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 continue
 
             # Skip multipart containers
-            #
             if part.get_content_maintype() == 'multipart':
                 logger.debug("Skipping multipart container")
                 continue
@@ -436,7 +411,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             inline = self.inline_part(part)
 
             # Drop HTML message
-            if ALTERNATIVE_MULTIPART and self.parameters['drop_alternative_html_version']:
+            if ALTERNATIVE_MULTIPART:
                 if part.get_content_type() == 'text/html':
                     logger.debug("Skipping alternative HTML message")
                     ALTERNATIVE_MULTIPART = False
@@ -475,6 +450,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
                 message_parts.append('%s' %ubody_text)
             else:
+                # Not inline body, or a specially-handled attachment.
                 logger.debug('               Filename: %s' % part.get_filename())
 
                 message_parts.append((part.get_filename(), part))
