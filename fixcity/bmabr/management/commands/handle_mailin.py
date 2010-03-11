@@ -187,7 +187,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             pass
 
 
-    def new_rack(self, title, address, spam):
+    def new_rack(self, title, address):
         """
         Create a new rack
         """
@@ -332,9 +332,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
         self.get_sender_info()
         subject  = self.email_to_unicode(self.msg.get('Subject', ''))
-
-        spam_msg = False #XXX not sure what this should be
-
         subject_re = re.compile(r'(?P<title>[^\@]*)\s*@(?P<address>.*)')
         subject_match = subject_re.search(subject)
         if subject_match:
@@ -350,7 +347,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             title = subject
 
         address = address.strip()
-        self.new_rack(title, address, spam_msg)
+        self.new_rack(title, address)
 
     def strip_signature(self, text):
         """
