@@ -19,6 +19,7 @@ from poster.encode import multipart_encode
 from stat import S_IRWXU, S_IRWXG, S_IRWXO
 import email.Header
 import httplib2
+import logging
 import mimetypes
 import os
 import re
@@ -38,6 +39,7 @@ from django.utils import simplejson as json
 
 from django.conf import settings
 
+logger = settings.LOGGER
 
 class EmailParser(object):
 
@@ -113,7 +115,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
     def debug_body(self, message_body):
         body_file = self._make_logfile()
 
-        print 'TD: writing body (%s)' % body_file
+        logger.debug('writing body (%s)' % body_file)
         fx = open(body_file, 'wb')
         if not message_body:
             message_body = '(None)'
@@ -138,12 +140,12 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             (original, filename, part) = part
 
             n = n + 1
-            print 'TD: part%d: Content-Type: %s' % (n, part.get_content_type())
-            print 'TD: part%d: filename: %s' % (n, part.get_filename())
+            logger.debug(' part%d: Content-Type: %s' % (n, part.get_content_type()))
+            logger.debug('part%d: filename: %s' % (n, part.get_filename()))
 
             part_file = self._make_logfile(suffix='.handle_mailin.part%d' % n)
 
-            print 'TD: writing part%d (%s)' % (n,part_file)
+            logger.debug('writing part%d (%s)' % (n,part_file))
             fx = open(part_file, 'wb')
             text = part.get_payload(decode=1)
             if not text:
@@ -175,7 +177,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
     def save_email_for_debug(self, message):
         msg_file = self._make_logfile()
 
-        print 'TD: saving email to %s' % msg_file
+        logger.debug(' saving email to %s' % msg_file)
         fx = open(msg_file, 'wb')
         fx.write('%s' % message)
         fx.close()
@@ -190,8 +192,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         Create a new rack
         """
         msg = self.msg
-        if self.parameters['debug']:
-            print "TD: new_rack"
+        logger.debug('new rack')
 
         message_parts = self.get_message_parts()
         message_parts = self.unique_attachment_names(message_parts)
@@ -212,7 +213,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                     )
 
         if self.parameters.get('dry-run') and self.parameters['debug']:
-            print "TD: would save rack here"
+            logger.debug("would save rack here")
             return
 
         # This is the one thing i apparently can't do
@@ -245,8 +246,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 )
             return
 
-        if self.parameters['debug']:
-            print "TD: server responded with:\n%s" % content
+        logger.debug("server responded with:\n%s" % content)
 
         if response.status >= 500:
             err_msg = (
@@ -294,9 +294,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             response, content = http.request(photo_url, 'POST',
                                              headers=headers, body=body)
             # XXX handle errors
-            if self.parameters['debug']:
-                print "TD: result from photo upload:"
-                print content
+            logger.debug("result from photo upload:")
+            logger.debug(content)
         # XXX need to add links per
         # https://projects.openplans.org/fixcity/wiki/EmailText
         # ... will need an HTML version.
@@ -316,8 +315,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
     def parse(self, s):
         self.msg = email.message_from_string(s)
         if not self.msg:
-            if self.parameters['debug']:
-                print "TD: This is not a valid email message format"
+            logger.debug("This is not a valid email message format")
             return
 
         # Work around lack of header folding in Python; see http://bugs.python.org/issue4696
@@ -383,9 +381,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         ALTERNATIVE_MULTIPART = False
 
         for part in msg.walk():
-            if self.parameters['debug']:
-                print 'TD: Message part: Main-Type: %s' % part.get_content_maintype()
-                print 'TD: Message part: Content-Type: %s' % part.get_content_type()
+            logger.debug('Message part: Main-Type: %s' % part.get_content_maintype())
+            logger.debug('Message part: Content-Type: %s' % part.get_content_type())
 
 
             # Check whether we just finished processing an AppleDouble container
@@ -435,8 +432,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             # Skip multipart containers
             #
             if part.get_content_maintype() == 'multipart':
-                if self.parameters['debug']:
-                    print "TD: Skipping multipart container"
+                logger.debug("Skipping multipart container")
                 continue
 
             # Check if this is an inline part. It's inline if there is co Cont-Disp header, or if there is one and it says "inline"
@@ -445,16 +441,13 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             # Drop HTML message
             if ALTERNATIVE_MULTIPART and self.parameters['drop_alternative_html_version']:
                 if part.get_content_type() == 'text/html':
-                    if self.parameters['debug']:
-                        print "TD: Skipping alternative HTML message"
-
+                    logger.debug("Skipping alternative HTML message")
                     ALTERNATIVE_MULTIPART = False
                     continue
 
             # Inline text parts are where the body is
             if part.get_content_type() == 'text/plain' and inline:
-                if self.parameters['debug']:
-                    print 'TD:               Inline body part'
+                logger.debug('               Inline body part')
 
                 # Try to decode, if fails then do not decode
                 #
@@ -485,8 +478,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
                 message_parts.append('%s' %ubody_text)
             else:
-                if self.parameters['debug']:
-                    print 'TD:               Filename: %s' % part.get_filename()
+                logger.debug('               Filename: %s' % part.get_filename())
 
                 message_parts.append((part.get_filename(), part))
         return message_parts
@@ -542,9 +534,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 num += 1
                 unique_filename = "%s-%s%s" % (filename, num, ext)
 
-            if self.parameters['debug']:
-                print 'TD: Attachment with filename %s will be saved as %s' % (filename, unique_filename)
-
+            logger.debug(' Attachment with filename %s will be saved as %s' % (filename, unique_filename))
             attachment_names.add(unique_filename)
 
             renamed_parts.append((filename, unique_filename, part))
@@ -623,8 +613,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         If notify_admin_body is non-empty, it will be added to the body
         sent to the admin.
         """
-        if self.parameters['debug']:
-            print "TD: Bouncing message to %s" % self.email_addr
+        logger.debug("Bouncing message to %s" % self.email_addr)
         body += '\n\n------------ original message follows ---------\n\n'
         # TO DO: use attachments rather than inline.
         body += unicode(self.msg.as_string(), errors='ignore')
@@ -709,11 +698,12 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        logger.debug('starting handle')
         parser = EmailParser(options)
         did_stdin = False
         for filename in args:
             now = datetime.now().isoformat(' ')
-            print "------------- %s ------------" % now
+            logger.info("------------- %s ------------" % now)
             if filename == '-':
                 if did_stdin:
                     continue
