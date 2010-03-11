@@ -126,7 +126,7 @@ def _geocode(text):
     result = cache.get(key)
     if result is None:
         result = list(_geocoder.geocode(text, exactly_one=False))
-        cache.set(key, result, 60 * 60)
+        cache.set(key, result, 60 * 60 * 24)
     return result
 
 def geocode(request):
@@ -145,7 +145,7 @@ def reverse_geocode(request):
     if result is None:
         (new_place,new_point) = geocoders.Google(settings.GOOGLE_MAPS_KEY).reverse(point)
         result = new_place
-        cache.set(key, result, 60 * 60)
+        cache.set(key, result, 60 * 60 * 24)
     return HttpResponse(result)
 
 def make_paginator(objs, start_page, per_page):

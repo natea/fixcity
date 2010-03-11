@@ -45,7 +45,9 @@ class EmailParser(object):
 
     msg = None
 
-    def __init__(self, parameters):
+    def __init__(self, notifier, parameters):
+
+        self.notifier = notifier
 
         # Save parameters
         #
@@ -66,7 +68,7 @@ class EmailParser(object):
             self.parameters[key] = typecast(self.parameters.get(key, default))
 
 
-    def _make_logfile(self, suffix='.handle_mailin'):
+    def _make_dumpfile(self, suffix='.handle_mailin'):
         """where to put dumps of messages for debugging"""
         logdir = self.parameters.get('debug_dir') or tempfile.gettempdir()
         try:
@@ -109,7 +111,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return str
 
     def debug_body(self, message_body):
-        body_file = self._make_logfile()
+        body_file = self._make_dumpfile()
 
         logger.debug('writing body (%s)' % body_file)
         fx = open(body_file, 'wb')
@@ -139,7 +141,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             logger.debug(' part%d: Content-Type: %s' % (n, part.get_content_type()))
             logger.debug('part%d: filename: %s' % (n, part.get_filename()))
 
-            part_file = self._make_logfile(suffix='.handle_mailin.part%d' % n)
+            part_file = self._make_dumpfile(suffix='.handle_mailin.part%d' % n)
 
             logger.debug('writing part%d (%s)' % (n,part_file))
             fx = open(part_file, 'wb')
@@ -171,7 +173,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
 
     def save_email_for_debug(self, message):
-        msg_file = self._make_logfile()
+        msg_file = self._make_dumpfile()
 
         logger.debug(' saving email to %s' % msg_file)
         fx = open(msg_file, 'wb')
@@ -181,113 +183,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             os.chmod(msg_file,S_IRWXU|S_IRWXG|S_IRWXO)
         except OSError:
             pass
-
-
-    def submit(self, data):
-        """
-        Create a new rack
-        """
-
-        photos = data.pop('photo', {})
-
-        if self.parameters.get('dry-run'):
-            logger.debug("would save rack here")
-            return
-
-        #if i could get postfix to run this as a different user,
-        # i could just do:
-        #rack = rackform.save()
-        # ... but nope, we'll use HTTP instead.
-
-        url = settings.RACK_POSTING_URL
-        jsondata = json.dumps(data)
-        http = httplib2.Http()
-        headers = {'Content-type': 'application/json'}
-        error_subject = "Unsuccessful Rack Request"
-        try:
-            response, content = http.request(url, 'POST',
-                                             headers=headers,
-                                             body=jsondata)
-        except (socket.error, AttributeError):
-            # it's absurd that we have to catch AttributeError here,
-            # but apparently that's what httplib 0.5.0 raises because
-            # the socket ends up being None. Lame!
-            # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
-            self.bounce(
-                error_subject,
-                "Thanks for trying to suggest a rack.\n"
-                "We are unfortunately experiencing some difficulties at the\n"
-                "moment -- please try again in an hour or two!",
-                notify_admin='Server down??'
-                )
-            return
-
-        logger.debug("server responded with:\n%s" % content)
-
-        if response.status >= 500:
-            # XXX email-specific error msg
-            err_msg = (
-                "Thanks for trying to suggest a rack.\n"
-                "We are unfortunately experiencing some difficulties at the\n"
-                "moment. Please check to make sure your subject line follows\n"
-                "this format exactly:\n\n"
-                "  Key Foods @224 McGuinness Blvd Brooklyn NY\n\n"
-                "If you've made an error, please resubmit. Otherwise we'll\n"
-                "look into this issue and get back to you as soon as we can.\n"
-                )
-            admin_body = content
-            self.bounce(error_subject, err_msg, notify_admin='500 Server error',
-                        notify_admin_body=content)
-            return
-
-        result = json.loads(content)
-        if result.has_key('errors'):
-
-            err_msg = (
-                "Thanks for trying to suggest a rack through fixcity.org,\n"
-                "but it won't go through without the proper information.\n\n"
-                "Please correct the following errors:\n\n")
-
-            errors = adapt_errors(result['errors'])
-            for k, v in sorted(errors.items()):
-                err_msg += "%s: %s\n" % (k, '; '.join(v))
-
-            err_msg += "\nPlease try again!\n"
-            self.bounce(error_subject, err_msg)
-            return
-
-        # Lots of rack-specific stuff below
-        parsed_url = urlparse.urlparse(url)
-        base_url = parsed_url[0] + '://' + parsed_url[1]
-        photo_url = base_url + result['photo_post_url']
-        rack_url = base_url + result['rack_url']
-        rack_user = result.get('user')
-
-        if photos.has_key('photo'):
-            datagen, headers = multipart_encode({'photo':
-                                                 photos['photo']})
-            # httplib2 doesn't like poster's integer headers.
-            headers['Content-Length'] = str(headers['Content-Length'])
-            body = ''.join([s for s in datagen])
-            response, content = http.request(photo_url, 'POST',
-                                             headers=headers, body=body)
-            # XXX handle errors
-            logger.debug("result from photo upload:")
-            logger.debug(content)
-        # XXX need to add links per
-        # https://projects.openplans.org/fixcity/wiki/EmailText
-        # ... will need an HTML version.
-        reply = "Thanks for your rack suggestion!\n\n"
-        reply += "You must verify that your spot meets DOT requirements\n"
-        reply += "before we can submit it.\n"
-        reply += "To verify, go to: %(rack_url)sedit/\n\n"
-        if not rack_user:
-            # XXX Create an inactive account and add a confirmation link.
-            reply += "To create an account, go to %(base_url)s/accounts/register/ .\n\n"
-        reply += "Thanks!\n\n"
-        reply += "- The Open Planning Project & Livable Streets Initiative\n"
-        reply = reply % locals()
-        self.reply("FixCity Rack Confirmation", reply)
 
 
     def parse(self, s):
@@ -576,6 +471,129 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return results
 
 
+class RackMaker(object):
+
+    def __init__(self, notifier, params):
+        self.notifier = notifier
+        self.parameters = params
+
+    def submit(self, data):
+        """
+        Create a new rack
+        """
+
+        photos = data.pop('photo', {})
+
+        if self.parameters.get('dry-run'):
+            logger.debug("would save rack here")
+            return
+
+        #if i could get postfix to run this as a different user,
+        # i could just do:
+        #rack = rackform.save()
+        # ... but nope, we'll use HTTP instead.
+
+        url = settings.RACK_POSTING_URL
+        jsondata = json.dumps(data)
+        http = httplib2.Http()
+        headers = {'Content-type': 'application/json'}
+        error_subject = "Unsuccessful Rack Request"
+        try:
+            response, content = http.request(url, 'POST',
+                                             headers=headers,
+                                             body=jsondata)
+        except (socket.error, AttributeError):
+            # it's absurd that we have to catch AttributeError here,
+            # but apparently that's what httplib 0.5.0 raises because
+            # the socket ends up being None. Lame!
+            # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
+            logger.debug('Server down??')
+            self.notifier.bounce(
+                error_subject,
+                "Thanks for trying to suggest a rack.\n"
+                "We are unfortunately experiencing some difficulties at the\n"
+                "moment -- please try again in an hour or two!",
+                notify_admin='Server down??'
+                )
+            return
+
+        logger.debug("server responded with:\n%s" % content)
+
+        if response.status >= 500:
+            # XXX email-specific error msg
+            err_msg = (
+                "Thanks for trying to suggest a rack.\n"
+                "We are unfortunately experiencing some difficulties at the\n"
+                "moment. Please check to make sure your subject line follows\n"
+                "this format exactly:\n\n"
+                "  Key Foods @224 McGuinness Blvd Brooklyn NY\n\n"
+                "If you've made an error, please resubmit. Otherwise we'll\n"
+                "look into this issue and get back to you as soon as we can.\n"
+                )
+            admin_body = content
+            self.notifier.bounce(
+                error_subject, err_msg, notify_admin='500 Server error',
+                notify_admin_body=content)
+            return
+
+        result = json.loads(content)
+        if result.has_key('errors'):
+
+            err_msg = (
+                "Thanks for trying to suggest a rack through fixcity.org,\n"
+                "but it won't go through without the proper information.\n\n"
+                "Please correct the following errors:\n\n")
+
+            errors = adapt_errors(result['errors'])
+            for k, v in sorted(errors.items()):
+                err_msg += "%s: %s\n" % (k, '; '.join(v))
+
+            err_msg += "\nPlease try again!\n"
+            self.notifier.bounce(error_subject, err_msg)
+            return
+
+        # Lots of rack-specific stuff below
+        parsed_url = urlparse.urlparse(url)
+        base_url = parsed_url[0] + '://' + parsed_url[1]
+        photo_url = base_url + result['photo_post_url']
+        rack_url = base_url + result['rack_url']
+        rack_user = result.get('user')
+
+        if photos.has_key('photo'):
+            datagen, headers = multipart_encode({'photo':
+                                                 photos['photo']})
+            # httplib2 doesn't like poster's integer headers.
+            headers['Content-Length'] = str(headers['Content-Length'])
+            body = ''.join([s for s in datagen])
+            response, content = http.request(photo_url, 'POST',
+                                             headers=headers, body=body)
+            # XXX handle errors
+            logger.debug("result from photo upload:")
+            logger.debug(content)
+        # XXX need to add links per
+        # https://projects.openplans.org/fixcity/wiki/EmailText
+        # ... will need an HTML version.
+        reply = "Thanks for your rack suggestion!\n\n"
+        reply += "You must verify that your spot meets DOT requirements\n"
+        reply += "before we can submit it.\n"
+        reply += "To verify, go to: %(rack_url)sedit/\n\n"
+        if not rack_user:
+            # XXX Create an inactive account and add a confirmation link.
+            reply += "To create an account, go to %(base_url)s/accounts/register/ .\n\n"
+        reply += "Thanks!\n\n"
+        reply += "- The Open Planning Project & Livable Streets Initiative\n"
+        reply = reply % locals()
+        self.notifier.reply("FixCity Rack Confirmation", reply)
+
+
+class Notifier(object):
+
+    """Notify users and/or admins of success or failure.
+    """
+
+    def __init__(self):
+        self.msg = ''
+
     def bounce(self, subject, body, notify_admin='', notify_admin_body=''):
         """Bounce a message to the sender, with additional subject
         and body for explanation.
@@ -585,13 +603,13 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         If notify_admin_body is non-empty, it will be added to the body
         sent to the admin.
         """
-        logger.debug("Bouncing message to %s" % self.email_addr)
+        logger.debug("Bouncing message to %s" % self.user_email)
         body += '\n\n------------ original message follows ---------\n\n'
         # TO DO: use attachments rather than inline.
         body += unicode(self.msg.as_string(), errors='ignore')
         if notify_admin:
             admin_subject = 'FixCity handle_mailin bounce! %s' % notify_admin
-            admin_body = 'Bouncing to: %s\n' % self.msg['from']
+            admin_body = 'Bouncing to: %s\n' % self.user_email
             admin_body += 'Bounce subject: %r\n' % subject
             admin_body += 'Time: %s\n' % datetime.now().isoformat(' ')
             admin_body += 'Not attaching original body, check the log file.\n'
@@ -601,8 +619,12 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             self.notify_admin(admin_subject, admin_body)
         return self.reply(subject, body)
 
+    @property
+    def user_email(self):
+        return self.msg['from']
+
     def reply(self, subject, body):
-        send_mail(subject, body, self.msg['to'], [self.msg['from']],
+        send_mail(subject, body, self.msg['to'], [self.user_email],
                   fail_silently=False)
 
     def notify_admin(self, subject, body):
@@ -671,8 +693,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         logger.debug('starting handle')
-        parser = EmailParser(options)
-
+        notifier = Notifier()
+        parser = EmailParser(notifier, options)
+        rackmaker = RackMaker(notifier, options)
         # We support both stdin and named files;
         # named files are easier for debugging,
         # and stdin is easier to hook up to postfix.
@@ -692,7 +715,8 @@ class Command(BaseCommand):
                 raw_msg = thisfile.read()
                 # XXX separate parse exceptions from submit exceptions
                 info = parser.parse(raw_msg)
-                parser.submit(info)
+                notifier.msg = parser.msg  # smelly.
+                rackmaker.submit(info)
             except:
                 tb_msg = "Exception at %s follows:\n------------\n" % now
                 tb_msg += traceback.format_exc()
@@ -700,7 +724,7 @@ class Command(BaseCommand):
                 tb_msg += raw_msg
                 if parser.msg:
                     parser.save_email_for_debug(parser.msg)
-                parser.notify_admin('Unexpected traceback in handle_mailin',
-                                    tb_msg)
+                notifier.notify_admin('Unexpected traceback in handle_mailin',
+                                      tb_msg)
                 logger.error(tb_msg)
                 raise
