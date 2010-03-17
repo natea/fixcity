@@ -60,12 +60,12 @@ class EmailParser(object):
         self.email_from = None
         self.id = None
 
-        for key, default, typecast in (
-            ('debug', 0, int),
-            ('strip_signature', 0, int),
-            ('max-attachment-size', -1, int),
+        for key, default in (
+            ('debug', 0),
+            ('strip_signature', 0),
+            ('max-attachment-size', -1),
             ):
-            self.parameters[key] = typecast(self.parameters.get(key, default))
+            self.parameters[key] = int(self.parameters.get(key, default))
 
 
     def _make_dumpfile(self, suffix='.handle_mailin'):
