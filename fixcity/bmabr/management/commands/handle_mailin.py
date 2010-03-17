@@ -83,31 +83,21 @@ class EmailParser(object):
 that is encoded in 7-bit ASCII code and encode it as utf-8.
         """
         results =  email.Header.decode_header(message_str)
-        str = None
         for text,format in results:
             if format:
                 try:
                     temp = unicode(text, format)
                 except UnicodeError, detail:
                     # This always works
-                    #
                     temp = unicode(text, 'iso-8859-15', errors='ignore')
                 except LookupError, detail:
-                    #text = 'ERROR: Could not find charset: %s, please install' %format
-                    #temp = unicode(text, 'iso-8859-15')
+                    logger.error('Could not find charset: %s, please install' %format)
                     temp = message_str
-
             else:
                 temp = string.strip(text)
                 temp = unicode(text, 'iso-8859-15', errors='ignore')
+        return temp
 
-            if str:
-                str = '%s %s' %(str, temp)
-            else:
-                str = '%s' %temp
-
-        #str = str.encode('utf-8')
-        return str
 
     def get_sender_info(self):
         """
