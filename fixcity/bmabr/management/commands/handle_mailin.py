@@ -19,7 +19,6 @@ from poster.encode import multipart_encode
 from stat import S_IRWXU, S_IRWXG, S_IRWXO
 import email.Header
 import httplib2
-import logging
 import mimetypes
 import os
 import re
@@ -92,7 +91,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 except UnicodeError, detail:
                     # This always works
                     #
-                    temp = unicode(text, 'iso-8859-15')
+                    temp = unicode(text, 'iso-8859-15', errors='ignore')
                 except LookupError, detail:
                     #text = 'ERROR: Could not find charset: %s, please install' %format
                     #temp = unicode(text, 'iso-8859-15')
@@ -100,7 +99,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
             else:
                 temp = string.strip(text)
-                temp = unicode(text, 'iso-8859-15')
+                temp = unicode(text, 'iso-8859-15', errors='ignore')
 
             if str:
                 str = '%s %s' %(str, temp)
@@ -473,6 +472,7 @@ class RackMaker(object):
 
         if response.status >= 500:
             # XXX email-specific error msg
+            # XXX FACTOR OUT ALL ERROR HANDLING, see Notes.txt
             err_msg = (
                 "Thanks for trying to suggest a rack.\n"
                 "We are unfortunately experiencing some difficulties at the\n"
