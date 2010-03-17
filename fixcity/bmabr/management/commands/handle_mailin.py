@@ -110,52 +110,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         #str = str.encode('utf-8')
         return str
 
-    def debug_body(self, message_body):
-        body_file = self._make_dumpfile()
-
-        logger.debug('writing body (%s)' % body_file)
-        fx = open(body_file, 'wb')
-        if not message_body:
-            message_body = '(None)'
-
-        message_body = message_body.encode('utf-8')
-        #message_body = unicode(message_body, 'iso-8859-15')
-
-        fx.write(message_body)
-        fx.close()
-        try:
-            os.chmod(body_file,S_IRWXU|S_IRWXG|S_IRWXO)
-        except OSError:
-            pass
-
-    def debug_attachments(self, message_parts):
-        n = 0
-        for part in message_parts:
-            # Skip inline text parts
-            if not isinstance(part, tuple):
-                continue
-
-            (original, filename, part) = part
-
-            n = n + 1
-            logger.debug(' part%d: Content-Type: %s' % (n, part.get_content_type()))
-            logger.debug('part%d: filename: %s' % (n, part.get_filename()))
-
-            part_file = self._make_dumpfile(suffix='.handle_mailin.part%d' % n)
-
-            logger.debug('writing part%d (%s)' % (n,part_file))
-            fx = open(part_file, 'wb')
-            text = part.get_payload(decode=1)
-            if not text:
-                text = '(None)'
-            fx.write(text)
-            fx.close()
-            try:
-                os.chmod(part_file,S_IRWXU|S_IRWXG|S_IRWXO)
-            except OSError:
-                pass
-
-
     def get_sender_info(self):
         """
         Get the default author name and email address from the message
@@ -200,8 +154,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
         if self.parameters['debug'] > 1:        # save the entire e-mail message text
             self.save_email_for_debug(self.msg)
-            self.debug_body(body_text)
-            self.debug_attachments(message_parts)
 
         self.get_sender_info()
         subject  = self.email_to_unicode(self.msg.get('Subject', ''))
