@@ -1,3 +1,24 @@
+XXX Error handling:
+
+need a trivial factory API for getting errors:
+
+ * adapt validation errors.
+   (varies on: error, source type, app)
+
+ * adapt server errors to a source-specific message
+   (varies on: error code, source type, app)
+
+ * adapt socket errors & other exceptions to a source-specific message
+   (varies on: source type, app)
+
+ maybe something like:
+
+  error_adapter = ErrorAdapterFactory('twitter', 'fixcity') # meh.
+  output = error_adapter.validation_error(field, orig_error_message)
+  output = error_adapter.server_error(response_code, response_msg)
+  output = error_adapter.exception(orig_exception)
+
+
 SERVER
 =======
 
@@ -9,6 +30,8 @@ All you need is:
 
 - this dict should have an 'errors' key which is a dict of 'fieldname':
   'errormessage' pairs.
+
+- response codes?
 
 
 CLIENT LIBRARY

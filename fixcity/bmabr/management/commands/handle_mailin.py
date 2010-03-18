@@ -45,15 +45,13 @@ class EmailParser(object):
     msg = None
 
     def __init__(self, notifier, parameters):
-
         self.notifier = notifier
+        self.error_adapter = ErrorAdapter()
 
         # Save parameters
-        #
         self.parameters = parameters
 
         # Some useful mail constants
-        #
         self.author = None
         self.email_addr = None
         self.email_from = None
@@ -141,7 +139,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         message_parts = self.unique_attachment_names(message_parts)
         body_text = self.body_text(message_parts)
 
-        if self.parameters['debug'] > 1:        # save the entire e-mail message text
+        if self.parameters['debug'] > 1:        
+            # save the entire e-mail message text
             self.save_email_for_debug(self.msg)
 
         self.get_sender_info()
@@ -417,13 +416,14 @@ class RackMaker(object):
     def __init__(self, notifier, params):
         self.notifier = notifier
         self.parameters = params
+        self.error_adapter = ErrorAdapter()
 
     def submit(self, data):
         """
         Create a new rack
         """
 
-        photos = data.pop('photo', {})
+        photos = data.pop('photos', {})
 
         if self.parameters.get('dry-run'):
             logger.debug("would save rack here")
@@ -436,62 +436,8 @@ class RackMaker(object):
 
         url = settings.RACK_POSTING_URL
         jsondata = json.dumps(data)
-        http = httplib2.Http()
-        headers = {'Content-type': 'application/json'}
-        error_subject = "Unsuccessful Rack Request"
-        try:
-            response, content = http.request(url, 'POST',
-                                             headers=headers,
-                                             body=jsondata)
-        except (socket.error, AttributeError):
-            # it's absurd that we have to catch AttributeError here,
-            # but apparently that's what httplib 0.5.0 raises because
-            # the socket ends up being None. Lame!
-            # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
-            logger.debug('Server down??')
-            self.notifier.bounce(
-                error_subject,
-                "Thanks for trying to suggest a rack.\n"
-                "We are unfortunately experiencing some difficulties at the\n"
-                "moment -- please try again in an hour or two!",
-                notify_admin='Server down??'
-                )
-            return
-
-        logger.debug("server responded with:\n%s" % content)
-
-        if response.status >= 500:
-            # XXX email-specific error msg
-            # XXX FACTOR OUT ALL ERROR HANDLING, see Notes.txt
-            err_msg = (
-                "Thanks for trying to suggest a rack.\n"
-                "We are unfortunately experiencing some difficulties at the\n"
-                "moment. Please check to make sure your subject line follows\n"
-                "this format exactly:\n\n"
-                "  Key Foods @224 McGuinness Blvd Brooklyn NY\n\n"
-                "If you've made an error, please resubmit. Otherwise we'll\n"
-                "look into this issue and get back to you as soon as we can.\n"
-                )
-            admin_body = content
-            self.notifier.bounce(
-                error_subject, err_msg, notify_admin='500 Server error',
-                notify_admin_body=content)
-            return
-
-        result = json.loads(content)
-        if result.has_key('errors'):
-
-            err_msg = (
-                "Thanks for trying to suggest a rack through fixcity.org,\n"
-                "but it won't go through without the proper information.\n\n"
-                "Please correct the following errors:\n\n")
-
-            errors = adapt_errors(result['errors'])
-            for k, v in sorted(errors.items()):
-                err_msg += "%s: %s\n" % (k, '; '.join(v))
-
-            err_msg += "\nPlease try again!\n"
-            self.notifier.bounce(error_subject, err_msg)
+        result = self.do_post(url, jsondata)
+        if not result:
             return
 
         # Lots of rack-specific stuff below
@@ -507,11 +453,10 @@ class RackMaker(object):
             # httplib2 doesn't like poster's integer headers.
             headers['Content-Length'] = str(headers['Content-Length'])
             body = ''.join([s for s in datagen])
-            response, content = http.request(photo_url, 'POST',
-                                             headers=headers, body=body)
-            # XXX handle errors
+            result = self.do_post(photo_url, body, headers=headers,
+                                  as_json=False)
             logger.debug("result from photo upload:")
-            logger.debug(content)
+            logger.debug(result)
         # XXX need to add links per
         # https://projects.openplans.org/fixcity/wiki/EmailText
         # ... will need an HTML version.
@@ -526,6 +471,50 @@ class RackMaker(object):
         reply += "- The Open Planning Project & Livable Streets Initiative\n"
         reply = reply % locals()
         self.notifier.reply("FixCity Rack Confirmation", reply)
+
+
+    def do_post(self, url, body, headers={}, as_json=True):
+        """POST the body to the URL. Returns True on success"""
+        error_subject = "Unsuccessful Rack Request"
+        http = httplib2.Http()
+        if as_json:
+            headers.setdefault('Content-type', 'application/json')
+        try:
+            response, content = http.request(url, 'POST',
+                                             headers=headers,
+                                             body=body)
+        except (socket.error, AttributeError):
+            # it's absurd that we have to catch AttributeError here,
+            # but apparently that's what httplib2 0.5.0 raises because
+            # the socket ends up being None. Lame!
+            # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
+            logger.debug('Server down at %r??' % url)
+            self.notifier.bounce(
+                error_subject,
+                self.error_adapter.server_error_retry,
+                notify_admin='Server down??'
+                )
+            return None
+
+        logger.debug("server %r responded with:\n%s" % (url, content))
+
+        if response.status >= 500:
+            err_msg = self.error_adapter.server_error_permanent
+            self.notifier.bounce(
+                error_subject, err_msg, notify_admin='500 Server error',
+                notify_admin_body=content)
+            return None
+
+        if as_json:
+            result = json.loads(content)
+            if result.has_key('errors'):
+                err_msg = self.error_adapter.validation_errors(result['errors'])
+                self.notifier.bounce(error_subject, err_msg)
+                return None
+        else:
+            result = content
+        return result
+
 
 
 class Notifier(object):
@@ -579,44 +568,71 @@ class Notifier(object):
         send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
 
 
-def adapt_errors(errors):
-    """Convert the form field names in the errors dict into things
-    that are meaningful via the email workflow, and adjust error
-    messages appropriately too.
-    """
-    adapted = {}
-    remove_me = object()
-    key_mapping = {
-        'title': 'subject',
-        'address': remove_me,  # an error here will also show up in 'location'.
-        'description': 'body',
-        }
+class ErrorAdapter(object):
+    
+    def validation_errors(self, errordict):
+        """Convert the form field names in the errors dict into things
+        that are meaningful via the email workflow, and adjust error
+        messages appropriately too.
+        """
+        err_msg = (
+            "Thanks for trying to suggest a rack through fixcity.org,\n"
+            "but it won't go through without the proper information.\n\n"
+            "Please correct the following errors:\n\n")
+        adapted = {}
+        remove_me = object()
+        key_mapping = {
+            'title': 'subject',
+            'address': remove_me,  # an error here will also show up in 'location'.
+            'description': 'body',
+            }
 
-    val_mapping = {
-        ('subject', 'This field is required.'): 
-        ("Your subject line should follow this format:\n\n"
-         "  Key Foods @224 McGuinness Blvd, Brooklyn NY\n\n"
-         "First comes the name of the establishment"
-         "(store, park, office etc.) you want a rack near.\n"
-         "Then enter @ followed by the address.\n"
-         ),
+        val_mapping = {
+            ('subject', 'This field is required.'): 
+            ("Your subject line should follow this format:\n\n"
+             "  Key Foods @224 McGuinness Blvd, Brooklyn NY\n\n"
+             "First comes the name of the establishment"
+             "(store, park, office etc.) you want a rack near.\n"
+             "Then enter @ followed by the address.\n"
+             ),
 
-        ("location", "No geometry value provided."):
-        ("The address didn't come through properly. Your subject line\n"
-         "should follow this format:\n\n"
-         "  Key Foods @224 McGuinness Blvd, Brooklyn NY\n\n"
-         "Make sure you have the street, city, and state listed after\n"
-         "the @ sign in this exact format.\n"),
-        }
+            ("location", "No geometry value provided."):
+            ("The address didn't come through properly. Your subject line\n"
+             "should follow this format:\n\n"
+             "  Key Foods @224 McGuinness Blvd, Brooklyn NY\n\n"
+             "Make sure you have the street, city, and state listed after\n"
+             "the @ sign in this exact format.\n"),
+            }
 
-    for key, vals in errors.items():
-        for val in vals:
-            key = key_mapping.get(key, key)
-            if key is remove_me:
-                continue
-            val = val_mapping.get((key, val), val)
-            adapted[key] = adapted.get(key, ()) + (val,)
-    return adapted
+        for key, vals in errordict.items():
+            for val in vals:
+                key = key_mapping.get(key, key)
+                if key is remove_me:
+                    continue
+                val = val_mapping.get((key, val), val)
+                adapted[key] = adapted.get(key, ()) + (val,)
+
+        for k, v in sorted(adapted.items()):
+            err_msg += "%s: %s\n" % (k, '; '.join(v))
+        err_msg += "\nPlease try again!\n"
+        return err_msg
+
+    server_error_retry = (
+        "Thanks for trying to suggest a rack.\n"
+        "We are unfortunately experiencing some difficulties at the\n"
+        "moment -- please try again in an hour or two!")
+
+    server_error_permanent = (
+        "Thanks for trying to suggest a rack.\n"
+        "We are unfortunately experiencing some difficulties at the\n"
+        "moment. Please check to make sure your subject line follows\n"
+        "this format exactly:\n\n"
+        "  Key Foods @224 McGuinness Blvd Brooklyn NY\n\n"
+        "If you've made an error, please resubmit. Otherwise we'll\n"
+        "look into this issue and get back to you as soon as we can.\n"
+        )
+
+
 
 
 class Command(BaseCommand):
@@ -662,11 +678,11 @@ class Command(BaseCommand):
             except:
                 tb_msg = "Exception at %s follows:\n------------\n" % now
                 tb_msg += traceback.format_exc()
-                tb_msg += "\n -----Original message follows ----------\n\n"
-                tb_msg += raw_msg
+                tb_msg += "\n -----Original message excerpt follows ----------\n\n"
+                tb_msg += raw_msg[:10000] + '...\n' # XXX attachments make this suck.
                 if parser.msg:
                     parser.save_email_for_debug(parser.msg)
-                notifier.notify_admin('Unexpected traceback in handle_mailin',
+                notifier.notify_admin('Unexpected error in handle_mailin',
                                       tb_msg)
                 logger.error(tb_msg)
                 raise
