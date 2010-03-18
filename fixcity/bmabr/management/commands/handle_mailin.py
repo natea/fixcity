@@ -64,17 +64,6 @@ class EmailParser(object):
             ):
             self.parameters[key] = int(self.parameters.get(key, default))
 
-
-    def _make_dumpfile(self, suffix='.handle_mailin'):
-        """where to put dumps of messages for debugging"""
-        logdir = self.parameters.get('debug_dir') or tempfile.gettempdir()
-        try:
-            os.makedirs(logdir)
-        except OSError:
-            if not os.path.isdir(logdir):
-                raise
-        return tempfile.mktemp(suffix, dir=logdir)
-
     def email_to_unicode(self, message_str):
         """
         Email has 7 bit ASCII code, convert it to unicode with the charset
@@ -114,8 +103,17 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
 
     def save_email_for_debug(self, message):
-        msg_file = self._make_dumpfile()
-
+        """save the entire e-mail message text, including attachments
+        """
+        """where to put dumps of messages for debugging"""
+        logdir = self.parameters.get('debug_dir') or tempfile.gettempdir()
+        try:
+            os.makedirs(logdir)
+        except OSError:
+            if not os.path.isdir(logdir):
+                raise
+            # otherwise it probably exists already.
+        msg_file = tempfile.mktemp('.handle_mailin', dir=logdir)
         logger.debug(' saving email to %s' % msg_file)
         fx = open(msg_file, 'wb')
         fx.write('%s' % message)
@@ -125,8 +123,9 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         except OSError:
             pass
 
-
     def parse(self, s):
+        if self.parameters['debug'] > 1:
+            self.save_email_for_debug(s)
         self.msg = email.message_from_string(s)
         if not self.msg:
             logger.debug("This is not a valid email message format")
@@ -138,10 +137,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         message_parts = self.get_message_parts()
         message_parts = self.unique_attachment_names(message_parts)
         body_text = self.body_text(message_parts)
-
-        if self.parameters['debug'] > 1:        
-            # save the entire e-mail message text
-            self.save_email_for_debug(self.msg)
 
         self.get_sender_info()
         subject  = self.email_to_unicode(self.msg.get('Subject', ''))
@@ -474,7 +469,14 @@ class RackMaker(object):
 
 
     def do_post(self, url, body, headers={}, as_json=True):
-        """POST the body to the URL. Returns True on success"""
+        """POST the body to the URL. Returns True on success.
+
+        If as_json is True, we assume the request and response are
+        both json. (The body argument should be passed in encoded
+        already.)
+
+        TODO: does this API make sense?
+        """
         error_subject = "Unsuccessful Rack Request"
         http = httplib2.Http()
         if as_json:
@@ -669,8 +671,8 @@ class Command(BaseCommand):
             else:
                 thisfile = open(filename)
 
+            raw_msg = thisfile.read()
             try:
-                raw_msg = thisfile.read()
                 # XXX separate parse exceptions from submit exceptions
                 info = parser.parse(raw_msg)
                 notifier.msg = parser.msg  # smelly.
@@ -680,8 +682,6 @@ class Command(BaseCommand):
                 tb_msg += traceback.format_exc()
                 tb_msg += "\n -----Original message excerpt follows ----------\n\n"
                 tb_msg += raw_msg[:10000] + '...\n' # XXX attachments make this suck.
-                if parser.msg:
-                    parser.save_email_for_debug(parser.msg)
                 notifier.notify_admin('Unexpected error in handle_mailin',
                                       tb_msg)
                 logger.error(tb_msg)
