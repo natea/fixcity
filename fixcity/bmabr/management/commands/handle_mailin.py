@@ -101,31 +101,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         # XXX do we care about author's name for fixcity? prob not.
         self.author = self.email_addr
 
-
-    def save_email_for_debug(self, message):
-        """save the entire e-mail message text, including attachments
-        """
-        """where to put dumps of messages for debugging"""
-        logdir = self.parameters.get('debug_dir') or tempfile.gettempdir()
-        try:
-            os.makedirs(logdir)
-        except OSError:
-            if not os.path.isdir(logdir):
-                raise
-            # otherwise it probably exists already.
-        msg_file = tempfile.mktemp('.handle_mailin', dir=logdir)
-        logger.debug(' saving email to %s' % msg_file)
-        fx = open(msg_file, 'wb')
-        fx.write('%s' % message)
-        fx.close()
-        try:
-            os.chmod(msg_file,S_IRWXU|S_IRWXG|S_IRWXO)
-        except OSError:
-            pass
-
     def parse(self, s):
-        if self.parameters['debug'] > 1:
-            self.save_email_for_debug(s)
         self.msg = email.message_from_string(s)
         if not self.msg:
             logger.debug("This is not a valid email message format")
@@ -417,7 +393,6 @@ class RackMaker(object):
         """
         Create a new rack
         """
-
         photos = data.pop('photos', {})
 
         if self.parameters.get('dry-run'):
@@ -490,7 +465,7 @@ class RackMaker(object):
             # but apparently that's what httplib2 0.5.0 raises because
             # the socket ends up being None. Lame!
             # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
-            logger.debug('Server down at %r??' % url)
+            logger.debug('Server down? %r' % url)
             self.notifier.bounce(
                 error_subject,
                 self.error_adapter.server_error_retry,
@@ -635,6 +610,26 @@ class ErrorAdapter(object):
         )
 
 
+def save_file_for_debug(message, options):
+    """save a file for later inspection
+    """
+    logdir = options.get('logdir') or tempfile.gettempdir()
+    try:
+        os.makedirs(logdir)
+    except OSError:
+        if not os.path.isdir(logdir):
+            raise
+        # otherwise it probably exists already.
+    msg_file = tempfile.mktemp('.handle_mailin', dir=logdir)
+    logger.debug(' saving email to %s' % msg_file)
+    fx = open(msg_file, 'wb')
+    fx.write('%s' % message)
+    fx.close()
+    try:
+        os.chmod(msg_file,S_IRWXU|S_IRWXG|S_IRWXO)
+    except OSError:
+        pass
+
 
 
 class Command(BaseCommand):
@@ -672,16 +667,22 @@ class Command(BaseCommand):
                 thisfile = open(filename)
 
             raw_msg = thisfile.read()
+            always_save = options['debug'] >= 1
+            if always_save:
+                save_file_for_debug(raw_msg, options)
             try:
                 # XXX separate parse exceptions from submit exceptions
                 info = parser.parse(raw_msg)
                 notifier.msg = parser.msg  # smelly.
                 rackmaker.submit(info)
             except:
+                if not always_save:
+                    save_file_for_debug(raw_msg)
                 tb_msg = "Exception at %s follows:\n------------\n" % now
                 tb_msg += traceback.format_exc()
                 tb_msg += "\n -----Original message excerpt follows ----------\n\n"
-                tb_msg += raw_msg[:10000] + '...\n' # XXX attachments make this suck.
+                tb_msg += raw_msg[:5000] + '\n...\n'
+                tb_msg += "\n ----- End of original message excerpt ----\n"
                 notifier.notify_admin('Unexpected error in handle_mailin',
                                       tb_msg)
                 logger.error(tb_msg)
