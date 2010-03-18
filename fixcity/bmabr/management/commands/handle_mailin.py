@@ -6,12 +6,13 @@ To hook this up with postfix, set up an alias along the lines of:
 
 myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin -u http://MYDOMAIN/racks/ --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
 
-You will want a cron job or something that cleans up the --debug-dir directory
-(defaults to your TMP directory).
+You will want a cron job or something that cleans up old files in the
+--debug-dir directory (defaults to your TMP directory).
 
 '''
 
-# based on email2trac.py, which is Copyright (C) 2002 under the GPL v2 or later
+# Some code originally derived from email2trac.py, 
+# which is Copyright (C) 2002 under the GPL v2 or later
 
 from datetime import datetime
 from optparse import make_option
@@ -418,8 +419,7 @@ class RackMaker(object):
         rack_user = result.get('user')
 
         if photos.has_key('photo'):
-            datagen, headers = multipart_encode({'photo':
-                                                 photos['photo']})
+            datagen, headers = multipart_encode({'photo': photos['photo']})
             # httplib2 doesn't like poster's integer headers.
             headers['Content-Length'] = str(headers['Content-Length'])
             body = ''.join([s for s in datagen])
