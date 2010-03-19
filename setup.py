@@ -10,7 +10,7 @@ install_requires=[
       'psycopg2>=2.0.12',
       'PIL==1.1.6',
       'wsgilog>=0.2',
-      'httplib2',
+      'httplib2>=0.6',
       'poster',
       'mock',
       'south',
