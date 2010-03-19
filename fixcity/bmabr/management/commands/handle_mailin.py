@@ -405,8 +405,7 @@ class RackMaker(object):
         # ... but nope, we'll use HTTP instead.
 
         url = settings.RACK_POSTING_URL
-        jsondata = json.dumps(data)
-        result = self.do_post(url, jsondata)
+        result = self.do_post_json(url, data)
         if not result:
             return
 
@@ -422,8 +421,7 @@ class RackMaker(object):
             # httplib2 doesn't like poster's integer headers.
             headers['Content-Length'] = str(headers['Content-Length'])
             body = ''.join([s for s in datagen])
-            result = self.do_post(photo_url, body, headers=headers,
-                                  as_json=False)
+            result = self.do_post(photo_url, body, headers=headers)
             logger.debug("result from photo upload:")
             logger.debug(result)
         # XXX need to add links per
@@ -442,19 +440,12 @@ class RackMaker(object):
         self.notifier.reply("FixCity Rack Confirmation", reply)
 
 
-    def do_post(self, url, body, headers={}, as_json=True):
-        """POST the body to the URL. Returns True on success.
-
-        If as_json is True, we assume the request and response are
-        both json. (The body argument should be passed in encoded
-        already.)
-
-        TODO: does this API make sense?
+    def do_post(self, url, body, headers={}):
+        """POST the body to the URL. Returns response body
+        on success, or None on failure.
         """
         error_subject = "Unsuccessful Rack Request"
         http = httplib2.Http()
-        if as_json:
-            headers.setdefault('Content-type', 'application/json')
         try:
             response, content = http.request(url, 'POST',
                                              headers=headers,
@@ -480,15 +471,27 @@ class RackMaker(object):
                 error_subject, err_msg, notify_admin='500 Server error',
                 notify_admin_body=content)
             return None
+        return content
 
-        if as_json:
-            result = json.loads(content)
-            if result.has_key('errors'):
-                err_msg = self.error_adapter.validation_errors(result['errors'])
-                self.notifier.bounce(error_subject, err_msg)
-                return None
-        else:
-            result = content
+    def do_post_json(self, url, data, headers):
+        """Post some data as json to the given URL.
+        Expect the response to be JSON data.
+
+        If the server detects validation errors, it should include an
+        'errors' key in the response data.  The value for 'errors'
+        should be a mapping of field name to a list of error strings
+        for that field.  (Not coincidentally, django forms yield
+        validation errors in that format.)
+        """
+        body = json.dumps(data)
+        error_subject = "Unsuccessful Rack Request"
+        headers.setdefault('Content-type', 'application/json')
+        response_body = self.do_post(url, body, headers)
+        result = json.loads(response_body)
+        if result.has_key('errors'):
+            err_msg = self.error_adapter.validation_errors(result['errors'])
+            self.notifier.bounce(error_subject, err_msg)
+            result = None
         return result
 
 
