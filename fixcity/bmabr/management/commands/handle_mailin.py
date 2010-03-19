@@ -473,9 +473,9 @@ class RackMaker(object):
             return None
         return content
 
-    def do_post_json(self, url, data, headers):
+    def do_post_json(self, url, data, headers={}):
         """Post some data as json to the given URL.
-        Expect the response to be JSON data.
+        Expect the response to be JSON data, and return it decoded.
 
         If the server detects validation errors, it should include an
         'errors' key in the response data.  The value for 'errors'
@@ -487,7 +487,10 @@ class RackMaker(object):
         error_subject = "Unsuccessful Rack Request"
         headers.setdefault('Content-type', 'application/json')
         response_body = self.do_post(url, body, headers)
-        result = json.loads(response_body)
+        if response_body:
+            result = json.loads(response_body)
+        else:
+            result = {}
         if result.has_key('errors'):
             err_msg = self.error_adapter.validation_errors(result['errors'])
             self.notifier.bounce(error_subject, err_msg)
