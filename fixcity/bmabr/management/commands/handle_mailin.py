@@ -3,6 +3,7 @@ This is a manage.py command for django which handles incoming email,
 typically via stdin.
 
 To hook this up with postfix, set up an alias along the lines of:
+(yes, this is an annoyingly long command):
 
 myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin -u http://MYDOMAIN/racks/ --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
 
@@ -11,7 +12,7 @@ You will want a cron job or something that cleans up old files in the
 
 '''
 
-# Some code originally derived from email2trac.py, 
+# Some parsing code originally derived from email2trac.py, 
 # which is Copyright (C) 2002 under the GPL v2 or later
 
 from datetime import datetime
@@ -24,7 +25,6 @@ import mimetypes
 import os
 import re
 import socket
-import string
 import sys
 import tempfile
 import time
@@ -45,12 +45,11 @@ class EmailParser(object):
 
     msg = None
 
-    def __init__(self, notifier, parameters):
+    def __init__(self, notifier, options):
         self.notifier = notifier
         self.error_adapter = ErrorAdapter()
 
-        # Save parameters
-        self.parameters = parameters
+        self.options = options
 
         # Some useful mail constants
         self.author = None
@@ -63,7 +62,7 @@ class EmailParser(object):
             ('strip_signature', 0),
             ('max-attachment-size', -1),
             ):
-            self.parameters[key] = int(self.parameters.get(key, default))
+            self.options[key] = int(self.options.get(key, default))
 
     def email_to_unicode(self, message_str):
         """
@@ -82,7 +81,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                     logger.error('Could not find charset: %s, please install' %format)
                     temp = message_str
             else:
-                temp = string.strip(text)
+                temp = text.strip()
                 temp = unicode(text, 'iso-8859-15', errors='ignore')
         return temp
 
@@ -236,7 +235,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 format = email.Utils.collapse_rfc2231_value(part.get_param('Format', 'fixed')).lower()
                 delsp = email.Utils.collapse_rfc2231_value(part.get_param('DelSp', 'no')).lower()
 
-                if self.parameters['strip_signature']:
+                if self.options['strip_signature']:
                     body_text = self.strip_signature(body_text)
 
                 # Get contents charset (iso-8859-15 if not defined in mail headers)
@@ -344,7 +343,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         """
         # Get Maxium attachment size
         #
-        max_size = self.parameters['max-attachment-size']
+        max_size = self.options['max-attachment-size']
         status   = ''
         results = {}
 
@@ -385,9 +384,9 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
 class RackMaker(object):
 
-    def __init__(self, notifier, params):
+    def __init__(self, notifier, options):
         self.notifier = notifier
-        self.parameters = params
+        self.options = options
         self.error_adapter = ErrorAdapter()
 
     def submit(self, data):
@@ -396,7 +395,7 @@ class RackMaker(object):
         """
         photos = data.pop('photos', {})
 
-        if self.parameters.get('dry-run'):
+        if self.options.get('dry-run'):
             logger.debug("would save rack here")
             return
 
