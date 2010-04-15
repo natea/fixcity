@@ -185,4 +185,26 @@ class TestRackMaker(TestCase):
 
         self.assertEqual(maker.submit({}), None)
 
+    @mock.patch('httplib2.Response')
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.RackMaker.do_post')
+    @mock.patch('logging.Logger.debug')
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
+    def test_submit__with_photos_and_user(self, mock_notifier, mock_debug,
+                                          mock_do_post, mock_response):
+        mock_do_post.return_value = '''{
+            "user": "bob",
+            "photo_post_url": "http://example.com/photos/",
+            "rack_url": "http://example.com/racks/1"
+            }'''
+        notifier = mock_notifier()
+        maker = handle_mailin.RackMaker(notifier, {})
 
+        # Mock photo needs to be just file-like enough.
+        mock_photo_file = mock.Mock()
+        mock_photo_file.name = 'foo.jpg'
+        mock_photo_file.fileno.side_effect = AttributeError()
+        mock_photo_file.tell.return_value = 12345
+        mock_photo_file.read.return_value = ''
+        self.assertEqual(maker.submit({'photos': {'photo': mock_photo_file}}),
+                         None)
+        self.assertEqual(notifier.reply.call_args[0][0], "FixCity Rack Confirmation")

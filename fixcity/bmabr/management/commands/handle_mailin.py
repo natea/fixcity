@@ -17,6 +17,7 @@ You will want a cron job or something that cleans up old files in the
 
 from datetime import datetime
 from optparse import make_option
+
 from poster.encode import multipart_encode
 from stat import S_IRWXU, S_IRWXG, S_IRWXO
 import email.Header
@@ -97,7 +98,6 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         self.email_from = self.email_to_unicode(message['from'])
         self.author, self.email_addr  = email.Utils.parseaddr(self.email_from)
 
-        # Trac can not handle author's name that contains spaces
         # XXX do we care about author's name for fixcity? prob not.
         self.author = self.email_addr
 
@@ -393,17 +393,11 @@ class RackMaker(object):
         """
         Create a new rack
         """
-        photos = data.pop('photos', {})
-
         if self.options.get('dry-run'):
             logger.debug("would save rack here")
             return
 
-        #if i could get postfix to run this as a different user,
-        # i could just do:
-        #rack = rackform.save()
-        # ... but nope, we'll use HTTP instead.
-
+        photos = data.pop('photos', {})
         url = settings.RACK_POSTING_URL
         result = self.do_post_json(url, data)
         if not result:
