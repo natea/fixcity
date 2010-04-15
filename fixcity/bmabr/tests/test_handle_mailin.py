@@ -208,3 +208,56 @@ class TestRackMaker(TestCase):
         self.assertEqual(maker.submit({'photos': {'photo': mock_photo_file}}),
                          None)
         self.assertEqual(notifier.reply.call_args[0][0], "FixCity Rack Confirmation")
+
+
+class TestNotifier(TestCase):
+
+    @staticmethod
+    def _make_one():
+        msg = open(os.path.join(HERE, 'files', 'test-mailin-no-address.txt'))
+        import email
+        from fixcity.bmabr.management.commands.handle_mailin import Notifier
+        notifier = Notifier()
+        notifier.msg = email.message_from_string(msg.read())
+        return notifier
+
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.send_mail')
+    def test_reply(self, mock_send_mail):
+        notifier = self._make_one()
+        notifier.reply('reply subject', 'reply body')
+        self.assertEqual(
+            mock_send_mail.call_args,
+            (('reply subject', 'reply body', '<racks@fixcity.org>',
+              ['Paul Winkler <pw@example.org>']),
+             {'fail_silently': False}))
+
+    @mock.patch('logging.Logger.debug')
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.send_mail')
+    def test_bounce(self, mock_send_mail, mock_debug):
+        notifier = self._make_one()
+        notifier.bounce('bounce subject', 'bounce body')
+        args, kwargs = mock_send_mail.call_args
+        self.assertEqual(args[0], 'bounce subject')
+        self.assert_(args[1].startswith('bounce body'))
+        self.assert_(args[1].endswith(notifier.msg.as_string()))
+        self.assertEqual(args[2], '<racks@fixcity.org>')
+        self.assertEqual(args[3], ['Paul Winkler <pw@example.org>'])
+        self.assertEqual(kwargs, {'fail_silently': False})
+
+    @mock.patch('logging.Logger.debug')
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.send_mail')
+    def test_bounce__notify_admin(self, mock_send_mail, mock_debug):
+        notifier = self._make_one()
+        notifier.bounce('bounce subject', 'bounce body', notify_admin='NOTIFY')
+        self.assertEqual(mock_send_mail.call_count, 2)
+        admin_args, user_args = mock_send_mail.call_args_list
+        admin_args, admin_kw_args = admin_args
+        self.assertEqual(admin_args[0], 'FixCity handle_mailin bounce! NOTIFY')
+        self.assert_(admin_args[1].startswith("Bouncing to: "))
+        self.assertEqual(admin_args[2], "<racks@fixcity.org>")
+        self.assertEqual(admin_args[3], ['pw+admin@openplans.org'])
+
+        # The user gets the same email whether you notify the admin or not.
+        notifier.bounce('bounce subject', 'bounce body')
+        self.assertEqual(mock_send_mail.call_args_list[-1],
+                         mock_send_mail.call_args_list[-2])
