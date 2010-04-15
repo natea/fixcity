@@ -121,7 +121,7 @@ class TestTweeter(TestCase):
         import StringIO, pickle
         mock_open.return_value = StringIO.StringIO(
             pickle.dumps({'last_processed_id': 99}))
-        builder = tweeter.RackBuilder(settings, MockTweepyAPI())
+        builder = tweeter.RackMaker(settings, MockTweepyAPI())
         self.assertEqual(builder.load_last_status(True), 99)
         self.assertEqual(builder.load_last_status(False), None)
 
@@ -134,7 +134,7 @@ class TestTweeter(TestCase):
         tweepy_mock = MockTweepyAPI()
         tweepy_mock.rate_limit_status.side_effect = tweepy.error.TweepError(
             "server down?")
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         builder.main()
         self.assertEqual(tweepy_mock.get_tweets.call_count, 0)
 
@@ -143,15 +143,15 @@ class TestTweeter(TestCase):
         tweepy_mock = MockTweepyAPI()
         tweepy_mock.rate_limit_status.return_value = {
             'remaining_hits': 0, 'reset_time': 'tomorrow'}
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         self.assertRaises(Exception, builder.main)
 
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackBuilder.new_rack')
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackMaker.new_rack')
     @mock.patch('tweepy.API')
     def test_main(self, MockTweepyAPI, mock_new_rack):
         tweepy_mock = MockTweepyAPI()
         user = settings.TWITTER_USER
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         # The Mock API works OK but setting attrs is a bit tedious...
         # i wish you could pass a dict as the spec argument.
         status = mock.Mock(['id', 'text', 'user', 'created_at'])
@@ -178,7 +178,7 @@ class TestTweeter(TestCase):
     @mock.patch('tweepy.API')
     def test_bounce(self, MockTweepyAPI):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         builder.bounce('somebody', 'an interesting message')
         self.assertEqual(tweepy_mock.update_status.call_args,
                          (('@somebody an interesting message',), {})) 
@@ -186,7 +186,7 @@ class TestTweeter(TestCase):
     @mock.patch('tweepy.API')
     def test_bounce__twitter_down(self, MockTweepyAPI):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         import tweepy
         tweepy_mock.update_status.side_effect = tweepy.error.TweepError(
             "server down?")
@@ -199,7 +199,7 @@ class TestTweeter(TestCase):
     def test_bounce__notify_admin(self, MockTweepyAPI, mock_send_mail,
                                   mock_info):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         message = 'a message!'
         subject = 'this is not my day.'
         builder.bounce('somebody', message, notify_admin=subject)
@@ -220,7 +220,7 @@ class TestTweeter(TestCase):
     @mock.patch('tweepy.API')
     def test_new_rack(self, MockTweepyAPI, mock_http, mock_info, mock_shorten):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         class StubResponse:
             status = 200
         mock_http.request.return_value = (StubResponse(), '{"rack": 99}')
@@ -255,7 +255,7 @@ class TestTweeter(TestCase):
     def test_new_rack__errors(self, MockTweepyAPI, mock_http, mock_info,
                               mock_shorten):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         class StubResponse:
             status = 200
         mock_http.request.return_value = (StubResponse(), '{"errors": "any"}')
@@ -270,13 +270,13 @@ class TestTweeter(TestCase):
         self.assert_(notify_args[0][0].count('something went wrong'))
 
     @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackBuilder.bounce')
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackMaker.bounce')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.http')
     @mock.patch('tweepy.API')
     def test_new_rack__server_error(self, MockTweepyAPI, mock_http,
                                     mock_bounce, mock_info):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         class StubResponse:
             status = 500
         mock_http.request.return_value = (StubResponse(), 'content')
@@ -290,20 +290,24 @@ class TestTweeter(TestCase):
     def test_new_rack__network_error(self, MockTweepyAPI, mock_http,
                                      mock_notify_admin, mock_info):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackBuilder(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock)
         import socket
         mock_http.request.side_effect = socket.error('oops')
         self.assertRaises(socket.error, builder.new_rack,
                           'TITLE', 'ADDRESS', 'USER', 'DATE', 123)
         self.assertEqual(mock_notify_admin.call_count, 1)
 
+
+class TestCommand(TestCase):
+
     @mock.patch('fixcity.bmabr.management.commands.tweeter.api_factory')
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackBuilder.main')
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackMaker.main')
     def test_command(self, mock_main, mock_api_factory):
         from fixcity.bmabr.management.commands.tweeter import Command
         c = Command()
         c.handle()
         self.assertEqual(mock_main.call_count, 1)
+
 
 
 class TestTweeterTransactions(TransactionTestCase):

@@ -67,7 +67,7 @@ class TwitterFetcher(object):
         return tweets
 
 
-class RackBuilder(object):
+class RackMaker(object):
 
     general_error_message = ("Thanks, but something went wrong! Check the "
                              "format e.g. http://bit.ly/76pXSi and try again "
@@ -249,5 +249,5 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         api = api_factory(settings)
-        builder = RackBuilder(settings, api)
+        builder = RackMaker(settings, api)
         builder.main(recent_only=True)
