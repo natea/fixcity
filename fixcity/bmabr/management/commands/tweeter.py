@@ -21,9 +21,10 @@ http = httplib2.Http()
 
 class TwitterFetcher(object):
 
-    def __init__(self, twitter_api, username):
+    def __init__(self, twitter_api, username, notifier):
         self.twitter_api = twitter_api
         self.username = username
+        self.notifier = notifier
         
     def parse(self, tweet):
         msg = tweet.text.replace('@' + self.username, '')
@@ -73,12 +74,13 @@ class RackMaker(object):
                              "format e.g. http://bit.ly/76pXSi and try again "
                              "or @ us w/questions.")
 
-    def __init__(self, config, api):
+    def __init__(self, config, api, notifier):
         self.url = config.RACK_POSTING_URL
         self.username = config.TWITTER_USER
         self.password = config.TWITTER_PASSWORD
         self.twitter_api = api
         self.status_file_path = config.TWITTER_STATUS_PATH
+        self.notifier = notifier
 
     def load_last_status(self, recent_only):
         last_processed_id = None
@@ -111,7 +113,7 @@ class RackMaker(object):
             # Twitter is feeling sad again.
             # Let's bail out and hope they're back soon.
             return
-        twit = TwitterFetcher(self.twitter_api, self.username)
+        twit = TwitterFetcher(self.twitter_api, self.username, self.notifier)
 
         all_tweets = twit.get_tweets(last_processed_id)
         for tweet in reversed(all_tweets):
@@ -119,9 +121,9 @@ class RackMaker(object):
 
             user = tweet.user.screen_name
             if parsed:
-                self.new_rack(**parsed)
+                self.submit(**parsed)
             else:
-                self.bounce(user, self.general_error_message)
+                self.notifier.bounce(user, self.general_error_message)
             # XXX We should lock the status file in case this script
             # ever takes so long that it overlaps with the next
             # run. Or something.
@@ -150,7 +152,7 @@ class RackMaker(object):
             # and notify user if they eventually succeed?
 
 
-    def new_rack(self, title, address, user, date, tweetid):
+    def submit(self, title, address, user, date, tweetid):
         url = self.url
         # XXX UGH, copy-pasted from handle_mailin.py. Refactoring time!
         description = ''
@@ -173,8 +175,9 @@ class RackMaker(object):
                                              headers=headers,
                                              body=jsondata)
         except socket.error:
-            _notify_admin('Server down??',
-                          'Could not post some tweets, fixcity.org dead?')
+            self.notifier.notify_admin(
+                'Server down??',
+                'Could not post some tweets, fixcity.org dead?')
             # Important to re-raise here, to prevent storing this tweet's
             # ID as the last successfully processed one.
             raise
@@ -183,7 +186,7 @@ class RackMaker(object):
             # XXX give a URL to a help page w/ more info?
             # Maybe even a private URL to a page w/ this user's exact errors?
             err_msg = self.general_error_message
-            self.bounce(
+            self.notifier.bounce(
                 user, err_msg,
                 notify_admin='fixcity: twitter: 500 Server error',
                 notify_admin_body=content)
@@ -194,18 +197,32 @@ class RackMaker(object):
     ##         errors = adapt_errors(result['errors'])
     ##         for k, v in sorted(errors.items()):
     ##             err_msg += "%s: %s\n" % (k, '; '.join(v))
-
-            self.bounce(user, err_msg)
+            
+            self.notifier.bounce(user, err_msg)
             return
         else:
             # XXX handle errors from bitly.
             shortened_url = shorten_url('%s%s/' % (self.url, result['rack']))
-            self.bounce(user,
-                        "Thank you! Here's the rack request %s; now you can "
-                        "register to verify your request "
-                        "http://bit.ly/84Myis" % shortened_url)
+            self.notifier.bounce(
+                user,
+                "Thank you! Here's the rack request %s; now you can register "
+                "to verify your request "
+                % shortened_url)
+
+
+class Notifier(object):
+
+    def __init__(self, twitter_api):
+        self.twitter_api = twitter_api
 
     def bounce(self, user, message, notify_admin='', notify_admin_body=''):
+        """Bounce a message, with additional info for explanation.
+
+        If the notify_admin string is non-empty, the site admin will
+        be notified, with that string appended to the subject.
+        If notify_admin_body is non-empty, it will be added to the body
+        sent to the admin.
+        """
         message = '@%s %s' % (user, message)
         message = message[:140]
         try:
@@ -222,20 +239,22 @@ class RackMaker(object):
             if notify_admin_body:
                 admin_body += 'Additional info:\n'
                 admin_body += notify_admin_body
-            _notify_admin(admin_subject, admin_body)
+            self.notify_admin(admin_subject, admin_body)
 
 
-def _notify_admin(subject, body):
-    admin_email = settings.SERVICE_FAILURE_EMAIL
-    from_addr = 'racks@fixcity.org'
-    send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
-    # person receiving cron messages will get stdout
-    logger.info(body)
+    @staticmethod
+    def notify_admin(subject, body):
+        admin_email = settings.SERVICE_FAILURE_EMAIL
+        from_addr = 'racks@fixcity.org'
+        send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
+        # person receiving cron messages will get stdout
+        logger.info(body)
 
-def adapt_errors(adict):
-    # XXX TODO
-    return adict
 
+class ErrorAdapter(object):
+    def adapt_errors(self, adict):
+        # XXX TODO
+        return adict
 
 
 def api_factory(settings):
@@ -249,5 +268,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         api = api_factory(settings)
-        builder = RackMaker(settings, api)
+        notifier = Notifier(api)
+        builder = RackMaker(settings, api, notifier)
         builder.main(recent_only=True)

@@ -70,7 +70,7 @@ class TestMailin(TestCase):
         # What else to test??
 
 
-class TestRackMaker(TestCase):
+class TestMailinRackMaker(TestCase):
 
     @mock.patch('httplib2.Response')
     @mock.patch('httplib2.Http.request')
@@ -82,7 +82,7 @@ class TestRackMaker(TestCase):
         notifier = mock_notifier()
         response.status = 200
         mock_request.return_value = (response, 'hello POST world')
-        maker = handle_mailin.RackMaker(mock_notifier(), {})
+        maker = handle_mailin.RackMaker(mock_notifier(), {}, handle_mailin.ErrorAdapter())
 
         content = maker.do_post('http://example.com', 'test body')
         self.assertEqual(content, 'hello POST world')
@@ -99,7 +99,7 @@ class TestRackMaker(TestCase):
         notifier = mock_notifier()
         response.status = 500
         mock_request.return_value = (response, 'hello POST world')
-        maker = handle_mailin.RackMaker(notifier, {})
+        maker = handle_mailin.RackMaker(notifier, {}, handle_mailin.ErrorAdapter())
 
         content = maker.do_post('http://example.com', 'test body')
         self.assertEqual(content, None)
@@ -118,7 +118,7 @@ class TestRackMaker(TestCase):
         import socket
         notifier = mock_notifier()
         mock_request.side_effect = socket.error("kaboom")
-        maker = handle_mailin.RackMaker(notifier, {})
+        maker = handle_mailin.RackMaker(notifier, {}, handle_mailin.ErrorAdapter())
 
         content = maker.do_post('http://example.com', 'test body')
         self.assertEqual(content, None)
@@ -137,7 +137,7 @@ class TestRackMaker(TestCase):
         notifier = mock_notifier()
         response.status = 200
         mock_request.return_value = (response, '{"foo": "bar"}')
-        maker = handle_mailin.RackMaker(mock_notifier(), {})
+        maker = handle_mailin.RackMaker(mock_notifier(), {}, handle_mailin.ErrorAdapter())
 
         content = maker.do_post_json('http://example.com',
                                      "{'some key': 'some value'}")
@@ -158,7 +158,7 @@ class TestRackMaker(TestCase):
         error_body = json.dumps(
             {'errors': {'title': ['This field is required.']}})
         mock_request.return_value = (response, error_body)
-        maker = handle_mailin.RackMaker(mock_notifier(), {})
+        maker = handle_mailin.RackMaker(mock_notifier(), {}, handle_mailin.ErrorAdapter())
 
         content = maker.do_post_json('http://example.com',
                                      "{'some key': 'some value'}")
@@ -168,7 +168,7 @@ class TestRackMaker(TestCase):
 
     @mock.patch('logging.Logger.debug')
     def test_submit__dry_run(self, mock_debug):
-        maker = handle_mailin.RackMaker(None, {'dry-run': True})
+        maker = handle_mailin.RackMaker(None, {'dry-run': True}, None)
         self.assertEqual(maker.submit({}), None)
         
     @mock.patch('httplib2.Response')
@@ -181,36 +181,50 @@ class TestRackMaker(TestCase):
         notifier = mock_notifier()
         response.status = 200
         mock_request.return_value = (response, '')
-        maker = handle_mailin.RackMaker(notifier, {})
+        maker = handle_mailin.RackMaker(notifier, {}, handle_mailin.ErrorAdapter())
 
         self.assertEqual(maker.submit({}), None)
 
     @mock.patch('httplib2.Response')
-    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.RackMaker.do_post')
+    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
     @mock.patch('logging.Logger.debug')
     @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
     def test_submit__with_photos_and_user(self, mock_notifier, mock_debug,
-                                          mock_do_post, mock_response):
-        mock_do_post.return_value = '''{
-            "user": "bob",
-            "photo_post_url": "http://example.com/photos/",
-            "rack_url": "http://example.com/racks/1"
-            }'''
-        notifier = mock_notifier()
-        maker = handle_mailin.RackMaker(notifier, {})
+                                          mock_do_post,
+                                          mock_response):
+        # XXX Most of this functionality is now in utils. MOve test 
+        # somewhere more appropriate.
 
+        # Mock typically uses side_effect() to specify multiple return
+        # value; clunky API but works fine.
+        do_post_return_values = [
+            '''{
+            "user": "bob",
+            "photo_post_url": "/photos/",
+            "rack_url": "/racks/1"
+            }''',
+            'OK']
+        def side_effect(*args, **kw):
+            return do_post_return_values.pop(0)
+        mock_do_post.side_effect = side_effect
+        notifier = mock_notifier()
+        maker = handle_mailin.RackMaker(notifier, {}, handle_mailin.ErrorAdapter())
         # Mock photo needs to be just file-like enough.
         mock_photo_file = mock.Mock()
         mock_photo_file.name = 'foo.jpg'
         mock_photo_file.fileno.side_effect = AttributeError()
         mock_photo_file.tell.return_value = 12345
         mock_photo_file.read.return_value = ''
+
         self.assertEqual(maker.submit({'photos': {'photo': mock_photo_file}}),
                          None)
-        self.assertEqual(notifier.reply.call_args[0][0], "FixCity Rack Confirmation")
+        self.assertEqual(notifier.on_submit_success.call_count, 1)
+        vars = notifier.on_submit_success.call_args[0][0]
+        self.assert_(vars.has_key('rack_url'))
+        self.assert_(vars.has_key('rack_user'))
 
 
-class TestNotifier(TestCase):
+class TestMailinNotifier(TestCase):
 
     @staticmethod
     def _make_one():

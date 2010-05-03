@@ -32,7 +32,7 @@ class TestTweeter(TestCase):
             screen_name = 'bob'
 
     def test_parse(self):
-        fetcher = tweeter.TwitterFetcher(None, self.username)
+        fetcher = tweeter.TwitterFetcher(None, self.username, None)
         self.assertEqual(fetcher.parse(self.StubTweet),
                          {'date': '1970-01-01 00:00:00',
                           'address': 'an address',
@@ -42,7 +42,7 @@ class TestTweeter(TestCase):
 
     @mock.patch('logging.Logger.warn')
     def test_parse_invalid(self, mock_logger_warn):
-        fetcher = tweeter.TwitterFetcher(None, self.username)
+        fetcher = tweeter.TwitterFetcher(None, self.username, None)
         self.StubTweet.text = 'invalid format'
         self.assertEqual(fetcher.parse(self.StubTweet), None)
         
@@ -78,7 +78,7 @@ class TestTweeter(TestCase):
     def test_get_tweets__server_error(self, mock_mentions):
         import tweepy
         mock_mentions.side_effect = tweepy.error.TweepError('500 or something')
-        fetcher = tweeter.TwitterFetcher(tweepy.API(), self.username)
+        fetcher = tweeter.TwitterFetcher(tweepy.API(), self.username, None)
         self.assertEqual(fetcher.get_tweets(), [])
 
 
@@ -86,7 +86,7 @@ class TestTweeter(TestCase):
     def test_get_tweets__empty(self, mock_mentions):
         import tweepy
         mock_mentions.return_value = []
-        fetcher = tweeter.TwitterFetcher(tweepy.API(), self.username)
+        fetcher = tweeter.TwitterFetcher(tweepy.API(), self.username, None)
         self.assertEqual(fetcher.get_tweets(), [])
 
     @mock.patch('tweepy.API.mentions')
@@ -110,7 +110,7 @@ class TestTweeter(TestCase):
             return results
                 
         mock_mentions.side_effect = get_mock_tweet_results
-        fetcher = tweeter.TwitterFetcher(tweepy.API(), self.username)
+        fetcher = tweeter.TwitterFetcher(tweepy.API(), self.username, None)
         results = fetcher.get_tweets()
         self.assertEqual(len(results), 207)
         self.assertEqual(mock_mentions.call_count, 2)
@@ -121,7 +121,7 @@ class TestTweeter(TestCase):
         import StringIO, pickle
         mock_open.return_value = StringIO.StringIO(
             pickle.dumps({'last_processed_id': 99}))
-        builder = tweeter.RackMaker(settings, MockTweepyAPI())
+        builder = tweeter.RackMaker(settings, MockTweepyAPI(), None)
         self.assertEqual(builder.load_last_status(True), 99)
         self.assertEqual(builder.load_last_status(False), None)
 
@@ -134,7 +134,7 @@ class TestTweeter(TestCase):
         tweepy_mock = MockTweepyAPI()
         tweepy_mock.rate_limit_status.side_effect = tweepy.error.TweepError(
             "server down?")
-        builder = tweeter.RackMaker(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock, None)
         builder.main()
         self.assertEqual(tweepy_mock.get_tweets.call_count, 0)
 
@@ -143,15 +143,15 @@ class TestTweeter(TestCase):
         tweepy_mock = MockTweepyAPI()
         tweepy_mock.rate_limit_status.return_value = {
             'remaining_hits': 0, 'reset_time': 'tomorrow'}
-        builder = tweeter.RackMaker(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock, None)
         self.assertRaises(Exception, builder.main)
 
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackMaker.new_rack')
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackMaker.submit')
     @mock.patch('tweepy.API')
-    def test_main(self, MockTweepyAPI, mock_new_rack):
+    def test_main(self, MockTweepyAPI, mock_submit):
         tweepy_mock = MockTweepyAPI()
         user = settings.TWITTER_USER
-        builder = tweeter.RackMaker(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock, None)
         # The Mock API works OK but setting attrs is a bit tedious...
         # i wish you could pass a dict as the spec argument.
         status = mock.Mock(['id', 'text', 'user', 'created_at'])
@@ -165,8 +165,8 @@ class TestTweeter(TestCase):
         tweepy_mock.rate_limit_status.return_value = {'remaining_hits': 999}
 
         builder.main(False)
-        self.assertEqual(mock_new_rack.call_count, 1)
-        self.assertEqual(mock_new_rack.call_args,
+        self.assertEqual(mock_submit.call_count, 1)
+        self.assertEqual(mock_submit.call_args,
                          ((),
                           {'address': '13 thames st, brooklyn, ny',
                            'date': '1970-01-01 00:00:00',
@@ -175,58 +175,23 @@ class TestTweeter(TestCase):
                            'user': 'some twitter user',
                            }))
 
-    @mock.patch('tweepy.API')
-    def test_bounce(self, MockTweepyAPI):
-        tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackMaker(settings, tweepy_mock)
-        builder.bounce('somebody', 'an interesting message')
-        self.assertEqual(tweepy_mock.update_status.call_args,
-                         (('@somebody an interesting message',), {})) 
 
-    @mock.patch('tweepy.API')
-    def test_bounce__twitter_down(self, MockTweepyAPI):
-        tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackMaker(settings, tweepy_mock)
-        import tweepy
-        tweepy_mock.update_status.side_effect = tweepy.error.TweepError(
-            "server down?")
-        builder.bounce('somebody else', 'twitter down?')
-        # ... umm... nothing interesting to test here?
-
-    @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.send_mail')
-    @mock.patch('tweepy.API')
-    def test_bounce__notify_admin(self, MockTweepyAPI, mock_send_mail,
-                                  mock_info):
-        tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackMaker(settings, tweepy_mock)
-        message = 'a message!'
-        subject = 'this is not my day.'
-        builder.bounce('somebody', message, notify_admin=subject)
-        args = mock_send_mail.call_args
-        self.assertEqual(args[0][0], 'FixCity tweeter bounce! %s' % subject)
-        self.failUnless(args[0][1].count('Bouncing to: somebody'))
-
-        builder.bounce('somebody', message, notify_admin=subject,
-                       notify_admin_body='more body')
-        args = mock_send_mail.call_args
-        self.failUnless(args[0][1].count('more body'))
-
-
-
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.shorten_url')
     @mock.patch('logging.Logger.info')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.http')
     @mock.patch('tweepy.API')
-    def test_new_rack(self, MockTweepyAPI, mock_http, mock_info, mock_shorten):
+    def test_submit(self, MockTweepyAPI, mock_http, mock_info, mock_shorten, 
+                      mock_notifier):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackMaker(settings, tweepy_mock)
+        mock_notifier.twitter_api = tweepy_mock
+        builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
         class StubResponse:
             status = 200
         mock_http.request.return_value = (StubResponse(), '{"rack": 99}')
         mock_shorten.return_value = 'http://short_url/'
-        builder.new_rack('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
 
+        builder.submit('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
         self.assertEqual(mock_http.request.call_count, 1)
         args = mock_http.request.call_args
         self.assert_(args[0][0].startswith('http'))
@@ -245,60 +210,101 @@ class TestTweeter(TestCase):
         self.assertEqual(decoded['twitter_user'], 'USER')
 
         # We notified the user too.
-        self.assertEqual(tweepy_mock.update_status.call_count, 1)
+        self.assertEqual(mock_notifier.bounce.call_count, 1)
 
 
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.shorten_url')
     @mock.patch('logging.Logger.info')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.http')
     @mock.patch('tweepy.API')
-    def test_new_rack__errors(self, MockTweepyAPI, mock_http, mock_info,
-                              mock_shorten):
+    def test_submit__errors(self, MockTweepyAPI, mock_http, mock_info,
+                              mock_shorten, mock_notifier):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackMaker(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
         class StubResponse:
             status = 200
         mock_http.request.return_value = (StubResponse(), '{"errors": "any"}')
         mock_shorten.return_value = 'http://short_url/'
-        builder.new_rack('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
 
+        builder.submit('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
         self.assertEqual(mock_http.request.call_count, 1)
-
         # We notified the user too.
-        self.assertEqual(tweepy_mock.update_status.call_count, 1)
-        notify_args = tweepy_mock.update_status.call_args
-        self.assert_(notify_args[0][0].count('something went wrong'))
+        self.assertEqual(mock_notifier.bounce.call_count, 1)
+        notify_args, notify_kwargs = mock_notifier.bounce.call_args
+        self.assert_(notify_args[1].count('something went wrong'))
 
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.RackMaker.bounce')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.http')
     @mock.patch('tweepy.API')
-    def test_new_rack__server_error(self, MockTweepyAPI, mock_http,
-                                    mock_bounce, mock_info):
+    def test_submit__server_error(self, MockTweepyAPI, mock_http, mock_info,
+                                    mock_notifier):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackMaker(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
         class StubResponse:
             status = 500
         mock_http.request.return_value = (StubResponse(), 'content')
-        builder.new_rack('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
-        self.assertEqual(mock_bounce.call_count, 1)
+        builder.submit('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
+        self.assertEqual(mock_notifier.bounce.call_count, 1)
 
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.tweeter._notify_admin')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.http')
     @mock.patch('tweepy.API')
-    def test_new_rack__network_error(self, MockTweepyAPI, mock_http,
-                                     mock_notify_admin, mock_info):
+    def test_submit__network_error(self, MockTweepyAPI, mock_http, mock_info,
+                                     mock_notifier):
         tweepy_mock = MockTweepyAPI()
-        builder = tweeter.RackMaker(settings, tweepy_mock)
+        builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
         import socket
         mock_http.request.side_effect = socket.error('oops')
-        self.assertRaises(socket.error, builder.new_rack,
+        self.assertRaises(socket.error, builder.submit,
                           'TITLE', 'ADDRESS', 'USER', 'DATE', 123)
-        self.assertEqual(mock_notify_admin.call_count, 1)
+        self.assertEqual(mock_notifier.notify_admin.call_count, 1)
 
 
-class TestCommand(TestCase):
+class TestTweeterNotifier(TestCase):
+
+    @mock.patch('tweepy.API')
+    def test_bounce(self, MockTweepyAPI):
+        tweepy_mock = MockTweepyAPI()
+        notifier = tweeter.Notifier(tweepy_mock)
+        notifier.bounce('somebody', 'an interesting message')
+        self.assertEqual(tweepy_mock.update_status.call_args,
+                         (('@somebody an interesting message',), {})) 
+
+    @mock.patch('tweepy.API')
+    def test_bounce__twitter_down(self, MockTweepyAPI):
+        tweepy_mock = MockTweepyAPI()
+        notifier = tweeter.Notifier(tweepy_mock)
+        import tweepy
+        tweepy_mock.update_status.side_effect = tweepy.error.TweepError(
+            "server down?")
+        notifier.bounce('somebody else', 'twitter down?')
+        # ... umm... nothing interesting to test here?
+
+    @mock.patch('logging.Logger.info')
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.send_mail')
+    @mock.patch('tweepy.API')
+    def test_bounce__notify_admin(self, MockTweepyAPI, mock_send_mail,
+                                  mock_info):
+        tweepy_mock = MockTweepyAPI()
+        notifier = tweeter.Notifier(tweepy_mock)
+        message = 'a message!'
+        subject = 'this is not my day.'
+        notifier.bounce('somebody', message, notify_admin=subject)
+        args = mock_send_mail.call_args
+        self.assertEqual(args[0][0], 'FixCity tweeter bounce! %s' % subject)
+        self.failUnless(args[0][1].count('Bouncing to: somebody'))
+
+        notifier.bounce('somebody', message, notify_admin=subject,
+                       notify_admin_body='more body')
+        args = mock_send_mail.call_args
+        self.failUnless(args[0][1].count('more body'))
+
+
+
+class TestTweeterCommand(TestCase):
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.api_factory')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.RackMaker.main')

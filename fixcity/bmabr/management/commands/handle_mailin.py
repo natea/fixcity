@@ -18,26 +18,24 @@ You will want a cron job or something that cleans up old files in the
 from datetime import datetime
 from optparse import make_option
 
-from poster.encode import multipart_encode
 from stat import S_IRWXU, S_IRWXG, S_IRWXO
+
 import email.Header
-import httplib2
 import mimetypes
 import os
 import re
-import socket
 import sys
 import tempfile
 import time
 import traceback
 import unicodedata
-import urlparse
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
-from django.utils import simplejson as json
 
+from utils import FixcityHttp
+ 
 from django.conf import settings
 
 logger = settings.LOGGER
@@ -384,10 +382,13 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
 class RackMaker(object):
 
-    def __init__(self, notifier, options):
+    # XXX Maybe this class doesn't need to exist anymore?
+    # FixcityHttp might be directly usable for email, twitter, etc?
+
+    def __init__(self, notifier, options, error_adapter):
         self.notifier = notifier
         self.options = options
-        self.error_adapter = ErrorAdapter()
+        self.error_adapter = error_adapter
 
     def submit(self, data):
         """
@@ -397,100 +398,13 @@ class RackMaker(object):
             logger.debug("would save rack here")
             return
 
-        photos = data.pop('photos', {})
-        url = settings.RACK_POSTING_URL
-        result = self.do_post_json(url, data)
-        if not result:
-            return
+        return FixcityHttp(self.notifier, self.error_adapter).submit(data)
 
-        # Lots of rack-specific stuff below
-        parsed_url = urlparse.urlparse(url)
-        base_url = parsed_url[0] + '://' + parsed_url[1]
-        photo_url = base_url + result['photo_post_url']
-        rack_url = base_url + result['rack_url']
-        rack_user = result.get('user')
+    def do_post(self, *args, **kw):
+        return FixcityHttp(self.notifier, self.error_adapter).do_post(*args, **kw)
 
-        if photos.has_key('photo'):
-            datagen, headers = multipart_encode({'photo': photos['photo']})
-            # httplib2 doesn't like poster's integer headers.
-            headers['Content-Length'] = str(headers['Content-Length'])
-            body = ''.join([s for s in datagen])
-            result = self.do_post(photo_url, body, headers=headers)
-            logger.debug("result from photo upload:")
-            logger.debug(result)
-        # XXX need to add links per
-        # https://projects.openplans.org/fixcity/wiki/EmailText
-        # ... will need an HTML version.
-        reply = "Thanks for your rack suggestion!\n\n"
-        reply += "You must verify that your spot meets DOT requirements\n"
-        reply += "before we can submit it.\n"
-        reply += "To verify, go to: %(rack_url)sedit/\n\n"
-        if not rack_user:
-            # XXX Create an inactive account and add a confirmation link.
-            reply += "To create an account, go to %(base_url)s/accounts/register/ .\n\n"
-        reply += "Thanks!\n\n"
-        reply += "- The Open Planning Project & Livable Streets Initiative\n"
-        reply = reply % locals()
-        self.notifier.reply("FixCity Rack Confirmation", reply)
-
-
-    def do_post(self, url, body, headers={}):
-        """POST the body to the URL. Returns response body
-        on success, or None on failure.
-        """
-        error_subject = "Unsuccessful Rack Request"
-        http = httplib2.Http()
-        try:
-            response, content = http.request(url, 'POST',
-                                             headers=headers,
-                                             body=body)
-        except (socket.error, AttributeError):
-            # it's absurd that we have to catch AttributeError here,
-            # but apparently that's what httplib2 0.5.0 raises because
-            # the socket ends up being None. Lame!
-            # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
-            logger.debug('Server down? %r' % url)
-            self.notifier.bounce(
-                error_subject,
-                self.error_adapter.server_error_retry,
-                notify_admin='Server down??'
-                )
-            return None
-
-        logger.debug("server %r responded with:\n%s" % (url, content))
-
-        if response.status >= 500:
-            err_msg = self.error_adapter.server_error_permanent
-            self.notifier.bounce(
-                error_subject, err_msg, notify_admin='500 Server error',
-                notify_admin_body=content)
-            return None
-        return content
-
-    def do_post_json(self, url, data, headers={}):
-        """Post some data as json to the given URL.
-        Expect the response to be JSON data, and return it decoded.
-
-        If the server detects validation errors, it should include an
-        'errors' key in the response data.  The value for 'errors'
-        should be a mapping of field name to a list of error strings
-        for that field.  (Not coincidentally, django forms yield
-        validation errors in that format.)
-        """
-        body = json.dumps(data)
-        error_subject = "Unsuccessful Rack Request"
-        headers.setdefault('Content-type', 'application/json')
-        response_body = self.do_post(url, body, headers)
-        if response_body:
-            result = json.loads(response_body)
-        else:
-            result = {}
-        if result.has_key('errors'):
-            err_msg = self.error_adapter.validation_errors(result['errors'])
-            self.notifier.bounce(error_subject, err_msg)
-            result = None
-        return result
-
+    def do_post_json(self, *args, **kw):
+        return FixcityHttp(self.notifier, self.error_adapter).do_post_json(*args, **kw)
 
 
 class Notifier(object):
@@ -542,6 +456,25 @@ class Notifier(object):
             # email might be so fubar that we can't even get addresses from it?
             from_addr = 'racks@fixcity.org'
         send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
+
+    def on_submit_success(self, vars):
+        """
+        Callback that the submitter will use to notify the user of success.
+        """
+        # XXX need to add links per
+        # https://projects.openplans.org/fixcity/wiki/EmailText
+        # ... will need an HTML version.
+        reply = "Thanks for your rack suggestion!\n\n"
+        reply += "You must verify that your spot meets DOT requirements\n"
+        reply += "before we can submit it.\n"
+        reply += "To verify, go to: %(rack_url)sedit/\n\n"
+        if not vars['rack_user']:
+            # XXX Create an inactive account and add a confirmation link.
+            reply += "To create an account, go to %(base_url)s/accounts/register/ .\n\n"
+        reply += "Thanks!\n\n"
+        reply += "- OpenPlans & Livable Streets Initiative\n"
+        reply = reply % vars
+        self.reply("FixCity Rack Confirmation", reply)
 
 
 class ErrorAdapter(object):
