@@ -401,9 +401,11 @@ class RackMaker(object):
         return FixcityHttp(self.notifier, self.error_adapter).submit(data)
 
     def do_post(self, *args, **kw):
+        # XXX unused?
         return FixcityHttp(self.notifier, self.error_adapter).do_post(*args, **kw)
 
     def do_post_json(self, *args, **kw):
+        # XXX unused?
         return FixcityHttp(self.notifier, self.error_adapter).do_post_json(*args, **kw)
 
 

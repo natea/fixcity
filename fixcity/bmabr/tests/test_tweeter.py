@@ -7,6 +7,8 @@ from django.test import TransactionTestCase, TestCase
 from django.utils import simplejson as json
 
 from fixcity.bmabr.management.commands import tweeter
+from fixcity.bmabr.management.commands.utils import SERVER_TEMP_FAILURE, SERVER_ERROR
+
 from fixcity.bmabr.models import Source
 from fixcity.bmabr.views import SRID
 
@@ -175,31 +177,29 @@ class TestTweeter(TestCase):
                            'user': 'some twitter user',
                            }))
 
-
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.shorten_url')
     @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.http')
+    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
     @mock.patch('tweepy.API')
-    def test_submit(self, MockTweepyAPI, mock_http, mock_info, mock_shorten, 
+    def test_submit(self, MockTweepyAPI, mock_do_post, mock_info, mock_shorten, 
                       mock_notifier):
         tweepy_mock = MockTweepyAPI()
         mock_notifier.twitter_api = tweepy_mock
         builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
-        class StubResponse:
-            status = 200
-        mock_http.request.return_value = (StubResponse(), '{"rack": 99}')
+        mock_do_post.return_value = '''{
+            "user": "bob",
+            "photo_post_url": "/photos/",
+            "rack_url": "/racks/1"
+            }'''
         mock_shorten.return_value = 'http://short_url/'
 
         builder.submit('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
-        self.assertEqual(mock_http.request.call_count, 1)
-        args = mock_http.request.call_args
+        self.assertEqual(mock_do_post.call_count, 1)
+        args = mock_do_post.call_args
         self.assert_(args[0][0].startswith('http'))
-        self.assertEqual(args[0][1], 'POST')
-        self.assertEqual(args[1]['headers'],
-                         {'Content-type': 'application/json'})
         from django.utils import simplejson as json
-        decoded = json.loads(args[1]['body'])
+        decoded = json.loads(args[0][1])
         self.assertEqual(decoded['address'], 'ADDRESS')
         self.assertEqual(decoded['date'], 'DATE')
         self.assertEqual(decoded['description'], '')
@@ -210,57 +210,55 @@ class TestTweeter(TestCase):
         self.assertEqual(decoded['twitter_user'], 'USER')
 
         # We notified the user too.
-        self.assertEqual(mock_notifier.bounce.call_count, 1)
+        self.assertEqual(mock_notifier.on_submit_success.call_count, 1)
+        vars = mock_notifier.on_submit_success.call_args[0][0]
+        self.assert_(vars.has_key('rack_url'))
+        self.assert_(vars.has_key('rack_user'))
 
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.shorten_url')
     @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.http')
+    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
     @mock.patch('tweepy.API')
-    def test_submit__errors(self, MockTweepyAPI, mock_http, mock_info,
-                              mock_shorten, mock_notifier):
+    def test_submit__user_errors(self, MockTweepyAPI, mock_do_post, mock_info,
+                                 mock_shorten, mock_notifier):
         tweepy_mock = MockTweepyAPI()
         builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
-        class StubResponse:
-            status = 200
-        mock_http.request.return_value = (StubResponse(), '{"errors": "any"}')
+        mock_do_post.return_value = '{"errors": {"any": "thing at all"}}'
         mock_shorten.return_value = 'http://short_url/'
 
         builder.submit('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
-        self.assertEqual(mock_http.request.call_count, 1)
-        # We notified the user too.
+        self.assertEqual(mock_do_post.call_count, 1)
+        # We notified the user of failure.
         self.assertEqual(mock_notifier.bounce.call_count, 1)
         notify_args, notify_kwargs = mock_notifier.bounce.call_args
         self.assert_(notify_args[1].count('something went wrong'))
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.http')
+    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
     @mock.patch('tweepy.API')
-    def test_submit__server_error(self, MockTweepyAPI, mock_http, mock_info,
-                                    mock_notifier):
+    def test_submit__server_error(self, MockTweepyAPI, mock_do_post, mock_info,
+                                  mock_notifier):
         tweepy_mock = MockTweepyAPI()
         builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
-        class StubResponse:
-            status = 500
-        mock_http.request.return_value = (StubResponse(), 'content')
+        mock_do_post.return_value = SERVER_ERROR
         builder.submit('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
         self.assertEqual(mock_notifier.bounce.call_count, 1)
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.tweeter.http')
+    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
     @mock.patch('tweepy.API')
-    def test_submit__network_error(self, MockTweepyAPI, mock_http, mock_info,
-                                     mock_notifier):
+    def test_submit__network_error(self, MockTweepyAPI, mock_do_post, mock_info,
+                                   mock_notifier):
         tweepy_mock = MockTweepyAPI()
         builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
-        import socket
-        mock_http.request.side_effect = socket.error('oops')
-        self.assertRaises(socket.error, builder.submit,
-                          'TITLE', 'ADDRESS', 'USER', 'DATE', 123)
+        mock_do_post.return_value = SERVER_TEMP_FAILURE
+        builder.submit('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
         self.assertEqual(mock_notifier.notify_admin.call_count, 1)
+        self.assertEqual(mock_notifier.bounce.call_count, 1)
 
 
 class TestTweeterNotifier(TestCase):

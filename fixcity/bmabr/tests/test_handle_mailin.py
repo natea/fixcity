@@ -3,6 +3,7 @@
 from django.test import TestCase
 
 from fixcity.bmabr.management.commands import handle_mailin
+from fixcity.bmabr.management.commands.utils import SERVER_TEMP_FAILURE, SERVER_ERROR
 
 
 import mock
@@ -95,6 +96,7 @@ class TestMailinRackMaker(TestCase):
     @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
     def test_do_post__500_error(self, mock_notifier, mock_debug,  mock_request,
                                 mock_response):
+        # XXX testing some innards of utils.FixcityHttp; factor out test?
         response = mock_response()
         notifier = mock_notifier()
         response.status = 500
@@ -102,7 +104,7 @@ class TestMailinRackMaker(TestCase):
         maker = handle_mailin.RackMaker(notifier, {}, handle_mailin.ErrorAdapter())
 
         content = maker.do_post('http://example.com', 'test body')
-        self.assertEqual(content, None)
+        self.assertEqual(content, SERVER_ERROR)
         self.assertEqual(notifier.bounce.call_count, 1)
         bounce_kwargs = notifier.bounce.call_args[-1]
         self.assertEqual(bounce_kwargs, {'notify_admin_body': 'hello POST world', 
@@ -115,13 +117,14 @@ class TestMailinRackMaker(TestCase):
     @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
     def test_do_post__socket_error(self, mock_notifier, mock_debug,
                                    mock_request):
+        # XXX testing some innards of utils.FixcityHttp; factor out test?
         import socket
         notifier = mock_notifier()
         mock_request.side_effect = socket.error("kaboom")
         maker = handle_mailin.RackMaker(notifier, {}, handle_mailin.ErrorAdapter())
 
         content = maker.do_post('http://example.com', 'test body')
-        self.assertEqual(content, None)
+        self.assertEqual(content, SERVER_TEMP_FAILURE)
         self.assertEqual(notifier.bounce.call_count, 1)
         bounce_kwargs = notifier.bounce.call_args[-1]
         self.assertEqual(bounce_kwargs, {'notify_admin': 'Server down??'})
@@ -175,15 +178,14 @@ class TestMailinRackMaker(TestCase):
     @mock.patch('httplib2.Http.request')
     @mock.patch('logging.Logger.debug')
     @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
-    def test_submit__no_result(self, mock_notifier, mock_debug,
-                               mock_request, mock_response):
+    def test_submit__successful_empty_result(self, mock_notifier, mock_debug,
+                                             mock_request, mock_response):
         response = mock_response()
         notifier = mock_notifier()
         response.status = 200
-        mock_request.return_value = (response, '')
+        mock_request.return_value = (response, '{}')
         maker = handle_mailin.RackMaker(notifier, {}, handle_mailin.ErrorAdapter())
-
-        self.assertEqual(maker.submit({}), None)
+        self.assertEqual(maker.submit({}), {})
 
     @mock.patch('httplib2.Response')
     @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')

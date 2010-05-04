@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
 from fixcity.bmabr.fixcity_bitly import shorten_url
+from utils import SERVER_TEMP_FAILURE, SERVER_ERROR
 import httplib2
 import logging
 import pickle
@@ -18,6 +19,7 @@ import tweepy
 logger = logging.getLogger('tweeter')
 
 http = httplib2.Http()
+
 
 class TwitterFetcher(object):
 
@@ -70,10 +72,6 @@ class TwitterFetcher(object):
 
 class RackMaker(object):
 
-    general_error_message = ("Thanks, but something went wrong! Check the "
-                             "format e.g. http://bit.ly/76pXSi and try again "
-                             "or @ us w/questions.")
-
     def __init__(self, config, api, notifier):
         self.url = config.RACK_POSTING_URL
         self.username = config.TWITTER_USER
@@ -81,6 +79,7 @@ class RackMaker(object):
         self.twitter_api = api
         self.status_file_path = config.TWITTER_STATUS_PATH
         self.notifier = notifier
+        self.error_adapter = ErrorAdapter()
 
     def load_last_status(self, recent_only):
         last_processed_id = None
@@ -120,14 +119,21 @@ class RackMaker(object):
             parsed = twit.parse(tweet)
 
             user = tweet.user.screen_name
+            success_info = None
             if parsed:
-                self.submit(**parsed)
+                submit_result = self.submit(**parsed)
             else:
                 self.notifier.bounce(user, self.general_error_message)
             # XXX We should lock the status file in case this script
             # ever takes so long that it overlaps with the next
             # run. Or something.
-            self.save_last_status(tweet.id)
+            if submit_result is SERVER_TEMP_FAILURE:
+                continue
+            elif submit_result is SERVER_ERROR:
+                # No point retrying.
+                self.save_last_status(tweet.id)
+            else:
+                self.save_last_status(tweet.id)
                     
             # TODO: batch-notification of success to cut down on posts:
             # if success, maintain a queue of recently successful posts,
@@ -153,6 +159,7 @@ class RackMaker(object):
 
 
     def submit(self, title, address, user, date, tweetid):
+        
         url = self.url
         # XXX UGH, copy-pasted from handle_mailin.py. Refactoring time!
         description = ''
@@ -165,49 +172,53 @@ class RackMaker(object):
                     address=address,
                     geocoded=0,  # Do server-side geocoding.
                     )
+        from utils import FixcityHttp
+        result = FixcityHttp(self.notifier, self.error_adapter).submit(data)
+        return result
 
-        jsondata = json.dumps(data)
-        headers = {'Content-type': 'application/json'}
+    # def NOTHINGXXX():
+    #     jsondata = json.dumps(data)
+    #     headers = {'Content-type': 'application/json'}
 
-        error_subject = "Unsuccessful bikerack request"
-        try:
-            response, content = http.request(url, 'POST',
-                                             headers=headers,
-                                             body=jsondata)
-        except socket.error:
-            self.notifier.notify_admin(
-                'Server down??',
-                'Could not post some tweets, fixcity.org dead?')
-            # Important to re-raise here, to prevent storing this tweet's
-            # ID as the last successfully processed one.
-            raise
+    #     error_subject = "Unsuccessful bikerack request"
+    #     try:
+    #         response, content = http.request(url, 'POST',
+    #                                          headers=headers,
+    #                                          body=jsondata)
+    #     except socket.error:
+    #         self.notifier.notify_admin(
+    #             'Server down??',
+    #             'Could not post some tweets, fixcity.org dead?')
+    #         # Important to re-raise here, to prevent storing this tweet's
+    #         # ID as the last successfully processed one.
+    #         raise
 
-        if response.status >= 500:
-            # XXX give a URL to a help page w/ more info?
-            # Maybe even a private URL to a page w/ this user's exact errors?
-            err_msg = self.general_error_message
-            self.notifier.bounce(
-                user, err_msg,
-                notify_admin='fixcity: twitter: 500 Server error',
-                notify_admin_body=content)
-            return
-        result = json.loads(content)
-        if result.has_key('errors'):
-            err_msg = self.general_error_message
-    ##         errors = adapt_errors(result['errors'])
-    ##         for k, v in sorted(errors.items()):
-    ##             err_msg += "%s: %s\n" % (k, '; '.join(v))
+    #     if response.status >= 500:
+    #         # XXX give a URL to a help page w/ more info?
+    #         # Maybe even a private URL to a page w/ this user's exact errors?
+    #         err_msg = self.general_error_message
+    #         self.notifier.bounce(
+    #             user, err_msg,
+    #             notify_admin='fixcity: twitter: 500 Server error',
+    #             notify_admin_body=content)
+    #         return
+    #     result = json.loads(content)
+    #     if result.has_key('errors'):
+    #         err_msg = self.general_error_message
+    # ##         errors = adapt_errors(result['errors'])
+    # ##         for k, v in sorted(errors.items()):
+    # ##             err_msg += "%s: %s\n" % (k, '; '.join(v))
             
-            self.notifier.bounce(user, err_msg)
-            return
-        else:
-            # XXX handle errors from bitly.
-            shortened_url = shorten_url('%s%s/' % (self.url, result['rack']))
-            self.notifier.bounce(
-                user,
-                "Thank you! Here's the rack request %s; now you can register "
-                "to verify your request "
-                % shortened_url)
+    #         self.notifier.bounce(user, err_msg)
+    #         return
+    #     else:
+    #         # XXX handle errors from bitly.
+    #         shortened_url = shorten_url('%s%s/' % (self.url, result['rack']))
+    #         self.notifier.bounce(
+    #             user,
+    #             "Thank you! Here's the rack request %s; now you can register "
+    #             "to verify your request "
+    #             % shortened_url)
 
 
 class Notifier(object):
@@ -252,9 +263,34 @@ class Notifier(object):
 
 
 class ErrorAdapter(object):
-    def adapt_errors(self, adict):
-        # XXX TODO
-        return adict
+
+    general_error_message = ("Thanks, but something went wrong! Check the "
+                             "format e.g. http://bit.ly/76pXSi and try again "
+                             "or @ us w/questions.")
+    
+    def validation_errors(self, errordict):
+        """Convert the form field names in the errors dict into things
+        that are meaningful via the twitter workflow, and adjust error
+        messages appropriately too.
+        """
+        return self.general_error_message
+
+    # XXX FIX THIS FOR TWITTER
+    server_error_retry = (
+        "Thanks for trying to suggest a rack.\n"
+        "We are unfortunately experiencing some difficulties at the\n"
+        "moment -- please try again in an hour or two!")
+
+    # XXX FIX THIS FOR TWITTER
+    server_error_permanent = (
+        "Thanks for trying to suggest a rack.\n"
+        "We are unfortunately experiencing some difficulties at the\n"
+        "moment. Please check to make sure your subject line follows\n"
+        "this format exactly:\n\n"
+        "  Key Foods @224 McGuinness Blvd Brooklyn NY\n\n"
+        "If you've made an error, please resubmit. Otherwise we'll\n"
+        "look into this issue and get back to you as soon as we can.\n"
+        )
 
 
 def api_factory(settings):
@@ -270,4 +306,5 @@ class Command(BaseCommand):
         api = api_factory(settings)
         notifier = Notifier(api)
         builder = RackMaker(settings, api, notifier)
+        # XXX handle unexpected errors
         builder.main(recent_only=True)
