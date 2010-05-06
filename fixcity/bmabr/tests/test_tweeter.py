@@ -236,29 +236,35 @@ class TestTweeter(TestCase):
         self.assert_(notify_args[1].count('something went wrong'))
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
-    @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
+    @mock.patch('httplib2.Http.request')
+    @mock.patch('logging.Logger.debug') 
     @mock.patch('tweepy.API')
-    def test_submit__server_error(self, MockTweepyAPI, mock_do_post, mock_info,
-                                  mock_notifier):
+    def test_submit__server_error(self, MockTweepyAPI, mock_debug,
+                                  mock_request, mock_notifier):
         tweepy_mock = MockTweepyAPI()
         builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
-        mock_do_post.return_value = SERVER_ERROR
+        import socket
+        mock_request.side_effect = socket.error('kapow')
         builder.submit('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
         self.assertEqual(mock_notifier.bounce.call_count, 1)
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
-    @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
+    @mock.patch('httplib2.Response')
+    @mock.patch('httplib2.Http.request')
+    @mock.patch('logging.Logger.debug')
     @mock.patch('tweepy.API')
-    def test_submit__network_error(self, MockTweepyAPI, mock_do_post, mock_info,
-                                   mock_notifier):
+    def test_submit__network_error(self, MockTweepyAPI, mock_debug,
+                                   mock_request, mock_response, mock_notifier):
         tweepy_mock = MockTweepyAPI()
+        mock_response.status = 500
+        mock_request.return_value = (mock_response, 'blah')
         builder = tweeter.RackMaker(settings, tweepy_mock, mock_notifier)
-        mock_do_post.return_value = SERVER_TEMP_FAILURE
         builder.submit('TITLE', 'ADDRESS', 'USER', 'DATE', 123)
-        self.assertEqual(mock_notifier.notify_admin.call_count, 1)
         self.assertEqual(mock_notifier.bounce.call_count, 1)
+        kwargs = mock_notifier.bounce.call_args[1]
+        self.assertEqual(kwargs,
+                         {'notify_admin_body': 'blah',
+                          'notify_admin': '500 Server error'})
 
 
 class TestTweeterNotifier(TestCase):

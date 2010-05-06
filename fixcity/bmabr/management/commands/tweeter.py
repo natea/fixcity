@@ -161,7 +161,6 @@ class RackMaker(object):
     def submit(self, title, address, user, date, tweetid):
         
         url = self.url
-        # XXX UGH, copy-pasted from handle_mailin.py. Refactoring time!
         description = ''
         data = dict(source_type='twitter',
                     twitter_user=user,
@@ -234,12 +233,13 @@ class Notifier(object):
         If notify_admin_body is non-empty, it will be added to the body
         sent to the admin.
         """
-        message = '@%s %s' % (user, message)
-        message = message[:140]
-        try:
-            self.twitter_api.update_status(message) # XXX add in_reply_to_id?
-        except tweepy.error.TweepError:
-            pass
+        if message is not None:
+            message = '@%s %s' % (user, message)
+            message = message[:140]
+            try:
+                self.twitter_api.update_status(message) # XXX add in_reply_to_id?
+            except tweepy.error.TweepError:
+                pass
 
         if notify_admin:
             # XXX include the original tweet?
@@ -275,22 +275,9 @@ class ErrorAdapter(object):
         """
         return self.general_error_message
 
-    # XXX FIX THIS FOR TWITTER
-    server_error_retry = (
-        "Thanks for trying to suggest a rack.\n"
-        "We are unfortunately experiencing some difficulties at the\n"
-        "moment -- please try again in an hour or two!")
+    server_error_retry = None  # don't bother the user, we'll just retry.
 
-    # XXX FIX THIS FOR TWITTER
-    server_error_permanent = (
-        "Thanks for trying to suggest a rack.\n"
-        "We are unfortunately experiencing some difficulties at the\n"
-        "moment. Please check to make sure your subject line follows\n"
-        "this format exactly:\n\n"
-        "  Key Foods @224 McGuinness Blvd Brooklyn NY\n\n"
-        "If you've made an error, please resubmit. Otherwise we'll\n"
-        "look into this issue and get back to you as soon as we can.\n"
-        )
+    server_error_permanent = general_error_message
 
 
 def api_factory(settings):
