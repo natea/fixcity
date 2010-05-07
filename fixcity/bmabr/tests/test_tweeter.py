@@ -7,7 +7,6 @@ from django.test import TransactionTestCase, TestCase
 from django.utils import simplejson as json
 
 from fixcity.bmabr.management.commands import tweeter
-from fixcity.bmabr.management.commands.utils import SERVER_TEMP_FAILURE, SERVER_ERROR
 
 from fixcity.bmabr.models import Source
 from fixcity.bmabr.views import SRID
@@ -305,7 +304,16 @@ class TestTweeterNotifier(TestCase):
                        notify_admin_body='more body')
         args = mock_send_mail.call_args
         self.failUnless(args[0][1].count('more body'))
-
+    
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.shorten_url')
+    @mock.patch('tweepy.API')
+    def test_on_submit_success(self, MockTweepyAPI, mock_shorten_url):
+        mock_shorten_url.return_value = 'http://xyz'
+        tweepy_mock = MockTweepyAPI()
+        notifier = tweeter.Notifier(tweepy_mock)
+        vars = {'rack_user': 'joeshmoe', 'rack_url': 'http://foo/racks/1'}
+        notifier.on_submit_success(vars)
+        self.assertEqual(tweepy_mock.update_status.call_count, 1)
 
 
 class TestTweeterCommand(TestCase):

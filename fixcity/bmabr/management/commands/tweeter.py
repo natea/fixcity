@@ -175,50 +175,6 @@ class RackMaker(object):
         result = FixcityHttp(self.notifier, self.error_adapter).submit(data)
         return result
 
-    # def NOTHINGXXX():
-    #     jsondata = json.dumps(data)
-    #     headers = {'Content-type': 'application/json'}
-
-    #     error_subject = "Unsuccessful bikerack request"
-    #     try:
-    #         response, content = http.request(url, 'POST',
-    #                                          headers=headers,
-    #                                          body=jsondata)
-    #     except socket.error:
-    #         self.notifier.notify_admin(
-    #             'Server down??',
-    #             'Could not post some tweets, fixcity.org dead?')
-    #         # Important to re-raise here, to prevent storing this tweet's
-    #         # ID as the last successfully processed one.
-    #         raise
-
-    #     if response.status >= 500:
-    #         # XXX give a URL to a help page w/ more info?
-    #         # Maybe even a private URL to a page w/ this user's exact errors?
-    #         err_msg = self.general_error_message
-    #         self.notifier.bounce(
-    #             user, err_msg,
-    #             notify_admin='fixcity: twitter: 500 Server error',
-    #             notify_admin_body=content)
-    #         return
-    #     result = json.loads(content)
-    #     if result.has_key('errors'):
-    #         err_msg = self.general_error_message
-    # ##         errors = adapt_errors(result['errors'])
-    # ##         for k, v in sorted(errors.items()):
-    # ##             err_msg += "%s: %s\n" % (k, '; '.join(v))
-            
-    #         self.notifier.bounce(user, err_msg)
-    #         return
-    #     else:
-    #         # XXX handle errors from bitly.
-    #         shortened_url = shorten_url('%s%s/' % (self.url, result['rack']))
-    #         self.notifier.bounce(
-    #             user,
-    #             "Thank you! Here's the rack request %s; now you can register "
-    #             "to verify your request "
-    #             % shortened_url)
-
 
 class Notifier(object):
 
@@ -260,6 +216,15 @@ class Notifier(object):
         send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
         # person receiving cron messages will get stdout
         logger.info(body)
+
+    def on_submit_success(self, vars):
+        user = vars['rack_user']
+        shortened_url = shorten_url(vars['rack_url']) 
+        self.bounce(
+            user,
+            "Thank you! Here's the rack request %s; now you can register "
+            "to verify your request "
+            % shortened_url)
 
 
 class ErrorAdapter(object):
