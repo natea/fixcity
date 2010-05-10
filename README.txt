@@ -1,4 +1,4 @@
-BikeRaction aka BuildMeABikeRack aka Fixcity
+FixCity aka BikeRaction aka BuildMeABikeRack
 ============================================
 
 This is the code behind http://fixcity.org/ , a site that aims to help
@@ -6,8 +6,7 @@ get bike racks built in New York City, by allowing ordinary people to
 combine efforts and get bulk orders submitted to the NYC Department of
 Transportation.
 
-It was built by TOPP Labs, a division of The Open Planning Project,
-http://openplans.org.
+It was built by OpenPlans, http://openplans.org.
 
 The canonical source code is at http://github.com/slinkp/fixcity
 
