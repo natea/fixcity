@@ -79,7 +79,6 @@ class RackMaker(object):
         self.twitter_api = api
         self.status_file_path = config.TWITTER_STATUS_PATH
         self.notifier = notifier
-        self.error_adapter = ErrorAdapter()
 
     def load_last_status(self, recent_only):
         last_processed_id = None
@@ -123,18 +122,22 @@ class RackMaker(object):
             if parsed:
                 submit_result = self.submit(**parsed)
             else:
-                self.notifier.bounce(user, self.general_error_message)
+                self.notifier.on_parse_error(user)
+                self.save_last_status(tweet.id)
+                continue
             # XXX We should lock the status file in case this script
             # ever takes so long that it overlaps with the next
             # run. Or something.
             if submit_result is SERVER_TEMP_FAILURE:
+                # Leave it in the queue for the next run.
                 continue
             elif submit_result is SERVER_ERROR:
                 # No point retrying.
                 self.save_last_status(tweet.id)
+                self.notifier.on_server_error(user)
             else:
                 self.save_last_status(tweet.id)
-                    
+
             # TODO: batch-notification of success to cut down on posts:
             # if success, maintain a queue of recently successful posts,
             # and every N minutes:
@@ -159,7 +162,7 @@ class RackMaker(object):
 
 
     def submit(self, title, address, user, date, tweetid):
-        
+
         url = self.url
         description = ''
         data = dict(source_type='twitter',
@@ -172,7 +175,7 @@ class RackMaker(object):
                     geocoded=0,  # Do server-side geocoding.
                     )
         from utils import FixcityHttp
-        result = FixcityHttp(self.notifier, self.error_adapter).submit(data)
+        result = FixcityHttp(self.notifier, ErrorAdapter()).submit(data)
         return result
 
 
@@ -218,13 +221,21 @@ class Notifier(object):
         logger.info(body)
 
     def on_submit_success(self, vars):
-        user = vars['rack_user']
-        shortened_url = shorten_url(vars['rack_url']) 
+        # XXX feels like the expected data should be cleaner.
+        user = vars['data']['twitter_user']
+        shortened_url = shorten_url(vars['rack_url'])
         self.bounce(
             user,
             "Thank you! Here's the rack request %s; now you can register "
             "to verify your request "
             % shortened_url)
+
+    def on_parse_error(self, user):
+        return self.bounce(user, ErrorAdapter().general_error_message)
+
+    def on_server_error(self, user):
+        # XXX make this part of the API and have FixcityHttp call it?
+        return self.bounce(user, ErrorAdapter().server_error_permanent)
 
 
 class ErrorAdapter(object):
@@ -232,7 +243,7 @@ class ErrorAdapter(object):
     general_error_message = ("Thanks, but something went wrong! Check the "
                              "format e.g. http://bit.ly/76pXSi and try again "
                              "or @ us w/questions.")
-    
+
     def validation_errors(self, errordict):
         """Convert the form field names in the errors dict into things
         that are meaningful via the twitter workflow, and adjust error
@@ -242,7 +253,9 @@ class ErrorAdapter(object):
 
     server_error_retry = None  # don't bother the user, we'll just retry.
 
-    server_error_permanent = general_error_message
+    server_error_permanent = ("Thanks, but something went wrong! "
+                              "Server error on our side, we'll look into it. "
+                              "Retrying probably wouldn't help.")
 
 
 def api_factory(settings):

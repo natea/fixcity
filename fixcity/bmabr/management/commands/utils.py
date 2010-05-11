@@ -27,6 +27,10 @@ class FixcityHttp(object):
         url = settings.RACK_POSTING_URL
         result = self.do_post_json(url, data)
         if not result:
+            # XXX return what?
+            return
+
+        if result.has_key('errors'):
             return result
 
         # Lots of rack-specific stuff below
@@ -41,15 +45,16 @@ class FixcityHttp(object):
             # httplib2 doesn't like poster's integer headers.
             headers['Content-Length'] = str(headers['Content-Length'])
             body = ''.join([s for s in datagen])
-            result = self.do_post(photo_url, body, headers=headers)
+            status, result = self.do_post(photo_url, body, headers=headers)
             logger.debug("result from photo upload:")
-            logger.debug(result)
+            logger.debug("%s, %s" % (status, result))
 
         self.notifier.on_submit_success(locals())
 
     def do_post_json(self, url, data, headers={}):
         """Post some data as json to the given URL.
         Expect the response to be JSON data, and return it decoded.
+        If there are errors, return None.
 
         If the server detects validation errors, it should include an
         'errors' key in the response data.  The value for 'errors'
@@ -58,25 +63,42 @@ class FixcityHttp(object):
         validation errors in that format.)
         """
         body = json.dumps(data)
-        error_subject = "Unsuccessful Rack Request"
+        err_subject = "Unsuccessful Rack Request"
         headers.setdefault('Content-type', 'application/json')
-        response_body = self.do_post(url, body, headers)
+        status, response_body = self.do_post(url, body, headers)
+        if status != 200:
+            # errors should've already been handled by do_post
+            return None
         if isinstance(response_body, basestring):
-            result = json.loads(response_body)
+#             response_body = response_body.strip()
+#             if not response_body:
+#                 err_msg = self.error_adapter.server_error_permanent
+#                 logger.error("Got empty body from %s; response code %d"
+#                              % (url, status))
+#                 self.notifier.bounce(err_subject, err_msg)
+#                 return None
+            try:
+                result = json.loads(response_body)
+            except ValueError:
+                logger.error("Got unparseable body. Response code %d. Body:\n%s"
+                             % (status, response_body))
+                self.notifier.bounce(err_subject,
+                                     self.error_adapter.server_error_permanent)
+                return None
             if result.has_key('errors'):
                 err_msg = self.error_adapter.validation_errors(result['errors'])
-                self.notifier.bounce(error_subject, err_msg)
-                result = None
+                self.notifier.bounce(err_subject, err_msg)
         else:
+            # XXX shouldn't get a non-string here, handle this error
             result = response_body
         return result
 
 
     def do_post(self, url, body, headers={}):
-        """POST the body to the URL. Returns response body
-        on success, or None on failure.
+        """POST the body to the URL. Returns (status, response body)
+        on success, or error placeholders on failure.
         """
-        error_subject = "Unsuccessful Rack Request"
+        err_subject = "Unsuccessful Rack Request"
         http = httplib2.Http()
         try:
             response, content = http.request(url, 'POST',
@@ -89,21 +111,20 @@ class FixcityHttp(object):
             # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
             logger.debug('Server down? %r' % url)
             self.notifier.bounce(
-                error_subject,
+                err_subject,
                 self.error_adapter.server_error_retry,
                 notify_admin='Server down??'
                 )
-            return SERVER_TEMP_FAILURE
+            return None, None
 
-        logger.debug("server %r responded with:\n%s" % (url, content))
+        logger.debug("server %r responded with %s:\n%s" % (
+            url, response.status, content))
 
         if response.status >= 500:
             err_msg = self.error_adapter.server_error_permanent
-            # XXX we should do something with the body from the server,
-            # duh.
             self.notifier.bounce(
-                error_subject, err_msg, notify_admin='500 Server error',
+                err_subject, err_msg, notify_admin='500 Server error',
                 notify_admin_body=content)
-            return SERVER_ERROR
-        return content
+
+        return response.status, content
 

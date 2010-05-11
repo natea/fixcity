@@ -5,7 +5,7 @@ typically via stdin.
 To hook this up with postfix, set up an alias along the lines of:
 (yes, this is an annoyingly long command):
 
-myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin -u http://MYDOMAIN/racks/ --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
+myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
 
 You will want a cron job or something that cleans up old files in the
 --debug-dir directory (defaults to your TMP directory).
@@ -46,8 +46,6 @@ class EmailParser(object):
 
     def __init__(self, notifier, options):
         self.notifier = notifier
-        self.error_adapter = ErrorAdapter()
-
         self.options = options
 
         # Some useful mail constants
@@ -385,10 +383,9 @@ class RackMaker(object):
     # XXX Maybe this class doesn't need to exist anymore?
     # FixcityHttp might be directly usable for email, twitter, etc?
 
-    def __init__(self, notifier, options, error_adapter):
+    def __init__(self, notifier, options):
         self.notifier = notifier
         self.options = options
-        self.error_adapter = error_adapter
 
     def submit(self, data):
         """
@@ -397,16 +394,16 @@ class RackMaker(object):
         if self.options.get('dry-run'):
             logger.debug("would save rack here")
             return
+        fixcity_http = FixcityHttp(self.notifier, ErrorAdapter())
+        fixcity_http.submit(data)
 
-        return FixcityHttp(self.notifier, self.error_adapter).submit(data)
+#     def do_post(self, *args, **kw):
+#         # XXX unused?
+#         return FixcityHttp(self.notifier, self.error_adapter).do_post(*args, **kw)
 
-    def do_post(self, *args, **kw):
-        # XXX unused?
-        return FixcityHttp(self.notifier, self.error_adapter).do_post(*args, **kw)
-
-    def do_post_json(self, *args, **kw):
-        # XXX unused?
-        return FixcityHttp(self.notifier, self.error_adapter).do_post_json(*args, **kw)
+#     def do_post_json(self, *args, **kw):
+#         # XXX unused?
+#         return FixcityHttp(self.notifier, self.error_adapter).do_post_json(*args, **kw)
 
 
 class Notifier(object):

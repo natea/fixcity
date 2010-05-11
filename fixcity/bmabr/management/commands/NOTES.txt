@@ -14,10 +14,14 @@ need a trivial factory API for getting errors:
  maybe something like:
 
   error_adapter = ErrorAdapterFactory('twitter', 'fixcity') # meh.
-  output = error_adapter.validation_error(field, orig_error_message)
+  output = error_adapter.validation_errors(errors_dict)
   output = error_adapter.server_error(response_code, response_msg)
   output = error_adapter.exception(orig_exception)
 
+ And maybe those should even be hidden by the Notifier's API? eg.
+  notifier.on_server_error(...)
+  notifier.on_user_error(...)
+  notifier.on_success(...)
 
 SERVER
 =======
