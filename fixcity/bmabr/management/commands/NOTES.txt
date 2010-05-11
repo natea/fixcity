@@ -1,3 +1,32 @@
+Twitter-specific stuff
+=======================
+
+ TODO: batch-notification of success to cut down on posts:
+ if success, maintain a queue of recently successful posts,
+ and every N minutes:
+ - start with a template success message like
+ 'thanks for rack suggestions, see http://bit.ly/XXX'
+ - while chars < 140:
+ -   pop a suggestion from the queue
+ -   prepend @username to the message
+ -   append &id=X to a url like http://fixcity.org/racks/by_id?...
+ -   ... this would be a new view that shows all the id'd racks.
+ - build a bit.ly version of the URL and insert it in the message
+ - tweet the message
+ - repeat until we're out of users, or hit our API limit
+ ... or something.
+
+ XXX Also batch error messages? We might get a bunch if the server
+ goes down and cron keeps running this script...
+
+ XXX Or maybe we need to keep some state about tweets
+ we couldn't process in case we want to retry them
+ and notify user if they eventually succeed?
+
+
+General stuff
+================
+
 XXX Error handling:
 
 need a trivial factory API for getting errors:
@@ -64,6 +93,7 @@ General pattern, maybe a Template Method kind of thing:
        - email admins
   - save ID as last processed item, unless server is down
     (or some other retryable failure)
+
 
 
 

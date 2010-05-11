@@ -144,12 +144,14 @@ class TestTweeter(TestCase):
         builder = tweeter.RackMaker(settings, tweepy_mock, None)
         self.assertRaises(Exception, builder.main)
 
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier.notify_admin')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.RackMaker.submit')
     @mock.patch('tweepy.API')
-    def test_main(self, MockTweepyAPI, mock_submit):
+    def test_main(self, MockTweepyAPI, mock_submit, mock_notify_admin):
+        from fixcity.bmabr.management.commands.tweeter import Notifier
         tweepy_mock = MockTweepyAPI()
         user = settings.TWITTER_USER
-        builder = tweeter.RackMaker(settings, tweepy_mock, None)
+        builder = tweeter.RackMaker(settings, tweepy_mock, Notifier(tweepy_mock))
         # The Mock API works OK but setting attrs is a bit tedious...
         # i wish you could pass a dict as the spec argument.
         status = mock.Mock(['id', 'text', 'user', 'created_at'])

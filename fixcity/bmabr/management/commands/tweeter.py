@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from fixcity.bmabr.fixcity_bitly import shorten_url
-from utils import SERVER_TEMP_FAILURE, SERVER_ERROR
 import httplib2
 import logging
 import pickle
@@ -19,6 +18,10 @@ logger = logging.getLogger('tweeter')
 
 http = httplib2.Http()
 
+SUCCESS = 'success'
+PARSE_ERROR = 'parse error'
+SERVER_ERROR = 'server error'
+SERVER_TEMP_FAILURE = 'server temp failure'
 
 class TwitterFetcher(object):
 
@@ -123,40 +126,21 @@ class RackMaker(object):
             if parsed:
                 submit_result = self.submit(**parsed)
             else:
-                self.notifier.on_parse_error(user)
-                self.save_last_status(tweet.id)
-                continue
-            if submit_result is SERVER_TEMP_FAILURE:
-                # Leave it in the queue for the next run.
-                continue
-            elif submit_result is SERVER_ERROR:
-                # No point retrying.
-                self.save_last_status(tweet.id)
-                self.notifier.on_server_error(user)
-            else:
-                self.save_last_status(tweet.id)
+                self.notifier.on_parse_error(user)            
+            #     self.save_last_status(tweet.id)
+            #     continue
+            # if submit_result is SERVER_TEMP_FAILURE:
+            #     # Leave it in the queue for the next run.
+            #     self.notifier.on_server_failure(user)
+            #     continue
+            # elif submit_result is SERVER_ERROR:
+            #     # No point retrying.
+            #     self.notifier.on_server_error(user)
+            # else:
+            #     self.notifier.on_submit_success(user) # XXX FixcityHttp does this already
 
-            # TODO: batch-notification of success to cut down on posts:
-            # if success, maintain a queue of recently successful posts,
-            # and every N minutes:
-            # - start with a template success message like
-            # 'thanks for rack suggestions, see http://bit.ly/XXX'
-            # - while chars < 140:
-            # -   pop a suggestion from the queue
-            # -   prepend @username to the message
-            # -   append &id=X to a url like http://fixcity.org/racks/by_id?...
-            # -   ... this would be a new view that shows all the id'd racks.
-            # - build a bit.ly version of the URL and insert it in the message
-            # - tweet the message
-            # - repeat until we're out of users, or hit our API limit
-            # ... or something.
-
-            # XXX Also batch error messages? We might get a bunch if the server
-            # goes down and cron keeps running this script...
-
-            # XXX Or maybe we need to keep some state about tweets
-            # we couldn't process in case we want to retry them
-            # and notify user if they eventually succeed?
+            if self.notifier.last_status in (SERVER_ERROR, SUCCESS):
+                self.save_last_status(tweet.id)
 
 
     def submit(self, title, address, user, date, tweetid):
@@ -181,6 +165,7 @@ class Notifier(object):
 
     def __init__(self, twitter_api):
         self.twitter_api = twitter_api
+        self.last_status = None
 
     def bounce(self, user, message, notify_admin='', notify_admin_body=''):
         """Bounce a message, with additional info for explanation.
@@ -220,6 +205,7 @@ class Notifier(object):
 
     def on_submit_success(self, vars):
         # XXX feels like the expected data should be cleaner.
+        self.last_status = SUCCESS
         user = vars['data']['twitter_user']
         shortened_url = shorten_url(vars['rack_url'])
         self.bounce(
@@ -229,11 +215,17 @@ class Notifier(object):
             % shortened_url)
 
     def on_parse_error(self, user):
+        self.last_status = PARSE_ERROR
         return self.bounce(user, ErrorAdapter().general_error_message)
 
     def on_server_error(self, user):
         # XXX make this part of the API and have FixcityHttp call it?
+        self.last_status = SERVER_ERROR
         return self.bounce(user, ErrorAdapter().server_error_permanent)
+
+    def on_server_temp_failure(self, user):
+        # Don't bother the user, we'll just retry.
+        self.last_status = SERVER_TEMP_FAILURE
 
 
 class ErrorAdapter(object):
