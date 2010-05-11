@@ -52,7 +52,7 @@ class FixcityHttp(object):
         self.notifier.on_submit_success(locals())
 
     def do_post_json(self, url, data, headers={}):
-        """Post some data as json to the given URL.
+        """Post a data structure (to be encoded as JSON) to the given URL.
         Expect the response to be JSON data, and return it decoded.
         If there are errors, return None.
 
@@ -79,8 +79,7 @@ class FixcityHttp(object):
                                      self.error_adapter.server_error_permanent)
                 return None
             if result.has_key('errors'):
-                err_msg = self.error_adapter.validation_errors(result['errors'])
-                self.notifier.bounce(err_subject, err_msg)
+                self.notifier.on_user_error(data, result['errors'])
         else:
             # XXX shouldn't get a non-string here, handle this error
             result = response_body

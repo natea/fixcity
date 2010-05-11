@@ -267,6 +267,39 @@ class TestTweeterNotifier(TestCase):
         self.assertEqual(tweepy_mock.update_status.call_count, 1)
 
 
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier.bounce')
+    @mock.patch('tweepy.API')
+    def test_on_user_error(self, MockTweepyAPI, mock_bounce):
+        tweepy_mock = MockTweepyAPI()
+        notifier = tweeter.Notifier(tweepy_mock)
+        notifier.on_user_error({'user': 'joe'}, {'title': 'required'})
+        self.assertEqual(mock_bounce.call_count, 1)
+
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier.bounce')
+    @mock.patch('tweepy.API')
+    def test_on_parse_error(self, MockTweepyAPI, mock_bounce):
+        tweepy_mock = MockTweepyAPI()
+        notifier = tweeter.Notifier(tweepy_mock)
+        notifier.on_parse_error('joe')
+        self.assertEqual(mock_bounce.call_count, 1)
+
+    @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier.bounce')
+    @mock.patch('tweepy.API')
+    def test_on_server_error(self, MockTweepyAPI, mock_bounce):
+        tweepy_mock = MockTweepyAPI()
+        notifier = tweeter.Notifier(tweepy_mock)
+        notifier.on_server_error('joe')
+        self.assertEqual(mock_bounce.call_count, 1)
+
+    @mock.patch('tweepy.API')
+    def test_on_server_temp_failure(self, MockTweepyAPI):
+        tweepy_mock = MockTweepyAPI()
+        notifier = tweeter.Notifier(tweepy_mock)
+        notifier.on_server_temp_failure('joe')
+        from fixcity.bmabr.management.commands.tweeter import SERVER_TEMP_FAILURE
+        self.assertEqual(notifier.last_status, SERVER_TEMP_FAILURE)
+
+
 class TestTweeterCommand(TestCase):
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.api_factory')

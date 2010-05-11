@@ -113,11 +113,10 @@ class TestFixcityHttp(TestCase):
             {'errors': {'title': ['This field is required.']}})
         mock_request.return_value = (response, error_body)
         http = FixcityHttp(notifier, StubErrorAdapter())
-
         content = http.do_post_json('http://example.com',
-                                     "{'some key': 'some value'}")
+                                     {'user': 'bob', 'some key': 'some value'})
         self.assertEqual(content, json.loads(error_body))
-        self.assertEqual(notifier.bounce.call_count, 1)
+        self.assertEqual(notifier.on_user_error.call_count, 1)
 
 
     @mock.patch('httplib2.Response')
@@ -199,11 +198,12 @@ class TestFixcityHttp(TestCase):
         mock_do_post.return_value = (200, '{"errors": {"any": "thing at all"}}')
         mock_shorten.return_value = 'http://short_url/'
 
-        http.submit({'title': 'TITLE', 'address': 'ADDRESS',
-                     'twitter_user': 'USER', 'date':  'DATE',
-                     'twitter_id': 123})
+        data = {'title': 'TITLE', 'address': 'ADDRESS', 'twitter_user': 'USER',
+                'date':  'DATE', 'twitter_id': 123}
+        http.submit(data)
         self.assertEqual(mock_do_post.call_count, 1)
         # We notified the user of failure.
-        self.assertEqual(mock_notifier.bounce.call_count, 1)
-        notify_args, notify_kwargs = mock_notifier.bounce.call_args
-        self.assertEqual(notify_args[1], 'Validation error')
+        self.assertEqual(mock_notifier.on_user_error.call_count, 1)
+        notify_args, notify_kwargs = mock_notifier.on_user_error.call_args
+        self.assertEqual(notify_args[0], data)
+        self.assertEqual(notify_args[1], {"any": "thing at all"})

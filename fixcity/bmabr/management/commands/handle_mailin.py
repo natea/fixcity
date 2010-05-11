@@ -468,6 +468,10 @@ class Notifier(object):
         reply = reply % vars
         self.reply("FixCity Rack Confirmation", reply)
 
+    def on_user_error(self, user, errors):
+        err_msg = self.error_adapter.validation_errors(errors)
+        return self.bounce( "Unsuccessful Rack Request", err_msg)
+
 
 class ErrorAdapter(object):
     

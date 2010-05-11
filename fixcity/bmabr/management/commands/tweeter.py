@@ -22,6 +22,8 @@ SUCCESS = 'success'
 PARSE_ERROR = 'parse error'
 SERVER_ERROR = 'server error'
 SERVER_TEMP_FAILURE = 'server temp failure'
+USER_ERROR = 'user error'
+
 
 class TwitterFetcher(object):
 
@@ -217,6 +219,10 @@ class Notifier(object):
     def on_parse_error(self, user):
         self.last_status = PARSE_ERROR
         return self.bounce(user, ErrorAdapter().general_error_message)
+
+    def on_user_error(self, data, errors):
+        self.last_status = USER_ERROR
+        return self.bounce(data['user'], ErrorAdapter().validation_errors(errors))
 
     def on_server_error(self, user):
         # XXX make this part of the API and have FixcityHttp call it?
