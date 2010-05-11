@@ -1,8 +1,5 @@
 from django.test import TestCase
-
 from fixcity.bmabr.management.commands import handle_mailin
-from fixcity.bmabr.management.commands.utils import SERVER_TEMP_FAILURE, SERVER_ERROR
-
 
 import mock
 import os
@@ -71,49 +68,10 @@ class TestMailin(TestCase):
 
 class TestMailinRackMaker(TestCase):
 
-
     @mock.patch('logging.Logger.debug')
     def test_submit__dry_run(self, mock_debug):
         maker = handle_mailin.RackMaker(None, {'dry-run': True})
         self.assertEqual(maker.submit({}), None)
-
-    @mock.patch('httplib2.Response')
-    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
-    @mock.patch('logging.Logger.debug')
-    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
-    def test_submit__with_photos_and_user(self, mock_notifier, mock_debug,
-                                          mock_do_post,
-                                          mock_response):
-        # XXX Most of this functionality is now in utils. MOve test 
-        # somewhere more appropriate.
-
-        # Mock typically uses side_effect() to specify multiple return
-        # value; clunky API but works fine.
-        do_post_return_values = [
-            (200, '''{
-            "user": "bob",
-            "photo_post_url": "/photos/",
-            "rack_url": "/racks/1"
-            }'''),
-            (200, 'OK')]
-        def side_effect(*args, **kw):
-            return do_post_return_values.pop(0)
-        mock_do_post.side_effect = side_effect
-        notifier = mock_notifier()
-        maker = handle_mailin.RackMaker(notifier, {})
-        # Mock photo needs to be just file-like enough.
-        mock_photo_file = mock.Mock()
-        mock_photo_file.name = 'foo.jpg'
-        mock_photo_file.fileno.side_effect = AttributeError()
-        mock_photo_file.tell.return_value = 12345
-        mock_photo_file.read.return_value = ''
-
-        self.assertEqual(maker.submit({'photos': {'photo': mock_photo_file}}),
-                         None)
-        self.assertEqual(notifier.on_submit_success.call_count, 1)
-        vars = notifier.on_submit_success.call_args[0][0]
-        self.assert_(vars.has_key('rack_url'))
-        self.assert_(vars.has_key('rack_user'))
 
 
 class TestMailinNotifier(TestCase):

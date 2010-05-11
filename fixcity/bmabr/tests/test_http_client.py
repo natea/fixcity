@@ -1,9 +1,5 @@
-# XXX I feel kinda icky importing settings during test
-
 from django.test import TestCase
-
 from fixcity.bmabr.management.commands.utils import FixcityHttp
-from fixcity.bmabr.management.commands.utils import SERVER_TEMP_FAILURE, SERVER_ERROR
 
 import mock
 import os
@@ -164,9 +160,6 @@ class TestFixcityHttp(TestCase):
     def test_submit__with_photos_and_user(self, mock_notifier, mock_debug,
                                           mock_do_post,
                                           mock_response):
-        # XXX Most of this functionality is now in utils. MOve test 
-        # somewhere more appropriate.
-
         # Mock typically uses side_effect() to specify multiple return
         # value; clunky API but works fine.
         do_post_return_values = [

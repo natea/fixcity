@@ -1,13 +1,10 @@
 # XXX I feel kinda icky importing settings during test
 from django.conf import settings
-
 from django.contrib.gis.geos.point import Point
 from django.core.cache import cache
 from django.test import TransactionTestCase, TestCase
 from django.utils import simplejson as json
-
 from fixcity.bmabr.management.commands import tweeter
-
 from fixcity.bmabr.models import Source
 from fixcity.bmabr.views import SRID
 
