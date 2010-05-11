@@ -6,7 +6,6 @@ from datetime import datetime
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
-from django.utils import simplejson as json
 from fixcity.bmabr.fixcity_bitly import shorten_url
 from utils import SERVER_TEMP_FAILURE, SERVER_ERROR
 import httplib2
@@ -94,10 +93,12 @@ class RackMaker(object):
         return last_processed_id
 
     def save_last_status(self, last_processed_id):
+        # XXX We should lock the status file in case this script
+        # ever takes so long that it overlaps with the next
+        # run. Or something.
         statusfile = open(self.status_file_path, 'w')
         pickle.dump({'last_processed_id': last_processed_id}, statusfile)
         statusfile.close()
-        
         
     def main(self, recent_only=True):
         last_processed_id = self.load_last_status(recent_only)
@@ -125,9 +126,6 @@ class RackMaker(object):
                 self.notifier.on_parse_error(user)
                 self.save_last_status(tweet.id)
                 continue
-            # XXX We should lock the status file in case this script
-            # ever takes so long that it overlaps with the next
-            # run. Or something.
             if submit_result is SERVER_TEMP_FAILURE:
                 # Leave it in the queue for the next run.
                 continue

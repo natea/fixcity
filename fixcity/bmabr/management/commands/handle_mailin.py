@@ -381,7 +381,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 class RackMaker(object):
 
     # XXX Maybe this class doesn't need to exist anymore?
-    # FixcityHttp might be directly usable for email, twitter, etc?
+    # it's pretty thin now...
 
     def __init__(self, notifier, options):
         self.notifier = notifier
@@ -397,13 +397,6 @@ class RackMaker(object):
         fixcity_http = FixcityHttp(self.notifier, ErrorAdapter())
         fixcity_http.submit(data)
 
-#     def do_post(self, *args, **kw):
-#         # XXX unused?
-#         return FixcityHttp(self.notifier, self.error_adapter).do_post(*args, **kw)
-
-#     def do_post_json(self, *args, **kw):
-#         # XXX unused?
-#         return FixcityHttp(self.notifier, self.error_adapter).do_post_json(*args, **kw)
 
 
 class Notifier(object):
@@ -468,7 +461,7 @@ class Notifier(object):
         reply += "before we can submit it.\n"
         reply += "To verify, go to: %(rack_url)sedit/\n\n"
         if not vars['rack_user']:
-            # XXX Create an inactive account and add a confirmation link.
+            # XXX TODO: Create an inactive account and add a confirmation link.
             reply += "To create an account, go to %(base_url)s/accounts/register/ .\n\n"
         reply += "Thanks!\n\n"
         reply += "- OpenPlans & Livable Streets Initiative\n"

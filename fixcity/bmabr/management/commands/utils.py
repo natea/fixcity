@@ -70,13 +70,6 @@ class FixcityHttp(object):
             # errors should've already been handled by do_post
             return None
         if isinstance(response_body, basestring):
-#             response_body = response_body.strip()
-#             if not response_body:
-#                 err_msg = self.error_adapter.server_error_permanent
-#                 logger.error("Got empty body from %s; response code %d"
-#                              % (url, status))
-#                 self.notifier.bounce(err_subject, err_msg)
-#                 return None
             try:
                 result = json.loads(response_body)
             except ValueError:
