@@ -394,9 +394,8 @@ class RackMaker(object):
         if self.options.get('dry-run'):
             logger.debug("would save rack here")
             return
-        fixcity_http = FixcityHttp(self.notifier, ErrorAdapter())
+        fixcity_http = FixcityHttp(self.notifier)
         fixcity_http.submit(data)
-
 
 
 class Notifier(object):

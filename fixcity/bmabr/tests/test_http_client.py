@@ -7,22 +7,6 @@ import os
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
-class StubErrorAdapter:
-
-    general_error_message = "General Error"
-
-    def validation_errors(self, errordict):
-        """Convert the form field names in the errors dict into things
-        that are meaningful via the twitter workflow, and adjust error
-        messages appropriately too.
-        """
-        return "Validation error"
-
-    server_error_retry = "Server Error Retry"
-
-    server_error_permanent = "Server Error Permanent"
-
-
 class TestFixcityHttp(TestCase):
 
     @mock.patch('httplib2.Response')
@@ -35,7 +19,7 @@ class TestFixcityHttp(TestCase):
         notifier = mock_notifier()
         response.status = 200
         mock_request.return_value = (response, 'hello POST world')
-        http = FixcityHttp(mock_notifier(), StubErrorAdapter())
+        http = FixcityHttp(mock_notifier())
         status, content = http.do_post('http://example.com', 'test body')
         self.assertEqual(content, 'hello POST world')
         self.assertEqual(status, 200)
@@ -52,7 +36,7 @@ class TestFixcityHttp(TestCase):
         notifier = mock_notifier()
         response.status = 500
         mock_request.return_value = (response, 'hello POST world')
-        http = FixcityHttp(notifier, StubErrorAdapter())
+        http = FixcityHttp(notifier)
 
         status, content = http.do_post('http://example.com', 'test body')
         self.assertEqual(status, 500)
@@ -69,7 +53,7 @@ class TestFixcityHttp(TestCase):
         import socket
         notifier = mock_notifier()
         mock_request.side_effect = socket.error("kaboom")
-        http = FixcityHttp(notifier, StubErrorAdapter())
+        http = FixcityHttp(notifier)
         status, content = http.do_post('http://example.com', 'test body')
         self.assertEqual(status, None)
         self.assertEqual(content, None)
@@ -85,7 +69,7 @@ class TestFixcityHttp(TestCase):
         response.status = 200
         notifier = mock_notifier()
         mock_request.return_value = (response, '{"foo": "bar"}')
-        http = FixcityHttp(notifier, StubErrorAdapter())
+        http = FixcityHttp(notifier)
 
         content = http.do_post_json('http://example.com',
                                     "{'some key': 'some value'}")
@@ -102,7 +86,7 @@ class TestFixcityHttp(TestCase):
         response.status = 200
         notifier = mock_notifier()
         mock_request.return_value = (response, 'this is not my beautiful JSON')
-        http = FixcityHttp(notifier, StubErrorAdapter())
+        http = FixcityHttp(notifier)
 
         content = http.do_post_json('http://example.com',
                                     "{'some key': 'some value'}")
@@ -117,7 +101,7 @@ class TestFixcityHttp(TestCase):
                                       mock_do_post):
         notifier = mock_notifier()
         mock_do_post.return_value = (200, 12345)
-        http = FixcityHttp(notifier, StubErrorAdapter())
+        http = FixcityHttp(notifier)
         self.assertRaises(AssertionError,
                           http.do_post_json, 'http://example.com',
                           "{'some key': 'some value'}")
@@ -136,7 +120,7 @@ class TestFixcityHttp(TestCase):
         error_body = json.dumps(
             {'errors': {'title': ['This field is required.']}})
         mock_request.return_value = (response, error_body)
-        http = FixcityHttp(notifier, StubErrorAdapter())
+        http = FixcityHttp(notifier)
         content = http.do_post_json('http://example.com',
                                      {'user': 'bob', 'some key': 'some value'})
         self.assertEqual(content, json.loads(error_body))
@@ -153,7 +137,7 @@ class TestFixcityHttp(TestCase):
         notifier = mock_notifier()
         response.status = 200
         mock_request.return_value = (response, '{}')
-        http = FixcityHttp(notifier, StubErrorAdapter())
+        http = FixcityHttp(notifier)
         self.assertEqual(http.submit({}), None)
         self.assertEqual(notifier.on_submit_success.call_count, 0)
 
@@ -166,7 +150,7 @@ class TestFixcityHttp(TestCase):
                                    mock_request, mock_response, mock_notifier):
         mock_response.status = 500
         mock_request.return_value = (mock_response, 'blah')
-        http = FixcityHttp(mock_notifier, StubErrorAdapter())
+        http = FixcityHttp(mock_notifier)
         data = {}
         http.submit(data)
         self.assertEqual(mock_notifier.on_server_error.call_count, 1)
@@ -194,7 +178,7 @@ class TestFixcityHttp(TestCase):
             return do_post_return_values.pop(0)
         mock_do_post.side_effect = side_effect
         notifier = mock_notifier()
-        http = FixcityHttp(notifier, StubErrorAdapter())
+        http = FixcityHttp(notifier)
 
         # Mock photo needs to be just file-like enough.
         mock_photo_file = mock.Mock()
@@ -216,7 +200,7 @@ class TestFixcityHttp(TestCase):
     @mock.patch('fixcity.bmabr.management.commands.http.FixcityHttp.do_post')
     def test_submit__user_errors(self, mock_do_post, mock_info,
                                  mock_shorten, mock_notifier):
-        http = FixcityHttp(mock_notifier, StubErrorAdapter())
+        http = FixcityHttp(mock_notifier)
         mock_do_post.return_value = (200, '{"errors": {"any": "thing at all"}}')
         mock_shorten.return_value = 'http://short_url/'
 

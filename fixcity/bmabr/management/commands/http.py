@@ -10,9 +10,8 @@ logger = settings.LOGGER
 
 class FixcityHttp(object):
 
-    def __init__(self, notifier, error_adapter):
+    def __init__(self, notifier):
         self.notifier = notifier
-        self.error_adapter = error_adapter
 
     def submit(self, data):
         photos = data.pop('photos', {})

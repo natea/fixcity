@@ -145,7 +145,7 @@ class RackMaker(object):
                     address=address,
                     geocoded=0,  # Do server-side geocoding.
                     )
-        result = FixcityHttp(self.notifier, ErrorAdapter()).submit(data)
+        result = FixcityHttp(self.notifier).submit(data)
         return result
 
 
