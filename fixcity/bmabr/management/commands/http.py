@@ -7,14 +7,6 @@ import urlparse
 
 logger = settings.LOGGER
 
-class _False(object):
-    def __len__(self):
-        return 0
-
-SERVER_TEMP_FAILURE = _False()
-
-SERVER_ERROR = _False()
-
 
 class FixcityHttp(object):
 
@@ -69,20 +61,17 @@ class FixcityHttp(object):
         if status != 200:
             # errors should've already been handled by do_post
             return None
-        if isinstance(response_body, basestring):
-            try:
-                result = json.loads(response_body)
-            except ValueError:
-                logger.error("Got unparseable body. Response code %d. Body:\n%s"
-                             % (status, response_body))
-                self.notifier.bounce(err_subject,
-                                     self.error_adapter.server_error_permanent)
-                return None
-            if result.has_key('errors'):
-                self.notifier.on_user_error(data, result['errors'])
-        else:
-            # XXX shouldn't get a non-string here, handle this error
-            result = response_body
+        assert isinstance(response_body, basestring), "Got non-string body %r even though response code was 200." % response_body
+        try:
+            result = json.loads(response_body)
+        except ValueError:
+            logger.error("Got unparseable body. Response code %d. Body:\n%s"
+                         % (status, response_body))
+            self.notifier.bounce(err_subject,
+                                 self.error_adapter.server_error_permanent)
+            return None
+        if result.has_key('errors'):
+            self.notifier.on_user_error(data, result['errors'])
         return result
 
 

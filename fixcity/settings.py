@@ -199,17 +199,20 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 # NB, Django 1.2 or later should include built-in code coverage support.
 TEST_RUNNER='fixcity.testrunner.test_runner_with_coverage'
 # Which modules to enable for code coverage reports.
-COVERAGE_MODULES = ['fixcity.bmabr.views', 'fixcity.bmabr.models',
-                    'fixcity.bmabr.management.commands.tweeter',
-                    'fixcity.bmabr.management.commands.handle_mailin',
-                    'fixcity.bmabr.management.commands.seeclickfix',
-                    'fixcity.bmabr.fixcity_bitly',
-                    'fixcity.exif_utils',
-                    'fixcity.flash_messages',
-                    'fixcity.bmabr.templatetags.recaptcha_tags',
-                    'fixcity.bmabr.templatetags.google_analytics',
-                    'fixcity.bmabr.bulkorder',
-                    ]
+COVERAGE_MODULES = [
+    'fixcity.bmabr.bulkorder',
+    'fixcity.bmabr.fixcity_bitly',
+    'fixcity.bmabr.management.commands.handle_mailin',
+    'fixcity.bmabr.management.commands.http',
+    'fixcity.bmabr.management.commands.seeclickfix',
+    'fixcity.bmabr.management.commands.tweeter',
+    'fixcity.bmabr.models',
+    'fixcity.bmabr.templatetags.google_analytics',
+    'fixcity.bmabr.templatetags.recaptcha_tags',
+    'fixcity.bmabr.views',
+    'fixcity.exif_utils',
+    'fixcity.flash_messages',
+    ]
 
 try:
     POSTGIS_TEMPLATE = config.get('db', 'POSTGIS_TEMPLATE')

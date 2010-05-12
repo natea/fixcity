@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from fixcity.bmabr.fixcity_bitly import shorten_url
-import httplib2
+from http import FixcityHttp
 import logging
 import pickle
 import socket
@@ -15,8 +15,6 @@ import tweepy
 
 
 logger = logging.getLogger('tweeter')
-
-http = httplib2.Http()
 
 SUCCESS = 'success'
 PARSE_ERROR = 'parse error'
@@ -147,7 +145,6 @@ class RackMaker(object):
                     address=address,
                     geocoded=0,  # Do server-side geocoding.
                     )
-        from utils import FixcityHttp
         result = FixcityHttp(self.notifier, ErrorAdapter()).submit(data)
         return result
 

@@ -1,5 +1,5 @@
 from django.test import TestCase
-from fixcity.bmabr.management.commands.utils import FixcityHttp
+from fixcity.bmabr.management.commands.http import FixcityHttp
 
 import mock
 import os
@@ -82,8 +82,8 @@ class TestFixcityHttp(TestCase):
     def test_do_post_json(self, mock_notifier, mock_debug, mock_request,
                           mock_response):
         response = mock_response()
-        notifier = mock_notifier()
         response.status = 200
+        notifier = mock_notifier()
         mock_request.return_value = (response, '{"foo": "bar"}')
         http = FixcityHttp(notifier, StubErrorAdapter())
 
@@ -91,6 +91,36 @@ class TestFixcityHttp(TestCase):
                                     "{'some key': 'some value'}")
         self.assertEqual(content, {'foo': 'bar'})
         self.failIf(notifier.bounce.call_count)
+
+    @mock.patch('httplib2.Response')
+    @mock.patch('httplib2.Http.request')
+    @mock.patch('logging.Logger._log')
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
+    def test_do_post_json__parse_error(self, mock_notifier, mock_log, 
+                                       mock_request, mock_response):
+        response = mock_response()
+        response.status = 200
+        notifier = mock_notifier()
+        mock_request.return_value = (response, 'this is not my beautiful JSON')
+        http = FixcityHttp(notifier, StubErrorAdapter())
+
+        content = http.do_post_json('http://example.com',
+                                    "{'some key': 'some value'}")
+        self.assertEqual(content, None)
+        self.assertEqual(notifier.bounce.call_count, 1)
+        self.assertEqual(mock_log.call_count, 2)
+
+    @mock.patch('fixcity.bmabr.management.commands.http.FixcityHttp.do_post')
+    @mock.patch('logging.Logger._log')
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
+    def test_do_post_json__non_string(self, mock_notifier, mock_log, 
+                                      mock_do_post):
+        notifier = mock_notifier()
+        mock_do_post.return_value = (200, 12345)
+        http = FixcityHttp(notifier, StubErrorAdapter())
+        self.assertRaises(AssertionError,
+                          http.do_post_json, 'http://example.com',
+                          "{'some key': 'some value'}")
 
 
     @mock.patch('httplib2.Response')
@@ -145,7 +175,7 @@ class TestFixcityHttp(TestCase):
 
 
     @mock.patch('httplib2.Response')
-    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
+    @mock.patch('fixcity.bmabr.management.commands.http.FixcityHttp.do_post')
     @mock.patch('logging.Logger.debug')
     @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
     def test_submit__with_photos_and_user(self, mock_notifier, mock_debug,
@@ -183,7 +213,7 @@ class TestFixcityHttp(TestCase):
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.shorten_url')
     @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
+    @mock.patch('fixcity.bmabr.management.commands.http.FixcityHttp.do_post')
     def test_submit__user_errors(self, mock_do_post, mock_info,
                                  mock_shorten, mock_notifier):
         http = FixcityHttp(mock_notifier, StubErrorAdapter())

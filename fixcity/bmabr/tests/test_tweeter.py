@@ -178,7 +178,7 @@ class TestTweeter(TestCase):
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.shorten_url')
     @mock.patch('logging.Logger.info')
-    @mock.patch('fixcity.bmabr.management.commands.utils.FixcityHttp.do_post')
+    @mock.patch('fixcity.bmabr.management.commands.http.FixcityHttp.do_post')
     @mock.patch('tweepy.API')
     def test_submit(self, MockTweepyAPI, mock_do_post, mock_info, mock_shorten, 
                       mock_notifier):

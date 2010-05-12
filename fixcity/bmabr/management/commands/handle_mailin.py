@@ -34,7 +34,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 
-from utils import FixcityHttp
+from http import FixcityHttp
  
 from django.conf import settings
 
