@@ -481,7 +481,7 @@ class Notifier(object):
     def on_server_error(self, content):
         self.bounce("Unsuccessful Rack Request",
                     self.error_adapter.server_error_permanent,
-                    notify_admin='500 Server error',
+                    notify_admin='Server error?',
                     notify_admin_body=content)
 
 

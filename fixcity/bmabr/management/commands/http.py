@@ -65,10 +65,10 @@ class FixcityHttp(object):
         try:
             result = json.loads(response_body)
         except ValueError:
-            logger.error("Got unparseable body. Response code %d. Body:\n%s"
-                         % (status, response_body))
-            self.notifier.bounce(err_subject,
-                                 self.error_adapter.server_error_permanent)
+            error = "Got unparseable body. Response code %d. Body:\n%s" % (
+                status, response_body)
+            logger.error(error)
+            self.notifier.on_server_error(error)
             return None
         if result.has_key('errors'):
             self.notifier.on_user_error(data, result['errors'])

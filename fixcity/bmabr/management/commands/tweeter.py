@@ -213,7 +213,7 @@ class Notifier(object):
     def on_server_error(self, content):
         self.last_status = SERVER_ERROR
         return self.bounce(ErrorAdapter().server_error_permanent,
-                           notify_admin='500 Server error',
+                           notify_admin='Server error?',
                            notify_admin_body=content)
 
     def on_server_temp_failure(self):

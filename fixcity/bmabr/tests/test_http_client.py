@@ -107,7 +107,7 @@ class TestFixcityHttp(TestCase):
         content = http.do_post_json('http://example.com',
                                     "{'some key': 'some value'}")
         self.assertEqual(content, None)
-        self.assertEqual(notifier.bounce.call_count, 1)
+        self.assertEqual(notifier.on_server_error.call_count, 1)
         self.assertEqual(mock_log.call_count, 2)
 
     @mock.patch('fixcity.bmabr.management.commands.http.FixcityHttp.do_post')
