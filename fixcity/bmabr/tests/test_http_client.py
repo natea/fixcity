@@ -57,11 +57,8 @@ class TestFixcityHttp(TestCase):
         status, content = http.do_post('http://example.com', 'test body')
         self.assertEqual(status, 500)
         self.assertEqual(content, 'hello POST world')
-        self.assertEqual(notifier.bounce.call_count, 1)
-        bounce_kwargs = notifier.bounce.call_args[-1]
-        self.assertEqual(bounce_kwargs, {'notify_admin_body': 'hello POST world',
-                                         'notify_admin': '500 Server error'})
-
+        self.assertEqual(notifier.on_server_error.call_count, 1)
+        self.assertEqual(notifier.on_server_error.call_args[0][0], content)
 
 
     @mock.patch('httplib2.Http.request')
@@ -76,10 +73,7 @@ class TestFixcityHttp(TestCase):
         status, content = http.do_post('http://example.com', 'test body')
         self.assertEqual(status, None)
         self.assertEqual(content, None)
-        self.assertEqual(notifier.bounce.call_count, 1)
-        bounce_kwargs = notifier.bounce.call_args[-1]
-        self.assertEqual(bounce_kwargs, {'notify_admin': 'Server down??'})
-
+        self.assertEqual(notifier.on_server_temp_failure.call_count, 1)
 
     @mock.patch('httplib2.Response')
     @mock.patch('httplib2.Http.request')
@@ -138,18 +132,16 @@ class TestFixcityHttp(TestCase):
     @mock.patch('httplib2.Response')
     @mock.patch('httplib2.Http.request')
     @mock.patch('logging.Logger.debug')
-    def test_submit__network_error(self, mock_debug,
+    def test_submit__server_error(self, mock_debug,
                                    mock_request, mock_response, mock_notifier):
         mock_response.status = 500
         mock_request.return_value = (mock_response, 'blah')
         http = FixcityHttp(mock_notifier, StubErrorAdapter())
         data = {}
         http.submit(data)
-        self.assertEqual(mock_notifier.bounce.call_count, 1)
-        kwargs = mock_notifier.bounce.call_args[1]
-        self.assertEqual(kwargs,
-                         {'notify_admin_body': 'blah',
-                          'notify_admin': '500 Server error'})
+        self.assertEqual(mock_notifier.on_server_error.call_count, 1)
+        args = mock_notifier.on_server_error.call_args[0]
+        self.assertEqual(args, ('blah',))
 
 
     @mock.patch('httplib2.Response')

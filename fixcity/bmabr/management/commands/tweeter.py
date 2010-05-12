@@ -124,11 +124,12 @@ class RackMaker(object):
             parsed = twit.parse(tweet)
 
             user = tweet.user.screen_name
+            self.notifier.user = user
             success_info = None
             if parsed:
                 submit_result = self.submit(**parsed)
             else:
-                self.notifier.on_parse_error(user)            
+                self.notifier.on_parse_error()
             #     self.save_last_status(tweet.id)
             #     continue
             # if submit_result is SERVER_TEMP_FAILURE:
@@ -165,11 +166,13 @@ class RackMaker(object):
 
 class Notifier(object):
 
+    user = None  # client must set this before calling anything that calls bounce
+
     def __init__(self, twitter_api):
         self.twitter_api = twitter_api
         self.last_status = None
 
-    def bounce(self, user, message, notify_admin='', notify_admin_body=''):
+    def bounce(self, message, notify_admin='', notify_admin_body=''):
         """Bounce a message, with additional info for explanation.
 
         If the notify_admin string is non-empty, the site admin will
@@ -177,8 +180,9 @@ class Notifier(object):
         If notify_admin_body is non-empty, it will be added to the body
         sent to the admin.
         """
+        assert self.user is not None, "Failed to set notifier.user before calling bounce"
         if message is not None:
-            message = '@%s %s' % (user, message)
+            message = '@%s %s' % (self.user, message)
             message = message[:140]
             try:
                 self.twitter_api.update_status(message) # XXX add in_reply_to_id?
@@ -188,7 +192,7 @@ class Notifier(object):
         if notify_admin:
             # XXX include the original tweet?
             admin_subject = 'FixCity tweeter bounce! %s' % notify_admin
-            admin_body = 'Bouncing to: %s\n' % user
+            admin_body = 'Bouncing to: %s\n' % self.user
             admin_body += 'Bounce message: %r\n' % message
             admin_body += 'Time: %s\n' % datetime.now().isoformat(' ')
             if notify_admin_body:
@@ -206,30 +210,28 @@ class Notifier(object):
         logger.info(body)
 
     def on_submit_success(self, vars):
-        # XXX feels like the expected data should be cleaner.
         self.last_status = SUCCESS
-        user = vars['data']['twitter_user']
         shortened_url = shorten_url(vars['rack_url'])
         self.bounce(
-            user,
             "Thank you! Here's the rack request %s; now you can register "
             "to verify your request "
             % shortened_url)
 
-    def on_parse_error(self, user):
+    def on_parse_error(self):
         self.last_status = PARSE_ERROR
-        return self.bounce(user, ErrorAdapter().general_error_message)
+        return self.bounce(ErrorAdapter().general_error_message)
 
-    def on_user_error(self, data, errors):
+    def on_user_error(self, errors):
         self.last_status = USER_ERROR
-        return self.bounce(data['user'], ErrorAdapter().validation_errors(errors))
+        return self.bounce( ErrorAdapter().validation_errors(errors))
 
-    def on_server_error(self, user):
-        # XXX make this part of the API and have FixcityHttp call it?
+    def on_server_error(self, content):
         self.last_status = SERVER_ERROR
-        return self.bounce(user, ErrorAdapter().server_error_permanent)
+        return self.bounce(ErrorAdapter().server_error_permanent,
+                           notify_admin='500 Server error',
+                           notify_admin_body=content)
 
-    def on_server_temp_failure(self, user):
+    def on_server_temp_failure(self):
         # Don't bother the user, we'll just retry.
         self.last_status = SERVER_TEMP_FAILURE
 

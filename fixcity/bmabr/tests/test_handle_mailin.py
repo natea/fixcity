@@ -54,7 +54,6 @@ class TestMailin(TestCase):
         self.assertEqual(photo.content_type, 'image/jpeg')
         self.assertEqual(photo.name, u'IMG_0133.JPG')
 
-
     @mock.patch('logging.Logger.debug')
     @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier')
     def test_parse__apple_weirdness(self, mock_notifier, mock_debug):
@@ -127,3 +126,32 @@ class TestMailinNotifier(TestCase):
         notifier.bounce('bounce subject', 'bounce body')
         self.assertEqual(mock_send_mail.call_args_list[-1],
                          mock_send_mail.call_args_list[-2])
+
+
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier.reply')
+    def test_on_submit_success(self, mock_reply):
+        notifier = self._make_one()
+        vars = {'rack_url': 'http://foo/racks/1', 'rack_user': 'bob'}
+        notifier.on_submit_success(vars)
+        self.assertEqual(mock_reply.call_count, 1)
+
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier.bounce')
+    def test_on_user_error(self, mock_bounce):
+        notifier = self._make_one()
+        notifier.on_user_error({'title': 'required'})
+        self.assertEqual(mock_bounce.call_count, 1)
+
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier.bounce')
+    def test_on_server_error(self, mock_bounce):
+        notifier = self._make_one()
+        notifier.on_server_error('blech')
+        self.assertEqual(mock_bounce.call_count, 1)
+
+    @mock.patch('fixcity.bmabr.management.commands.handle_mailin.Notifier.bounce')
+    def test_on_server_temp_failure(self, mock_bounce):
+        notifier = self._make_one()
+        notifier.on_server_temp_failure()
+        self.assertEqual(mock_bounce.call_count, 1)
+        self.assert_('experiencing some difficulties' in
+                     mock_bounce.call_args[0][1])
+

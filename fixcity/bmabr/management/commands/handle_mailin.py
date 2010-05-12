@@ -406,6 +406,7 @@ class Notifier(object):
 
     def __init__(self):
         self.msg = ''
+        self.error_adapter = ErrorAdapter()
 
     def bounce(self, subject, body, notify_admin='', notify_admin_body=''):
         """Bounce a message to the sender, with additional subject
@@ -468,9 +469,20 @@ class Notifier(object):
         reply = reply % vars
         self.reply("FixCity Rack Confirmation", reply)
 
-    def on_user_error(self, user, errors):
+    def on_user_error(self, errors):
         err_msg = self.error_adapter.validation_errors(errors)
         return self.bounce( "Unsuccessful Rack Request", err_msg)
+
+    def on_server_temp_failure(self):
+        self.bounce("Unsuccessful Rack Request",
+                    self.error_adapter.server_error_retry,
+                    notify_admin='Server down??')
+
+    def on_server_error(self, content):
+        self.bounce("Unsuccessful Rack Request",
+                    self.error_adapter.server_error_permanent,
+                    notify_admin='500 Server error',
+                    notify_admin_body=content)
 
 
 class ErrorAdapter(object):

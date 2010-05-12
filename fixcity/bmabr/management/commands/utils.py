@@ -102,21 +102,13 @@ class FixcityHttp(object):
             # the socket ends up being None. Lame!
             # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
             logger.debug('Server down? %r' % url)
-            self.notifier.bounce(
-                err_subject,
-                self.error_adapter.server_error_retry,
-                notify_admin='Server down??'
-                )
+            self.notifier.on_server_temp_failure()
             return None, None
 
         logger.debug("server %r responded with %s:\n%s" % (
             url, response.status, content))
 
         if response.status >= 500:
-            err_msg = self.error_adapter.server_error_permanent
-            self.notifier.bounce(
-                err_subject, err_msg, notify_admin='500 Server error',
-                notify_admin_body=content)
+            self.notifier.on_server_error(content)
 
         return response.status, content
-

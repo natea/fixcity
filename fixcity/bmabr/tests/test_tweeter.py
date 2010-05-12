@@ -222,7 +222,8 @@ class TestTweeterNotifier(TestCase):
     def test_bounce(self, MockTweepyAPI):
         tweepy_mock = MockTweepyAPI()
         notifier = tweeter.Notifier(tweepy_mock)
-        notifier.bounce('somebody', 'an interesting message')
+        notifier.user = 'somebody'
+        notifier.bounce('an interesting message')
         self.assertEqual(tweepy_mock.update_status.call_args,
                          (('@somebody an interesting message',), {})) 
 
@@ -233,7 +234,8 @@ class TestTweeterNotifier(TestCase):
         import tweepy
         tweepy_mock.update_status.side_effect = tweepy.error.TweepError(
             "server down?")
-        notifier.bounce('somebody else', 'twitter down?')
+        notifier.user = 'somebody else'
+        notifier.bounce('twitter down?')
         # ... umm... nothing interesting to test here?
 
     @mock.patch('logging.Logger.info')
@@ -245,13 +247,14 @@ class TestTweeterNotifier(TestCase):
         notifier = tweeter.Notifier(tweepy_mock)
         message = 'a message!'
         subject = 'this is not my day.'
-        notifier.bounce('somebody', message, notify_admin=subject)
+        notifier.user = 'somebody'
+        notifier.bounce(message, notify_admin=subject)
         args = mock_send_mail.call_args
         self.assertEqual(args[0][0], 'FixCity tweeter bounce! %s' % subject)
         self.failUnless(args[0][1].count('Bouncing to: somebody'))
 
-        notifier.bounce('somebody', message, notify_admin=subject,
-                       notify_admin_body='more body')
+        notifier.bounce(message, notify_admin=subject,
+                        notify_admin_body='more body')
         args = mock_send_mail.call_args
         self.failUnless(args[0][1].count('more body'))
 
@@ -261,8 +264,8 @@ class TestTweeterNotifier(TestCase):
         mock_shorten_url.return_value = 'http://xyz'
         tweepy_mock = MockTweepyAPI()
         notifier = tweeter.Notifier(tweepy_mock)
-        vars = {'data': {'twitter_user': 'joeshmoe'},
-                'rack_url': 'http://foo/racks/1'}
+        notifier.user = 'joeshmoe'
+        vars = {'rack_url': 'http://foo/racks/1'}
         notifier.on_submit_success(vars)
         self.assertEqual(tweepy_mock.update_status.call_count, 1)
 
@@ -272,7 +275,7 @@ class TestTweeterNotifier(TestCase):
     def test_on_user_error(self, MockTweepyAPI, mock_bounce):
         tweepy_mock = MockTweepyAPI()
         notifier = tweeter.Notifier(tweepy_mock)
-        notifier.on_user_error({'user': 'joe'}, {'title': 'required'})
+        notifier.on_user_error({'title': 'required'})
         self.assertEqual(mock_bounce.call_count, 1)
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier.bounce')
@@ -280,7 +283,7 @@ class TestTweeterNotifier(TestCase):
     def test_on_parse_error(self, MockTweepyAPI, mock_bounce):
         tweepy_mock = MockTweepyAPI()
         notifier = tweeter.Notifier(tweepy_mock)
-        notifier.on_parse_error('joe')
+        notifier.on_parse_error()
         self.assertEqual(mock_bounce.call_count, 1)
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier.bounce')
@@ -288,14 +291,14 @@ class TestTweeterNotifier(TestCase):
     def test_on_server_error(self, MockTweepyAPI, mock_bounce):
         tweepy_mock = MockTweepyAPI()
         notifier = tweeter.Notifier(tweepy_mock)
-        notifier.on_server_error('joe')
+        notifier.on_server_error('blah')
         self.assertEqual(mock_bounce.call_count, 1)
 
     @mock.patch('tweepy.API')
     def test_on_server_temp_failure(self, MockTweepyAPI):
         tweepy_mock = MockTweepyAPI()
         notifier = tweeter.Notifier(tweepy_mock)
-        notifier.on_server_temp_failure('joe')
+        notifier.on_server_temp_failure()
         from fixcity.bmabr.management.commands.tweeter import SERVER_TEMP_FAILURE
         self.assertEqual(notifier.last_status, SERVER_TEMP_FAILURE)
 
