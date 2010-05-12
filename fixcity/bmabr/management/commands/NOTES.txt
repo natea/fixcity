@@ -16,44 +16,16 @@ Twitter-specific stuff
  - repeat until we're out of users, or hit our API limit
  ... or something.
 
- XXX Also batch error messages? We might get a bunch if the server
+Also batch error messages? We might get a bunch if the server
  goes down and cron keeps running this script...
 
- XXX Or maybe we need to keep some state about tweets
+Or maybe we need to keep some state about tweets
  we couldn't process in case we want to retry them
  and notify user if they eventually succeed?
 
 
-General stuff
-================
-
-XXX Error handling:
-
-need a trivial factory API for getting errors:
-
- * adapt validation errors.
-   (varies on: error, source type, app)
-
- * adapt server errors to a source-specific message
-   (varies on: error code, source type, app)
-
- * adapt socket errors & other exceptions to a source-specific message
-   (varies on: source type, app)
-
- maybe something like:
-
-  error_adapter = ErrorAdapterFactory('twitter', 'fixcity') # meh.
-  output = error_adapter.validation_errors(errors_dict)
-  output = error_adapter.server_error(response_code, response_msg)
-  output = error_adapter.exception(orig_exception)
-
- And maybe those should even be hidden by the Notifier's API? eg.
-  notifier.on_server_error(...)
-  notifier.on_user_error(...)
-  notifier.on_success(...)
-
-SERVER
-=======
+Generalizing beyond FixCity: SERVER
+===================================
 
 All you need is:
 
@@ -65,34 +37,6 @@ All you need is:
   'errormessage' pairs.
 
 - response codes?
-
-
-CLIENT LIBRARY
-==============
-
-Refactoring as per
-https://projects.openplans.org/fixcity/ticket/159
-
-General pattern, maybe a Template Method kind of thing:
-
-* get ID of last processed input
-
-* FETCH: get new data since last ID
-
-* for each:
-  - ADAPT data to json
-  - SUBMIT json to create new rack:
-    * create a source (seeclickfix only... should be done server-side)
-  - FEEDBACK:
-    on user error:
-       - adapt errors to source-specific format
-       - send msg
-    on exception:
-       - adapt errors to source-specific format
-       - send msg
-       - email admins
-  - save ID as last processed item, unless server is down
-    (or some other retryable failure)
 
 
 
