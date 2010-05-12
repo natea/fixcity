@@ -222,6 +222,7 @@ class Notifier(object):
 
 
 class ErrorAdapter(object):
+    # XXX this could probably be absorbed by the Notifier now
 
     general_error_message = ("Thanks, but something went wrong! Check the "
                              "format e.g. http://bit.ly/76pXSi and try again "
