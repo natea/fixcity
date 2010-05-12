@@ -130,24 +130,12 @@ class RackMaker(object):
                 submit_result = self.submit(**parsed)
             else:
                 self.notifier.on_parse_error()
-            #     self.save_last_status(tweet.id)
-            #     continue
-            # if submit_result is SERVER_TEMP_FAILURE:
-            #     # Leave it in the queue for the next run.
-            #     self.notifier.on_server_failure(user)
-            #     continue
-            # elif submit_result is SERVER_ERROR:
-            #     # No point retrying.
-            #     self.notifier.on_server_error(user)
-            # else:
-            #     self.notifier.on_submit_success(user) # XXX FixcityHttp does this already
 
             if self.notifier.last_status in (SERVER_ERROR, SUCCESS):
                 self.save_last_status(tweet.id)
 
 
     def submit(self, title, address, user, date, tweetid):
-
         url = self.url
         description = ''
         data = dict(source_type='twitter',
