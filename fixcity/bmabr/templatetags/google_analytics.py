@@ -1,7 +1,6 @@
 from django import template
-register = template.Library()
 from django.conf import settings
-
+register = template.Library()
 
 @register.simple_tag
 def google_analytics():

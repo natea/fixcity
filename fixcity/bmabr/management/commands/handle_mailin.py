@@ -15,9 +15,13 @@ You will want a cron job or something that cleans up old files in the
 # Some parsing code originally derived from email2trac.py, 
 # which is Copyright (C) 2002 under the GPL v2 or later
 
+from .http import FixcityHttp
 from datetime import datetime
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.mail import send_mail
+from django.core.management.base import BaseCommand
 from optparse import make_option
-
 from stat import S_IRWXU, S_IRWXG, S_IRWXO
 
 import email.Header
@@ -29,14 +33,6 @@ import tempfile
 import time
 import traceback
 import unicodedata
-
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.mail import send_mail
-from django.core.management.base import BaseCommand
-
-from http import FixcityHttp
- 
-from django.conf import settings
 
 logger = settings.LOGGER
 
