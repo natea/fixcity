@@ -113,7 +113,12 @@ class RackBuilder(object):
             return
         twit = TwitterFetcher(self.twitter_api, self.username)
 
-        all_tweets = twit.get_tweets(last_processed_id)
+        socket.setdefaulttimeout(40)
+        try:
+            all_tweets = twit.get_tweets(last_processed_id)
+        except socket.timeout:
+            logger.error("Timeout from twitter")
+            return
         for tweet in reversed(all_tweets):
             parsed = twit.parse(tweet)
 
