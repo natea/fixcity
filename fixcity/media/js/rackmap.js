@@ -166,23 +166,34 @@ function loadMap(draggable) {
       return newLayer;
   };
   var cityracksLayer = createLayerFn('/site_media/img/rack-city-icon.png', 'cityracks', '/cityracks.kml');
-  var suggestedLayer = createLayerFn('/site_media/img/rack-verified-icon.png', 'suggestedracks', '/racks/requested.kml');
+  var suggestedLayer = createLayerFn('/site_media/img/rack-icon.png', 'suggestedracks', '/racks/search.kml?status=new');
+  var verifiedLayer = createLayerFn('/site_media/img/rack-verified-icon.png', 'verifiedracks', '/racks/search.kml?status=verified');
+  var pendingLayer = createLayerFn('/site_media/img/rack-pending-icon.png', 'pendingracks', '/racks/search.kml?status=pending');
+  // var completedLayer = createLayerFn('/site_media/img/rack-completed-icon.png', 'completedracks', '/racks/search.kml?status=completed');
+
   var showLayersFn = function() {
       if (map.getZoom() >= 16) {
           cityracksLayer.setVisibility(true);
           suggestedLayer.setVisibility(true);
+          verifiedLayer.setVisibility(true);
+	  pendingLayer.setVisibility(true);
       } else {
           cityracksLayer.setVisibility(false);
           suggestedLayer.setVisibility(false);
-      }
+          pendingLayer.setVisibility(false);
+          verifiedLayer.setVisibility(false);
+      };
   };
   map.events.on({
           moveend: showLayersFn
   });
   cityracksLayer.setVisibility(false);
   suggestedLayer.setVisibility(false);
+  pendingLayer.setVisibility(false);
+  verifiedLayer.setVisibility(false);
   map.addLayer(cityracksLayer);
   map.addLayer(suggestedLayer);
-
+  map.addLayer(pendingLayer);
+  map.addLayer(verifiedLayer);
   post_loadmap(map, geometry);
 }

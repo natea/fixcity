@@ -18,6 +18,7 @@ except IOError:
     raise
 
 DEBUG = config.getboolean('main', 'DEBUG')
+
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -30,6 +31,8 @@ DEFAULT_FROM_EMAIL = config.get('main', 'DEFAULT_FROM_EMAIL')
 
 BULK_ORDER_APPROVAL_EMAIL = [e.strip() for e in 
                              config.get('main', 'BULK_ORDER_APPROVAL_EMAIL').split(',')]
+
+BULK_ORDER_SUBMISSION_EMAIL = config.get('main', 'BULK_ORDER_SUBMISSION_EMAIL')
 
 DATABASE_ENGINE = config.get('db', 'DATABASE_ENGINE')
 DATABASE_NAME = config.get('db', 'DATABASE_NAME')
@@ -82,7 +85,12 @@ MEDIA_URL = '/uploads/'
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = '/media/'
 
+#COMPRESS_URL = '/site_media/'
+#COMPRESS_ROOT = STATIC_DOC_ROOT
+
 GOOGLE_ANALYTICS_KEY = config.get('main', 'GOOGLE_ANALYTICS_KEY')
+
+GOOGLE_MAPS_KEY = config.get('main', 'GOOGLE_MAPS_KEY')
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = config.get('main', 'SECRET_KEY')
@@ -170,6 +178,7 @@ INSTALLED_APPS = (
     'voting',
     'pagination',
     'attachments',
+#    'compressor',
 )
 
 
@@ -180,6 +189,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.media",
     "django.core.context_processors.request",
     "fixcity.bmabr.views.user_context",
+    "fixcity.bmabr.views.media_refresh_context",
     "djangoflash.context_processors.flash",
     )
 
@@ -189,17 +199,20 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 # NB, Django 1.2 or later should include built-in code coverage support.
 TEST_RUNNER='fixcity.testrunner.test_runner_with_coverage'
 # Which modules to enable for code coverage reports.
-COVERAGE_MODULES = ['fixcity.bmabr.views', 'fixcity.bmabr.models',
-                    'fixcity.bmabr.management.commands.tweeter',
-                    'fixcity.bmabr.management.commands.handle_mailin',
-                    'fixcity.bmabr.management.commands.seeclickfix',
-                    'fixcity.bmabr.fixcity_bitly',
-                    'fixcity.exif_utils',
-                    'fixcity.flash_messages',
-                    'fixcity.bmabr.templatetags.recaptcha_tags',
-                    'fixcity.bmabr.templatetags.google_analytics',
-                    'fixcity.bmabr.bulkorder',
-                    ]
+COVERAGE_MODULES = [
+    'fixcity.bmabr.bulkorder',
+    'fixcity.bmabr.fixcity_bitly',
+    'fixcity.bmabr.management.commands.handle_mailin',
+    'fixcity.bmabr.management.commands.http',
+    'fixcity.bmabr.management.commands.seeclickfix',
+    'fixcity.bmabr.management.commands.tweeter',
+    'fixcity.bmabr.models',
+    'fixcity.bmabr.templatetags.google_analytics',
+    'fixcity.bmabr.templatetags.recaptcha_tags',
+    'fixcity.bmabr.views',
+    'fixcity.exif_utils',
+    'fixcity.flash_messages',
+    ]
 
 try:
     POSTGIS_TEMPLATE = config.get('db', 'POSTGIS_TEMPLATE')
@@ -208,17 +221,26 @@ except:
     # (notably not ubuntu, hence the need for a config option)
     pass
 
+# This is a query string added (manually) to a bunch of static
+# resource URLs.  I tried and failed to get django-compress working;
+# it seemed to work, all CSS loaded, but most of the styles failed to
+# actually get used.
+MEDIA_REFRESH_TOKEN = config.get('main', 'MEDIA_REFRESH_TOKEN')
+
+
 # Logging?
 import logging
 import sys
 
-handler = logging.StreamHandler(sys.stderr)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(levelname)-8s %(message)s')
-handler.setFormatter(formatter)
 logger = logging.getLogger('')
-logger.addHandler(handler) 
+
+if not logger.handlers:
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(levelname)-8s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
 logger.setLevel(logging.DEBUG)
 
-# XXX move this to config.ini
-GKEY="ABQIAAAApLR-B_RMiEN2UBRoEWYPlhTmTlZhMVUZVOGFgSe6Omf4DswcaBSLmUPer5a9LF8EEWHK6IrMgA62bg"
+LOGGER = logger

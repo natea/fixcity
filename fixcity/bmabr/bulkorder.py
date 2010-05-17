@@ -178,7 +178,7 @@ def get_map(bbox, size=(400, 256), format='jpg'):
 
     # GMap API Key for opengeo.org - static api doesn't care about origin
     url = 'http://maps.google.com/staticmap'
-    key = settings.GKEY
+    key = settings.GOOGLE_MAPS_KEY
 
     center = ((bbox[2] + bbox[0]) / 2, (bbox[3] + bbox[1]) / 2)
     span = (bbox[2] - bbox[0], bbox[3] - bbox[1])
@@ -195,6 +195,7 @@ def get_map(bbox, size=(400, 256), format='jpg'):
     if response.status != 200:
         raise RuntimeError("Response %s while retrieving %s" % (response.status, url))
     # would be nice to deal directly with image data instead of writing first
+    # XXX this means we need a cron job or similar to clean up old files in $TMP
     tmp, path = tempfile.mkstemp('.%s' % format)
     os.write(tmp, data)
     os.close(tmp)
@@ -257,7 +258,7 @@ def make_zip(bulk_order, outfile):
     # Workaround for permissions bug, see http://bugs.python.org/issue3394
     info.external_attr = 0660 << 16L
     zf.writestr(info, pdf.getvalue())
-    
+
     csv = StringIO()
     make_csv(bulk_order, csv)
     name = make_filename(bulk_order, 'csv')
@@ -273,9 +274,9 @@ def make_zip(bulk_order, outfile):
         # but you can't call that when output is a stringio instance
         # because zf.write() apparently needs to call seek().
         zf.writestr(info, open(path).read())
-        
+
     zf.close()
-    
+
 
 
 def make_filename(bulk_order, extension):
@@ -284,4 +285,4 @@ def make_filename(bulk_order, extension):
     name = "%s_%s.%s" % (str(cb).replace(' ', '-'), date.isoformat('-'),
                          extension)
     return name
-    
+

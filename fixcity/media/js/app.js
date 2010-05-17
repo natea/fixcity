@@ -150,7 +150,12 @@ jQuery.fn.maxLength = function (len) {
     //get the value of the textarea
     var val = textarea.val();
     //get the length of the current text selection
-    var selected = Math.abs(textarea.attr('selectionStart') - textarea.attr('selectionEnd'));
+    var selected=0;
+    try {
+	    selected = Math.abs(textarea.attr('selectionStart') - textarea.attr('selectionEnd'));
+	  } catch(err) {
+	    // textArea not currently displayed or otherwise causing selection to fail
+	  }
     selected = isNaN(selected) ? 0 : selected;
     //if this is the maximum length
     if (val.length == len && selected < 1) return false;
@@ -195,3 +200,25 @@ jQuery.fn.maxLength = function (len) {
   //trigger a keypress event so that the limit will be enforced
   this.keypress();
 };
+
+var rack_icon_url = function(feature) {
+  var n = feature.cluster.length;
+  var all_pending = true;
+  var all_verified = true;
+  for (var i = 0; i < n; i++) {
+    if (feature.cluster[i].attributes.status.value != 'pending') {
+      all_pending = false;
+    }
+    if (feature.cluster[i].attributes.verified == null) {
+      all_verified = false;
+    }
+  }
+  if ( all_pending ) {
+    return "/site_media/img/rack-pending-icon.png";
+  } else if ( all_verified) {
+    return "/site_media/img/rack-verified-icon.png";
+  } else {
+    return "/site_media/img/rack-icon.png";
+  }
+};
+

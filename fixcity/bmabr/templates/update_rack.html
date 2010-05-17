@@ -7,7 +7,7 @@
 
 {% block extra_header %}
 
-<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js"></script>
+<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js?refresh={{ refresh_token }}"></script>
 <script type="text/javascript">
   // Settings needed by rackmap.js.
   var pointRadius = "10";
@@ -17,7 +17,7 @@
     map.setCenter(geom.getBounds().getCenterLonLat(), 16);
   };
 </script>
-<script type="text/javascript" src="/site_media/js/rackmap.js"></script>
+<script type="text/javascript" src="/site_media/js/rackmap.js?refresh={{ refresh_token }}"></script>
 
 <script type="text/javascript">
 //<![CDATA[
@@ -51,7 +51,7 @@ jQuery(document).ready(function() {loadMap();});
   <div class="section">
     <label for="address">Street Address</label>
     <input id="address" name="address" class="required" type="text" title="Enter an address or click a point on the map" value="{{request.POST.address|default:rack.address}}" />
-    <div class="helptext">Enter an address or click a point on the map. <a href="/placement-guide/">Location Guidelines</a></div>
+    <div class="helptext">Enter an address or click a point on the map. <a href="/placement-guide/">Placement Guidelines</a></div>
     <input type="hidden" id="location" name="location" class="required" value="{{wkt}}" />
     {{ form.address.errors }} {{ form.location.errors }}
     <label for="title">Establishment</label>
@@ -128,7 +128,7 @@ jQuery(document).ready(function() {loadMap();});
         </ul>
       </div>
     </fieldset>
-    <p>For more information, view detailed <a href="/placement-guide/">Location Guidelines</a></p>
+    <p>For more information, view detailed <a href="/placement-guide/">Placement Guidelines</a></p>
   </div><!-- /.section -->
 
     <!-- XXX Do we want to update date on edit? -->
@@ -170,8 +170,8 @@ jQuery(document).ready(function() {loadMap();});
     $('input#browse').change(function( objEvent ){$('#fakebrowseinput').val($(this).val());});
     $('input#statement').change(function( objEvent ){$('#fakestatementinput').val($(this).val());});
     expandOnce('#statement-wrap', 'Add Statement of Support');
-    $('textarea#description').maxLength(300);
     $('.rack-meta a.rack-likes').voteify({'rackID': {{rack.id}}});
+    $('textarea#description').maxLength(300);
 });
 //]]>
 </script>

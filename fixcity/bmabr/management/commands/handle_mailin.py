@@ -3,123 +3,63 @@ This is a manage.py command for django which handles incoming email,
 typically via stdin.
 
 To hook this up with postfix, set up an alias along the lines of:
+(yes, this is an annoyingly long command):
 
-myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin -u http://MYDOMAIN/racks/ --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
+myaddress: "|PYTHON_EGG_CACHE=/tmp/my-egg-cache /PATH/TO/VENV/bin/python /PATH/TO/VENV/src/fixcity/fixcity/manage.py handle_mailin --debug=9 - >> /var/log/MYLOGS/mailin.log 2>&1""
 
-You will want a cron job or something that cleans up the --debug-dir directory
-(defaults to your TMP directory).
+You will want a cron job or something that cleans up old files in the
+--debug-dir directory (defaults to your TMP directory).
 
 '''
 
-# based on email2trac.py, which is Copyright (C) 2002 under the GPL v2 or later
+# Some parsing code originally derived from email2trac.py, 
+# which is Copyright (C) 2002 under the GPL v2 or later
 
 from datetime import datetime
 from optparse import make_option
-from poster.encode import multipart_encode
+
 from stat import S_IRWXU, S_IRWXG, S_IRWXO
+
 import email.Header
-import httplib2
 import mimetypes
 import os
 import re
-import socket
-import string
 import sys
 import tempfile
 import time
 import traceback
 import unicodedata
-import urlparse
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
-from django.utils import simplejson as json
 
+from http import FixcityHttp
+ 
 from django.conf import settings
 
+logger = settings.LOGGER
 
 class EmailParser(object):
 
     msg = None
 
-    def __init__(self, parameters):
-
-        # Save parameters
-        #
-        self.parameters = parameters
+    def __init__(self, notifier, options):
+        self.notifier = notifier
+        self.options = options
 
         # Some useful mail constants
-        #
         self.author = None
         self.email_addr = None
         self.email_from = None
         self.id = None
 
-        # XXX Cull stuff that just stores a value, we should just
-        # store all the parameters instead.
-        if parameters.has_key('debug'):
-            self.DEBUG = int(parameters['debug'])
-        else:
-            self.DEBUG = 0
-
-        if parameters.has_key('email_quote'):
-            self.EMAIL_QUOTE = str(parameters['email_quote'])
-        else:
-            self.EMAIL_QUOTE = '> '
-
-        if parameters.has_key('email_header'):
-            self.EMAIL_HEADER = int(parameters['email_header'])
-        else:
-            self.EMAIL_HEADER = 0
-
-        if parameters.has_key('reply_all'):
-            self.REPLY_ALL = int(parameters['reply_all'])
-        else:
-            self.REPLY_ALL = 0
-
-        if parameters.has_key('rack_update'):
-            self.RACK_UPDATE = int(parameters['rack_update'])
-        else:
-            self.RACK_UPDATE = 0
-
-        if parameters.has_key('drop_alternative_html_version'):
-            self.DROP_ALTERNATIVE_HTML_VERSION = int(parameters['drop_alternative_html_version'])
-        else:
-            self.DROP_ALTERNATIVE_HTML_VERSION = 0
-
-        if parameters.has_key('strip_signature'):
-            self.STRIP_SIGNATURE = int(parameters['strip_signature'])
-        else:
-            self.STRIP_SIGNATURE = 0
-
-        if parameters.has_key('binhex'):
-            self.BINHEX = parameters['binhex']
-        else:
-            self.BINHEX = 'warn'
-
-        if parameters.has_key('applesingle'):
-            self.APPLESINGLE = parameters['applesingle']
-        else:
-            self.APPLESINGLE = 'warn'
-
-        if parameters.has_key('appledouble'):
-            self.APPLEDOUBLE = parameters['appledouble']
-        else:
-            self.APPLEDOUBLE = 'warn'
-
-        self.MAX_ATTACHMENT_SIZE = int(parameters.get('max-attachment-size', -1))
-
-
-    def _make_logfile(self, suffix='.handle_mailin'):
-        """where to put dumps of messages for debugging"""
-        logdir = self.parameters.get('debug_dir') or tempfile.gettempdir()
-        try:
-            os.makedirs(logdir)
-        except OSError:
-            if not os.path.isdir(logdir):
-                raise
-        return tempfile.mktemp(suffix, dir=logdir)
+        for key, default in (
+            ('debug', 0),
+            ('strip_signature', 0),
+            ('max-attachment-size', -1),
+            ):
+            self.options[key] = int(self.options.get(key, default))
 
     def email_to_unicode(self, message_str):
         """
@@ -127,76 +67,20 @@ class EmailParser(object):
 that is encoded in 7-bit ASCII code and encode it as utf-8.
         """
         results =  email.Header.decode_header(message_str)
-        str = None
         for text,format in results:
             if format:
                 try:
                     temp = unicode(text, format)
                 except UnicodeError, detail:
                     # This always works
-                    #
-                    temp = unicode(text, 'iso-8859-15')
+                    temp = unicode(text, 'iso-8859-15', errors='ignore')
                 except LookupError, detail:
-                    #text = 'ERROR: Could not find charset: %s, please install' %format
-                    #temp = unicode(text, 'iso-8859-15')
+                    logger.error('Could not find charset: %s, please install' %format)
                     temp = message_str
-
             else:
-                temp = string.strip(text)
-                temp = unicode(text, 'iso-8859-15')
-
-            if str:
-                str = '%s %s' %(str, temp)
-            else:
-                str = '%s' %temp
-
-        #str = str.encode('utf-8')
-        return str
-
-    def debug_body(self, message_body):
-        body_file = self._make_logfile()
-
-        print 'TD: writing body (%s)' % body_file
-        fx = open(body_file, 'wb')
-        if not message_body:
-            message_body = '(None)'
-
-        message_body = message_body.encode('utf-8')
-        #message_body = unicode(message_body, 'iso-8859-15')
-
-        fx.write(message_body)
-        fx.close()
-        try:
-            os.chmod(body_file,S_IRWXU|S_IRWXG|S_IRWXO)
-        except OSError:
-            pass
-
-    def debug_attachments(self, message_parts):
-        n = 0
-        for part in message_parts:
-            # Skip inline text parts
-            if not isinstance(part, tuple):
-                continue
-
-            (original, filename, part) = part
-
-            n = n + 1
-            print 'TD: part%d: Content-Type: %s' % (n, part.get_content_type())
-            print 'TD: part%d: filename: %s' % (n, part.get_filename())
-
-            part_file = self._make_logfile(suffix='.handle_mailin.part%d' % n)
-
-            print 'TD: writing part%d (%s)' % (n,part_file)
-            fx = open(part_file, 'wb')
-            text = part.get_payload(decode=1)
-            if not text:
-                text = '(None)'
-            fx.write(text)
-            fx.close()
-            try:
-                os.chmod(part_file,S_IRWXU|S_IRWXG|S_IRWXO)
-            except OSError:
-                pass
+                temp = text.strip()
+                temp = unicode(text, 'iso-8859-15', errors='ignore')
+        return temp
 
 
     def get_sender_info(self):
@@ -210,157 +94,13 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         self.email_from = self.email_to_unicode(message['from'])
         self.author, self.email_addr  = email.Utils.parseaddr(self.email_from)
 
-        # Trac can not handle author's name that contains spaces
         # XXX do we care about author's name for fixcity? prob not.
         self.author = self.email_addr
-
-
-    def save_email_for_debug(self, message):
-        msg_file = self._make_logfile()
-
-        print 'TD: saving email to %s' % msg_file
-        fx = open(msg_file, 'wb')
-        fx.write('%s' % message)
-        fx.close()
-        try:
-            os.chmod(msg_file,S_IRWXU|S_IRWXG|S_IRWXO)
-        except OSError:
-            pass
-
-
-    def new_rack(self, title, address, spam):
-        """
-        Create a new rack
-        """
-        msg = self.msg
-        if self.DEBUG:
-            print "TD: new_rack"
-
-        message_parts = self.get_message_parts()
-        message_parts = self.unique_attachment_names(message_parts)
-
-        description = self.description = self.body_text(message_parts)
-        photos = self.get_photos(message_parts)
-        # We don't bother with microsecond precision because
-        # Django datetime fields can't parse it anyway.
-        now = datetime.fromtimestamp(int(time.time()))
-        data = dict(title=title,
-                    source_type='email',
-                    description=description,
-                    date=now.isoformat(' '),
-                    address=address,
-                    geocoded=0,  # Do server-side location processing.
-                    got_communityboard=0,   # Ditto.
-                    email=self.email_addr,
-                    )
-
-        if self.parameters.get('dry-run') and self.DEBUG:
-            print "TD: would save rack here"
-            return
-
-        # This is the one thing i apparently can't do
-        # when running as `nobody`.
-        # And getting postfix to run this script as another user
-        # seems to be a PITA.
-        #rack = rackform.save()
-
-        # So instead, let's POST our data to some URL...
-        url = self.parameters['url']
-        jsondata = json.dumps(data)
-        http = httplib2.Http()
-        headers = {'Content-type': 'application/json'}
-        error_subject = "Unsuccessful Rack Request"
-        try:
-            response, content = http.request(url, 'POST',
-                                             headers=headers,
-                                             body=jsondata)
-        except (socket.error, AttributeError):
-            # it's absurd that we have to catch AttributeError here,
-            # but apparently that's what httplib 0.5.0 raises because
-            # the socket ends up being None. Lame!
-            # Known issue: http://code.google.com/p/httplib2/issues/detail?id=62&can=1&q=AttributeError
-            self.bounce(
-                error_subject,
-                "Thanks for trying to suggest a rack.\n"
-                "We are unfortunately experiencing some difficulties at the\n"
-                "moment -- please try again in an hour or two!",
-                notify_admin='Server down??'
-                )
-            return
-
-        if self.DEBUG:
-            print "TD: server responded with:\n%s" % content
-
-        if response.status >= 500:
-            err_msg = (
-                "Thanks for trying to suggest a rack.\n"
-                "We are unfortunately experiencing some difficulties at the\n"
-                "moment. Please check to make sure your subject line follows\n"
-                "this format exactly:\n\n"
-                "  Key Foods @224 McGuinness Blvd Brooklyn NY\n\n"
-                "If you've made an error, please resubmit. Otherwise we'll\n"
-                "look into this issue and get back to you as soon as we can.\n"
-                )
-            admin_body = content
-            self.bounce(error_subject, err_msg, notify_admin='500 Server error',
-                        notify_admin_body=content)
-            return
-
-        result = json.loads(content)
-        if result.has_key('errors'):
-
-            err_msg = (
-                "Thanks for trying to suggest a rack through fixcity.org,\n"
-                "but it won't go through without the proper information.\n\n"
-                "Please correct the following errors:\n\n")
-
-            errors = adapt_errors(result['errors'])
-            for k, v in sorted(errors.items()):
-                err_msg += "%s: %s\n" % (k, '; '.join(v))
-
-            err_msg += "\nPlease try again!\n"
-            self.bounce(error_subject, err_msg)
-            return
-
-        parsed_url = urlparse.urlparse(url)
-        base_url = parsed_url[0] + '://' + parsed_url[1]
-        photo_url = base_url + result['photo_post_url']
-        rack_url = base_url + result['rack_url']
-        rack_user = result.get('user')
-
-        if photos.has_key('photo'):
-            datagen, headers = multipart_encode({'photo':
-                                                 photos['photo']})
-            # httplib2 doesn't like poster's integer headers.
-            headers['Content-Length'] = str(headers['Content-Length'])
-            body = ''.join([s for s in datagen])
-            response, content = http.request(photo_url, 'POST',
-                                             headers=headers, body=body)
-            # XXX handle errors
-            if self.DEBUG:
-                print "TD: result from photo upload:"
-                print content
-        # XXX need to add links per
-        # https://projects.openplans.org/fixcity/wiki/EmailText
-        # ... will need an HTML version.
-        reply = "Thanks for your rack suggestion!\n\n"
-        reply += "You must verify that your spot meets DOT requirements\n"
-        reply += "before we can submit it.\n"
-        reply += "To verify, go to: %(rack_url)sedit/\n\n"
-        if not rack_user:
-            # XXX Create an inactive account and add a confirmation link.
-            reply += "To create an account, go to %(base_url)s/accounts/register/ .\n\n"  % locals()
-        reply += "Thanks!\n\n"
-        reply += "- The Open Planning Project & Livable Streets Initiative\n"
-        reply = reply % locals()
-        self.reply("FixCity Rack Confirmation", reply)
-
 
     def parse(self, s):
         self.msg = email.message_from_string(s)
         if not self.msg:
-            if self.DEBUG:
-                print "TD: This is not a valid email message format"
+            logger.debug("This is not a valid email message format")
             return
 
         # Work around lack of header folding in Python; see http://bugs.python.org/issue4696
@@ -370,16 +110,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         message_parts = self.unique_attachment_names(message_parts)
         body_text = self.body_text(message_parts)
 
-        if self.DEBUG > 1:        # save the entire e-mail message text
-            self.save_email_for_debug(self.msg)
-            self.debug_body(body_text)
-            self.debug_attachments(message_parts)
-
         self.get_sender_info()
         subject  = self.email_to_unicode(self.msg.get('Subject', ''))
-
-        spam_msg = False #XXX not sure what this should be
-
         subject_re = re.compile(r'(?P<title>[^\@]*)\s*@(?P<address>.*)')
         subject_match = subject_re.search(subject)
         if subject_match:
@@ -395,7 +127,24 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             title = subject
 
         address = address.strip()
-        self.new_rack(title, address, spam_msg)
+        logger.debug('new rack')
+
+        photos = self.get_photos(message_parts)
+
+        # We don't bother with microsecond precision because
+        # Django datetime fields can't parse it anyway.
+        now = datetime.fromtimestamp(int(time.time()))
+        data = dict(title=title,
+                    source_type='email',
+                    description=body_text,
+                    date=now.isoformat(' '),
+                    address=address,
+                    geocoded=0,  # Do server-side location processing.
+                    got_communityboard=0,   # Ditto.
+                    email=self.email_addr,
+                    photos=photos,
+                    )
+        return data
 
     def strip_signature(self, text):
         """
@@ -426,9 +175,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         ALTERNATIVE_MULTIPART = False
 
         for part in msg.walk():
-            if self.DEBUG:
-                print 'TD: Message part: Main-Type: %s' % part.get_content_maintype()
-                print 'TD: Message part: Content-Type: %s' % part.get_content_type()
+            logger.debug('Message part: Main-Type: %s' % part.get_content_maintype())
+            logger.debug('Message part: Content-Type: %s' % part.get_content_type())
 
 
             # Check whether we just finished processing an AppleDouble container
@@ -436,69 +184,43 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 appledouble_parts = []
 
             ## Check content type
-            #
+            # Special handling for Mac-specific attachments.
             if part.get_content_type() == 'application/mac-binhex40':
-                #
-                # Special handling for BinHex attachments. Options are drop (leave out with no warning), warn (and leave out), and keep
-                #
-                if self.BINHEX == 'warn':
-                    message_parts.append("'''A BinHex attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
-                    continue
-                elif self.BINHEX == 'drop':
-                    continue
-
+                message_parts.append("'''A BinHex attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
+                continue
             elif part.get_content_type() == 'application/applefile':
-                #
-                # Special handling for the Mac-specific part of AppleDouble/AppleSingle attachments. Options are strip (leave out with no warning), warn (and leave out), and keep
-                #
-
                 if part in appledouble_parts:
-                    if self.APPLEDOUBLE == 'warn':
-                        message_parts.append("'''The resource fork of an attachment named '%s' was removed.'''" % part.get_filename())
-                        continue
-                    elif self.APPLEDOUBLE == 'strip':
-                        continue
+                    message_parts.append("'''The resource fork of an attachment named '%s' was removed.'''" % part.get_filename())
+                    continue
                 else:
-                    if self.APPLESINGLE == 'warn':
-                        message_parts.append("'''An AppleSingle attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
-                        continue
-                    elif self.APPLESINGLE == 'drop':
-                        continue
-
+                    message_parts.append("'''An AppleSingle attachment named '%s' was ignored (use MIME encoding instead).'''" % part.get_filename())
+                    continue
             elif part.get_content_type() == 'multipart/appledouble':
-                #
                 # If we entering an AppleDouble container, set up appledouble_parts so that we know what to do with its subparts
-                #
                 appledouble_parts = part.get_payload()
                 continue
-
             elif part.get_content_type() == 'multipart/alternative':
                 ALTERNATIVE_MULTIPART = True
                 continue
 
             # Skip multipart containers
-            #
             if part.get_content_maintype() == 'multipart':
-                if self.DEBUG:
-                    print "TD: Skipping multipart container"
+                logger.debug("Skipping multipart container")
                 continue
 
             # Check if this is an inline part. It's inline if there is co Cont-Disp header, or if there is one and it says "inline"
             inline = self.inline_part(part)
 
             # Drop HTML message
-            if ALTERNATIVE_MULTIPART and self.DROP_ALTERNATIVE_HTML_VERSION:
+            if ALTERNATIVE_MULTIPART:
                 if part.get_content_type() == 'text/html':
-                    if self.DEBUG:
-                        print "TD: Skipping alternative HTML message"
-
+                    logger.debug("Skipping alternative HTML message")
                     ALTERNATIVE_MULTIPART = False
                     continue
 
             # Inline text parts are where the body is
             if part.get_content_type() == 'text/plain' and inline:
-                if self.DEBUG:
-                    print 'TD:               Inline body part'
+                logger.debug('               Inline body part')
 
                 # Try to decode, if fails then do not decode
                 #
@@ -509,7 +231,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 format = email.Utils.collapse_rfc2231_value(part.get_param('Format', 'fixed')).lower()
                 delsp = email.Utils.collapse_rfc2231_value(part.get_param('DelSp', 'no')).lower()
 
-                if self.STRIP_SIGNATURE:
+                if self.options['strip_signature']:
                     body_text = self.strip_signature(body_text)
 
                 # Get contents charset (iso-8859-15 if not defined in mail headers)
@@ -529,8 +251,8 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
 
                 message_parts.append('%s' %ubody_text)
             else:
-                if self.DEBUG:
-                    print 'TD:               Filename: %s' % part.get_filename()
+                # Not inline body, or a specially-handled attachment.
+                logger.debug('               Filename: %s' % part.get_filename())
 
                 message_parts.append((part.get_filename(), part))
         return message_parts
@@ -586,9 +308,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
                 num += 1
                 unique_filename = "%s-%s%s" % (filename, num, ext)
 
-            if self.DEBUG:
-                print 'TD: Attachment with filename %s will be saved as %s' % (filename, unique_filename)
-
+            logger.debug(' Attachment with filename %s will be saved as %s' % (filename, unique_filename))
             attachment_names.add(unique_filename)
 
             renamed_parts.append((filename, unique_filename, part))
@@ -619,7 +339,7 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         """
         # Get Maxium attachment size
         #
-        max_size = self.MAX_ATTACHMENT_SIZE
+        max_size = self.options['max-attachment-size']
         status   = ''
         results = {}
 
@@ -658,6 +378,35 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         return results
 
 
+class RackMaker(object):
+
+    # XXX Maybe this class doesn't need to exist anymore?
+    # it's pretty thin now...
+
+    def __init__(self, notifier, options):
+        self.notifier = notifier
+        self.options = options
+
+    def submit(self, data):
+        """
+        Create a new rack
+        """
+        if self.options.get('dry-run'):
+            logger.debug("would save rack here")
+            return
+        fixcity_http = FixcityHttp(self.notifier)
+        fixcity_http.submit(data)
+
+
+class Notifier(object):
+
+    """Notify users and/or admins of success or failure.
+    """
+
+    def __init__(self):
+        self.msg = ''
+        self.error_adapter = ErrorAdapter()
+
     def bounce(self, subject, body, notify_admin='', notify_admin_body=''):
         """Bounce a message to the sender, with additional subject
         and body for explanation.
@@ -667,14 +416,13 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
         If notify_admin_body is non-empty, it will be added to the body
         sent to the admin.
         """
-        if self.DEBUG:
-            print "TD: Bouncing message to %s" % self.email_addr
+        logger.debug("Bouncing message to %s" % self.user_email)
         body += '\n\n------------ original message follows ---------\n\n'
         # TO DO: use attachments rather than inline.
         body += unicode(self.msg.as_string(), errors='ignore')
         if notify_admin:
             admin_subject = 'FixCity handle_mailin bounce! %s' % notify_admin
-            admin_body = 'Bouncing to: %s\n' % self.msg['from']
+            admin_body = 'Bouncing to: %s\n' % self.user_email
             admin_body += 'Bounce subject: %r\n' % subject
             admin_body += 'Time: %s\n' % datetime.now().isoformat(' ')
             admin_body += 'Not attaching original body, check the log file.\n'
@@ -684,8 +432,12 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             self.notify_admin(admin_subject, admin_body)
         return self.reply(subject, body)
 
+    @property
+    def user_email(self):
+        return self.msg['from']
+
     def reply(self, subject, body):
-        send_mail(subject, body, self.msg['to'], [self.msg['from']],
+        send_mail(subject, body, self.msg['to'], [self.user_email],
                   fail_silently=False)
 
     def notify_admin(self, subject, body):
@@ -697,57 +449,130 @@ that is encoded in 7-bit ASCII code and encode it as utf-8.
             from_addr = 'racks@fixcity.org'
         send_mail(subject, body, from_addr, [admin_email], fail_silently=False)
 
+    def on_submit_success(self, vars):
+        """
+        Callback that the submitter will use to notify the user of success.
+        """
+        # XXX need to add links per
+        # https://projects.openplans.org/fixcity/wiki/EmailText
+        # ... will need an HTML version.
+        reply = "Thanks for your rack suggestion!\n\n"
+        reply += "You must verify that your spot meets DOT requirements\n"
+        reply += "before we can submit it.\n"
+        reply += "To verify, go to: %(rack_url)sedit/\n\n"
+        if not vars['rack_user']:
+            # XXX TODO: Create an inactive account and add a confirmation link.
+            reply += "To create an account, go to %(base_url)s/accounts/register/ .\n\n"
+        reply += "Thanks!\n\n"
+        reply += "- OpenPlans & Livable Streets Initiative\n"
+        reply = reply % vars
+        self.reply("FixCity Rack Confirmation", reply)
 
-def _find_in_list(astr, alist):
-    alist = alist or []
-    for s in alist:
-        if s.count(astr):
-            return True
-    return False
+    def on_user_error(self, errors):
+        err_msg = self.error_adapter.validation_errors(errors)
+        return self.bounce( "Unsuccessful Rack Request", err_msg)
 
-def adapt_errors(errors):
-    """Convert the form field names in the errors dict into things
-    that are meaningful via the email workflow, and adjust error
-    messages appropriately too.
+    def on_server_temp_failure(self):
+        self.bounce("Unsuccessful Rack Request",
+                    self.error_adapter.server_error_retry,
+                    notify_admin='Server down??')
+
+    def on_server_error(self, content):
+        self.bounce("Unsuccessful Rack Request",
+                    self.error_adapter.server_error_permanent,
+                    notify_admin='Server error?',
+                    notify_admin_body=content)
+
+
+class ErrorAdapter(object):
+    
+    def validation_errors(self, errordict):
+        """Convert the form field names in the errors dict into things
+        that are meaningful via the email workflow, and adjust error
+        messages appropriately too.
+        """
+        err_msg = (
+            "Thanks for trying to suggest a rack through fixcity.org,\n"
+            "but it won't go through without the proper information.\n\n"
+            "Please correct the following errors:\n\n")
+        adapted = {}
+        remove_me = object()
+        key_mapping = {
+            'title': 'subject',
+            'address': remove_me,  # an error here will also show up in 'location'.
+            'description': 'body',
+            }
+
+        val_mapping = {
+            ('subject', 'This field is required.'): 
+            ("Your subject line should follow this format:\n\n"
+             "  Key Foods @224 McGuinness Blvd, Brooklyn NY\n\n"
+             "First comes the name of the establishment"
+             "(store, park, office etc.) you want a rack near.\n"
+             "Then enter @ followed by the address.\n"
+             ),
+
+            ("location", "No geometry value provided."):
+            ("The address didn't come through properly. Your subject line\n"
+             "should follow this format:\n\n"
+             "  Key Foods @224 McGuinness Blvd, Brooklyn NY\n\n"
+             "Make sure you have the street, city, and state listed after\n"
+             "the @ sign in this exact format.\n"),
+            }
+
+        for key, vals in errordict.items():
+            for val in vals:
+                key = key_mapping.get(key, key)
+                if key is remove_me:
+                    continue
+                val = val_mapping.get((key, val), val)
+                adapted[key] = adapted.get(key, ()) + (val,)
+
+        for k, v in sorted(adapted.items()):
+            err_msg += "%s: %s\n" % (k, '; '.join(v))
+        err_msg += "\nPlease try again!\n"
+        return err_msg
+
+    server_error_retry = (
+        "Thanks for trying to suggest a rack.\n"
+        "We are unfortunately experiencing some difficulties at the\n"
+        "moment -- please try again in an hour or two!")
+
+    server_error_permanent = (
+        "Thanks for trying to suggest a rack.\n"
+        "We are unfortunately experiencing some difficulties at the\n"
+        "moment. Please check to make sure your subject line follows\n"
+        "this format exactly:\n\n"
+        "  Key Foods @224 McGuinness Blvd Brooklyn NY\n\n"
+        "If you've made an error, please resubmit. Otherwise we'll\n"
+        "look into this issue and get back to you as soon as we can.\n"
+        )
+
+
+def save_file_for_debug(message, options):
+    """save a file for later inspection
     """
-    adapted = {}
-    remove_me = object()
-    key_mapping = {
-        'title': 'subject',
-        'address': remove_me,  # an error here will also show up in 'location'.
-        'description': 'body',
-        }
+    logdir = options.get('logdir') or tempfile.gettempdir()
+    try:
+        os.makedirs(logdir)
+    except OSError:
+        if not os.path.isdir(logdir):
+            raise
+        # otherwise it probably exists already.
+    msg_file = tempfile.mktemp('.handle_mailin', dir=logdir)
+    logger.debug(' saving email to %s' % msg_file)
+    fx = open(msg_file, 'wb')
+    fx.write('%s' % message)
+    fx.close()
+    try:
+        os.chmod(msg_file,S_IRWXU|S_IRWXG|S_IRWXO)
+    except OSError:
+        pass
 
-    val_mapping = {
-        ('subject', 'This field is required.'): 
-        ("Your subject line should follow this format:\n\n"
-         "  Key Foods @224 McGuinness Blvd, Brooklyn NY\n\n"
-         "First comes the name of the establishment"
-         "(store, park, office etc.) you want a rack near.\n"
-         "Then enter @ followed by the address.\n"
-         ),
-
-        ("location", "No geometry value provided."):
-        ("The address didn't come through properly. Your subject line\n"
-         "should follow this format:\n\n"
-         "  Key Foods @224 McGuinness Blvd, Brooklyn NY\n\n"
-         "Make sure you have the street, city, and state listed after\n"
-         "the @ sign in this exact format.\n"),
-        }
-
-    for key, vals in errors.items():
-        for val in vals:
-            key = key_mapping.get(key, key)
-            if key is remove_me:
-                continue
-            val = val_mapping.get((key, val), val)
-            adapted[key] = adapted.get(key, ()) + (val,)
-    return adapted
 
 
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
-        make_option('--url', '-u', help="URL to post racks to", action="store"),
         make_option('--dry-run', action="store_true",
                     help="Don't save any data.", dest="dry_run"),
         make_option('--debug', type="int", default=0,
@@ -761,12 +586,17 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
-        assert options['url'] is not None
-        parser = EmailParser(options)
+        logger.debug('starting handle')
+        notifier = Notifier()
+        parser = EmailParser(notifier, options)
+        rackmaker = RackMaker(notifier, options)
+        # We support both stdin and named files;
+        # named files are easier for debugging,
+        # and stdin is easier to hook up to postfix.
         did_stdin = False
         for filename in args:
             now = datetime.now().isoformat(' ')
-            print "------------- %s ------------" % now
+            logger.info("------------- %s ------------" % now)
             if filename == '-':
                 if did_stdin:
                     continue
@@ -774,16 +604,25 @@ class Command(BaseCommand):
                 did_stdin = True
             else:
                 thisfile = open(filename)
+
+            raw_msg = thisfile.read()
+            always_save = options['debug'] >= 1
+            if always_save:
+                save_file_for_debug(raw_msg, options)
             try:
-                raw_msg = thisfile.read()
-                parser.parse(raw_msg)
+                # XXX separate parse exceptions from submit exceptions
+                info = parser.parse(raw_msg)
+                notifier.msg = parser.msg  # smelly.
+                rackmaker.submit(info)
             except:
+                if not always_save:
+                    save_file_for_debug(raw_msg)
                 tb_msg = "Exception at %s follows:\n------------\n" % now
                 tb_msg += traceback.format_exc()
-                tb_msg += "\n -----Original message follows ----------\n\n"
-                tb_msg += raw_msg
-                if parser.msg:
-                    parser.save_email_for_debug(parser.msg)
-                parser.notify_admin('Unexpected traceback in handle_mailin',
-                                    tb_msg)
+                tb_msg += "\n -----Original message excerpt follows ----------\n\n"
+                tb_msg += raw_msg[:5000] + '\n...\n'
+                tb_msg += "\n ----- End of original message excerpt ----\n"
+                notifier.notify_admin('Unexpected error in handle_mailin',
+                                      tb_msg)
+                logger.error(tb_msg)
                 raise

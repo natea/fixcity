@@ -35,3 +35,4 @@ class TestExifUtils(unittest.TestCase):
         # Unfortunately PIL doesn't save exif info on new images...
         self.assertEqual(exif_utils.get_exif_info(rotated), {})
         
+    

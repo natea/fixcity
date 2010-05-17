@@ -27,6 +27,28 @@ class CommunityBoard(models.Model):
 
 
 
+class RackManager(models.GeoManager):
+
+    def filter_by_verified(self, verified, racks=None):
+        """Since 'verified' is really three fields, this needs a bit
+        of encapsulating other than just the rack.verified property,
+        because you can't filter a query set on a property.
+        """
+        if racks is None:
+            racks = self.all()
+        if verified == 'verified':
+            racks = racks.filter(verify_surface=True,
+                                 verify_objects=True,
+                                 verify_access=True)
+        elif verified == 'unverified':
+            from django.db.models import Q
+            racks = racks.filter(Q(verify_surface=False) |
+                                 Q(verify_access=False) |
+                                 Q(verify_objects=False))
+        # Otherwise assume we want all racks.
+        return racks
+
+
 class Rack(models.Model):
     address = models.CharField(max_length=200)
     title = models.CharField(max_length=140)
@@ -43,13 +65,24 @@ class Rack(models.Model):
     user = models.CharField(max_length=20, blank=True)
     location = models.PointField(srid=4326)
 
-    verified = models.BooleanField(default=False, blank=True)
     # these represent the parts of a rack that need to be marked for a rack to
     # be marked as verified/complete
     verify_surface = models.BooleanField(default=False, blank=True)
     verify_objects = models.BooleanField(default=False, blank=True)
     verify_access = models.BooleanField(default=False, blank=True)
 
+    @property
+    def verified(self):
+        return self.verify_surface and self.verify_objects and self.verify_access
+
+    status_choices = (('new', 'Unverified'),
+                      ('verified', 'Verified'),
+                      ('pending', 'Pending'),  # It's part of a bulk order.
+                      ('completed', 'Completed'))
+
+    status = models.CharField(max_length=20, blank=True, choices=status_choices,
+                              default=status_choices[0][0])
+                              
     # keep track of where the rack was submitted from
     # if not set, that means it was submitted from the web
     source = models.ForeignKey('Source', null=True, blank=True)
@@ -57,7 +90,7 @@ class Rack(models.Model):
     bulk_orders = models.ManyToManyField('NYCDOTBulkOrder', null=True, blank=True)
 
 
-    objects = models.GeoManager()
+    objects = RackManager()
 
     def __unicode__(self):
         return self.address
@@ -80,8 +113,8 @@ class Rack(models.Model):
 
     @property
     def locked(self):
+        # Rack is 'locked' iff it's explicitly attached to a bulk order.
         return bool(self.bulk_orders.count())
-
 
 class Source(models.Model):
     """base class representing the source of where a rack was submitted from"""
@@ -152,7 +185,7 @@ class StatementOfSupport(models.Model):
 
 class Neighborhood(models.Model):
 
-    gid = models.AutoField(primary_key=True)
+    gid = models.IntegerField(primary_key=True)
     objectid = models.IntegerField()
     name = models.CharField(max_length=100, null=False)
 
@@ -231,16 +264,35 @@ class NYCDOTBulkOrder(models.Model):
     date = models.DateTimeField(auto_now=True)
     organization = models.CharField(max_length=128, blank=False, null=True)
     rationale = models.TextField(blank=False, null=True)
-    approved = models.BooleanField(default=False)
+
+    status_choices = (
+        ('new', 'New'),
+        ('approved', 'Approved for Submission'),
+        ('pending', 'Pending Approval by DOT'),
+        ('completed', 'Completed'),
+        )
+
+    status = models.CharField(max_length=32, null=False, blank=True,
+                              choices=status_choices, default=status_choices[0][0])
 
     def __unicode__(self):
         return u'Bulk order for %s' % self.communityboard
 
-    def approve(self):
+    def submit(self):
+        next_status = 'pending'
         for rack in self.communityboard.racks:
+            # We have to iterate here, can't call queryset.update() with a
+            # many-to-many field.
             rack.bulk_orders.add(self)
+            rack.status = next_status
             rack.save()
-        self.approved = True
+        self.status = next_status
+        self.save()
+
+    def approve(self):
+        # xxx convenience, can go away
+        self.status = 'approved'
+        self.save()
 
     def delete(self, *args, **kw):
         self.rack_set.clear()
@@ -248,10 +300,11 @@ class NYCDOTBulkOrder(models.Model):
 
     @property
     def racks(self):
-        # I find it odd that Django's back-references don't provide a
-        # convenience for this already....  self.rack_set.all()
-        # returns ALL racks, not just the related ones!
-        # XXX or does it?
+        # WHen not submitted yet, we want all racks in the CB.  When
+        # submitted, we want to freeze the racks from the CB at that
+        # time.
+        if self.status in ('new', 'approved'):
+            return self.communityboard.racks
         return self.rack_set.all() #filter(bulk_orders.=self)
 
 
@@ -277,6 +330,13 @@ class NYCStreet(models.Model):
 class BulkOrderForm(ModelForm):
     class Meta:
         model = NYCDOTBulkOrder
+
+    def clean_status(self):
+        status = self.cleaned_data.get('status')
+        if not status:
+            status = NYCDOTBulkOrder.status_choices[0][0]
+        return status
+        
 
 
 class SupportForm(ModelForm):
@@ -305,14 +365,15 @@ class RackForm(ModelForm):
         from django.forms.util import ErrorList
         cleaned_data = self.cleaned_data
 
-        # dynamically calculate the verified status from the requirements
+        # dynamically calculate the status from the requirements
         if self.is_bound:
-            if (cleaned_data['verify_access'] and
-                cleaned_data['verify_surface'] and
-                cleaned_data['verify_objects']):
-                cleaned_data['verified'] = True
-            else:
-                cleaned_data['verified'] = False
+            if not cleaned_data.get('status'):
+                if (cleaned_data['verify_access'] and
+                    cleaned_data['verify_surface'] and
+                    cleaned_data['verify_objects']):
+                    cleaned_data['status'] = 'verified'
+                else:
+                    cleaned_data['status'] = 'new'
 
         if self.is_bound and self.instance.source:
             return cleaned_data

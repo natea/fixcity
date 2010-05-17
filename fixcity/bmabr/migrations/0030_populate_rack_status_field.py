@@ -4,22 +4,25 @@ from django.db import models
 from fixcity.bmabr.models import *
 
 class Migration:
-
+    
     def forwards(self, orm):
-        db.add_column(u'bmabr_rack', 'verify_surface', models.BooleanField(default=False))
-        db.add_column(u'bmabr_rack', 'verify_objects', models.BooleanField(default=False))
-        db.add_column(u'bmabr_rack', 'verify_access', models.BooleanField(default=False))
-
+        "Write your forwards migration here"
+        for rack in orm.Rack.objects.all():
+            if rack.verify_surface and rack.verify_objects and rack.verify_access:
+                rack.status = 'verified'
+                rack.save()
+            elif not rack.status:
+                rack.status = 'new'
+                rack.save()
+    
     def backwards(self, orm):
-        db.delete_column(u'bmabr_rack', 'verify_surface')
-        db.delete_column(u'bmabr_rack', 'verify_objects')
-        db.delete_column(u'bmabr_rack', 'verify_access')
-
-
+        "Write your backwards migration here"
+    
+    
     models = {
         'auth.group': {
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '80'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '80', 'unique': 'True'}),
             'permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'blank': 'True'})
         },
         'auth.permission': {
@@ -42,7 +45,7 @@ class Migration:
             'last_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'blank': 'True'}),
-            'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
+            'username': ('django.db.models.fields.CharField', [], {'max_length': '30', 'unique': 'True'})
         },
         'bmabr.borough': {
             'Meta': {'db_table': "u'gis_boroughs'"},
@@ -92,20 +95,20 @@ class Migration:
         'bmabr.neighborhood': {
             'Meta': {'db_table': "u'gis_neighborhoods'"},
             'borough': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'city': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
+            'city': ('django.db.models.fields.CharField', [], {'default': "'New York City'", 'max_length': '50'}),
             'gid': ('django.db.models.fields.IntegerField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'objectid': ('django.db.models.fields.IntegerField', [], {}),
-            'state': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
+            'state': ('django.db.models.fields.CharField', [], {'default': "'NY'", 'max_length': '2', 'null': 'True'}),
             'the_geom': ('django.contrib.gis.db.models.fields.PointField', [], {})
         },
         'bmabr.nycdotbulkorder': {
-            'approved': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
             'communityboard': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.CommunityBoard']"}),
             'date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'rationale': ('django.db.models.fields.TextField', [], {}),
+            'organization': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True'}),
+            'rationale': ('django.db.models.fields.TextField', [], {'null': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'new'", 'blank': 'True', 'max_length': 32}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
         'bmabr.nycstreet': {
@@ -118,7 +121,6 @@ class Migration:
             'zipleft': ('django.db.models.fields.CharField', [], {'max_length': '5'})
         },
         'bmabr.rack': {
-            'access': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
             'address': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'bulk_orders': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['bmabr.NYCDOTBulkOrder']", 'null': 'True', 'blank': 'True'}),
             'date': ('django.db.models.fields.DateTimeField', [], {}),
@@ -128,10 +130,13 @@ class Migration:
             'location': ('django.contrib.gis.db.models.fields.PointField', [], {}),
             'photo': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'source': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['bmabr.Source']", 'null': 'True', 'blank': 'True'}),
-            'surface': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'new'", 'max_length': '20', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '140'}),
             'user': ('django.db.models.fields.CharField', [], {'max_length': '20', 'blank': 'True'}),
-            'verified': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'})
+            'verified': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
+            'verify_access': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
+            'verify_objects': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'}),
+            'verify_surface': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'blank': 'True'})
         },
         'bmabr.seeclickfixsource': {
             'image_url': ('django.db.models.fields.URLField', [], {'max_length': '200'}),

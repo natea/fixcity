@@ -596,6 +596,12 @@ float: left;
 width: 540px;
 }
 
+#bulk-map-wrap {
+float: left;
+width: 540px;
+margin: 0 0 0 20px;
+}
+
 #verify-map {
 height: 420px;
 border: 1px solid #8fb9cc;
@@ -674,10 +680,19 @@ background: url(/site_media/img/like-icon-active.png) 100% 50% no-repeat;
 /* - */
 
 #content form,
-#content #rackinfo {
+#content #rackinfo,
+#content .formwrap {
 width: 380px;
 overflow: hidden;
 float: left;
+}
+
+#content .formwrap {
+margin: 0 20px 0 0;
+}
+
+#content .formwrap form {
+float: none;
 }
 
 #content form label,
@@ -687,6 +702,7 @@ display: block;
 font-size: 1.2em;
 font-weight: bold;
 margin: 1em 0 0;
+padding: 0;
 color: #333;
 }
 
@@ -775,8 +791,18 @@ font-family: "Museo500", "Helvetica Neue", helvetica, verdana, sans-serif;
 border-radius: 3px;
 }
 
-#content form input.standalone {
-margin: 1em 0;
+#content #upload-documents input[type="submit"],
+#content #upload-documents input.submit,
+#content #bulk-submit input[type="submit"],
+#content #bulk-submit input.submit {
+margin: 1em 0 0;
+}
+
+#content #bulk-order-submit-to-dot input[type="submit"],
+#content #bulk-order-submit-to-dot input.submit {
+background: #57bbf1;
+color: #fff;
+border-color: #57bbf1;
 }
 
 
@@ -828,7 +854,8 @@ padding: 0;
 }
 
 #browse,
-#statement {
+#statement,
+#id_attachment_file {
 opacity: 0.0;
 -moz-opacity: 0.0;
 filter: alpha(opacity=00);

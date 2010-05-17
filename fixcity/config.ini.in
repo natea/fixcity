@@ -10,7 +10,12 @@ DEFAULT_FROM_EMAIL = foo@example.com
 # Who approves bulk order requests?
 BULK_ORDER_APPROVAL_EMAIL = 
 
+# Where do finished bulk orders get emailed to?
+BULK_ORDER_SUBMISSION_EMAIL =
+
 GOOGLE_ANALYTICS_KEY =
+
+GOOGLE_MAPS_KEY =
 
 # This is for uploaded files. 
 # It's probably advisable to use an absolute path outside your source tree
@@ -30,6 +35,10 @@ SERVICE_FAILURE_EMAIL = admin@example.com
 
 # This is the URL where scripts can post new racks.
 RACK_POSTING_URL = http://localhost:8000/racks/
+
+# Update this to today's date every time you deploy.
+MEDIA_REFRESH_TOKEN = 2010-03-04
+
 
 [bitly]
 user =

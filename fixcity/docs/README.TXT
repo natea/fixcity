@@ -18,5 +18,17 @@ TheNest: http://thenest.topplabs.org/egg/build-me-a-bike-rack/
 Author
 ======
 
-Ivan Willig, et al. for the Open Planning Project.
+Initially created by Ivan Willig for OpenPlans.
 http://openplans.org/
+
+============
+Contributors
+============
+
+Lily Bernheimer - project management, conceptual stuff
+Sonali Sridhar - design, user experience, project management
+Chris Patterson - design, user experience, javascript
+Paul Winkler - much python code, bit of javascript
+Dan Latorre - project management
+Douglas Mayle - javascript, misc fixes
+

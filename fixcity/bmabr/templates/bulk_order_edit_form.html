@@ -3,9 +3,9 @@
 
 {% block extra_header %}
 
-<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js"></script>
+<script type="text/javascript" src="/site_media/openlayers/OpenLayers.js?refresh={{ refresh_token }}"></script>
 
-<script type="text/javascript" src="/site_media/js/verify-rackmap.js">
+<script type="text/javascript" src="/site_media/js/verify-rackmap.js?refresh={{ refresh_token }}">
 </script>
 
 {% endblock %}
@@ -13,28 +13,52 @@
 
 {% block content %}
 {% load attachments_tags %}
-
+<div class="formwrap">
   <h2>Package {{cb}} Racks</h2>
 
-  <h2>Instructions:</h2>
+  <div>Status: <strong>{{ status }}</strong></div>
   
   <p>
-   Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Donec hendrerit tempor tellus. Donec pretium posuere tellus. Proin quam nisl, tincidunt et, mattis eget, convallis nec, purus. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nulla posuere. Donec vitae dolor. Nullam tristique diam non turpis. Cras placerat accumsan nulla. Nullam rutrum. Nam vestibulum accumsan nisl.
+   Please upload supporting documents you would like to send to the
+   DOT with your bulk order (e.g. statements of support, letters from
+   the Community Board).
+  </p>
+
+  <p>
+   When you "Submit to DOT" you will be prompted to email the DOT, and
+   all these documents will be attached to the email, along with a
+   .CSV file that the DOT will be able to import into their database.
   </p>
 
 <div class="attachments">
   {% get_attachments_for bulk_order as "bo_attachments" %}
-
-  <form method="post" enctype="multipart/form-data" action="/attachments/add-for/bmabr/nycdotbulkorder/{{bulk_order.id}}/" class="add-attachment">
+  <form method="post" enctype="multipart/form-data" action="/attachments/add-for/bmabr/nycdotbulkorder/{{bulk_order.id}}/" class="add-attachment" id="upload-documents">
     <input type="hidden" name="next" value="{{request.get_full_path}}" />
-    <div><label for="id_attachment_file">Upload Supporting Documents</label> <input type="file" name="attachment_file" id="id_attachment_file" /></div>
-
-    <p class="submit">
-        <input type="submit" value="UPLOAD"/>
-    </p>
+    <div id="statement-wrap">
+      <label for="statement">Upload Supporting Documents</label>
+      <input id="id_attachment_file" name="attachment_file" type="file" value="" size="20" />
+      <div id="fakestatement" class="selfclear"><input name="fakestatementinput" id="fakestatementinput" type="text" title="" /><span class="fakebutton">browse</span></div>
+    </div><!-- /#statement-wrap -->
+    <input type="submit" value="UPLOAD"/>
   </form>
 
+  {% ifequal bulk_order.status "approved" %}
+    <form id="bulk-order-submit-to-dot" action="../submit/" method="GET">
+      <input type="submit" value="SUBMIT TO DOT" />
+    </form>
+  {% endifequal %}
+
+  {% ifequal bulk_order.status "pending" %}
+    {% if request.user.is_superuser %}
+      <form id="bulk-order-completed" action="." method="POST">
+        <input type="hidden" name="next_state" value="completed" />
+        <input type="submit" value="MARK COMPLETED BY DOT" />
+      </form>
+    {% endif %}
+  {% endifequal %}
+
   {% if bo_attachments %}
+    <strong>Documents attached to this request:</strong>
     <ul>
     {% for attachment in bo_attachments %}
      <li>
@@ -44,28 +68,21 @@
     {% endfor %}
     </ul>
   {% endif %}
-
-
 </div>
-
-<form id="bulk-order-edit-form" action="." method="POST"
-enctype="multipart/form-data">
-<input type="submit" value="SUBMIT TO DOT" />
-</form>
+</div><!-- /.formwrap -->
 
 <div id="verify-map-wrap">
   <div id="verify-map"><div id="map-legend" class="pngfix"></div></div>
+  <div>
+   <a href="../order.csv/">Download bulk order as a CSV</a>
+   <br/>
+   <a href="../order.pdf/">Download bulk order as a PDF</a>
+   <br />
+   <a href="../order.zip/">Download a zip of all supporting documents</a>
+  </div>
 </div>
 
-<div>
-<a href="../order.csv/">Download bulk order as a CSV</a>
-<br/>
-<a href="../order.pdf/">Download bulk order as a PDF</a>
-<br />
-<a href="../order.zip/">Download bulk order as a zip file (contains
-PDF, CSV, and all attachments)</a>
 
-</div>
 
 
 {% endblock %}
@@ -87,6 +104,8 @@ PDF, CSV, and all attachments)</a>
 
   jQuery(document).ready(function($) {
     updateMapFn();
+    
+    $('input#id_attachment_file').change(function( objEvent ){$('#fakestatementinput').val($(this).val());});
   });
 //]]>
 </script>

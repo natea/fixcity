@@ -33,7 +33,7 @@ function loadRacks(params) {
     strategies: [
     new OpenLayers.Strategy.Fixed(), new OpenLayers.Strategy.Cluster()],
     protocol: new OpenLayers.Protocol.HTTP({
-      url: "/racks/requested.kml",
+      url: "/racks/search.kml",
       params: params,
       format: new OpenLayers.Format.KML()
     }),
@@ -149,21 +149,7 @@ function loadMap() {
   },
   {
     context: {
-      url: function (feature) {
-        if (feature.cluster.length > 1) {
-          var n = feature.cluster.length;
-          for (var i = 0; i < n; i++) {
-            if (feature.cluster[i].attributes.verified == null) {
-              return "/site_media/img/rack-icon.png";
-            }
-          }
-          return "/site_media/img/rack-verified-icon.png";
-        } else if (feature.cluster[0].attributes.verified) {
-          return "/site_media/img/rack-verified-icon.png";
-        } else {
-          return "/site_media/img/rack-icon.png";
-        }
-      },
+      url: rack_icon_url,
       radius: function (feature) {
         return Math.min(feature.attributes.count * 2, 8) + 5;
       }
