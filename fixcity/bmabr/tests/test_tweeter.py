@@ -79,6 +79,13 @@ class TestTweeter(TestCase):
         fetcher = tweeter.TwitterFetcher(tweepy.API(), self.username, None)
         self.assertEqual(fetcher.get_tweets(), [])
 
+    @mock.patch('tweepy.API')
+    def test_get_tweets__timeout(self, MockTweepyAPI):
+        import socket
+        tweepy_mock = MockTweepyAPI()
+        tweepy_mock.mentions.side_effect = socket.timeout()
+        fetcher = tweeter.TwitterFetcher(tweepy_mock, self.username, None)
+        self.assertEqual(fetcher.get_tweets(), [1])
 
     @mock.patch('tweepy.API.mentions')
     def test_get_tweets__empty(self, mock_mentions):

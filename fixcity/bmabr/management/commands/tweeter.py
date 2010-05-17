@@ -60,7 +60,7 @@ class TwitterFetcher(object):
                         more_tweets = tweet_func(count=max_per_page, page=page, since_id=since_id)
                     else:
                         more_tweets = tweet_func(count=max_per_page, page=page)
-                except (socket.error, tweepy.error.TweepError):
+                except (socket.error, socket.timeout, tweepy.error.TweepError):
                     # 50x errors from Twitter are not interesting.
                     # Just give up and hope Twitter's back by the next time
                     # we run.
@@ -117,7 +117,16 @@ class RackMaker(object):
             return
         twit = TwitterFetcher(self.twitter_api, self.username, self.notifier)
 
-        all_tweets = twit.get_tweets(last_processed_id)
+        # Work around tweepy using httplib with no timeout.
+        old_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(60)
+        try:
+            all_tweets = twit.get_tweets(last_processed_id)
+        except socket.timeout:
+            logger.error("Timeout connecting to twitter")
+            return
+        finally:
+            socket.setdefaulttimeout(old_timeout)
         for tweet in reversed(all_tweets):
             parsed = twit.parse(tweet)
 
