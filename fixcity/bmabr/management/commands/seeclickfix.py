@@ -1,10 +1,6 @@
 # Parses the json output feed from seeclickfix and creates racks from results
 # Expected to be run from cron at regular intervals
 
-from ...bmabr.models import RACK_IMAGE_LOCATION
-from ...models import Rack
-from ...models import SeeClickFixSource
-from ...views import SRID
 from datetime import datetime
 from django.conf import settings
 from django.contrib.gis.geos.point import Point
@@ -13,6 +9,10 @@ from django.core.management.base import BaseCommand
 from django.utils import simplejson as json
 from pickle import dump
 from pickle import load
+from fixcity.bmabr.models import RACK_IMAGE_LOCATION
+from fixcity.bmabr.models import Rack
+from fixcity.bmabr.models import SeeClickFixSource
+from fixcity.bmabr.views import SRID
 import httplib2
 import os
 import time

@@ -1,4 +1,5 @@
 from django import template
+
 from voting.models import Vote
 
 register = template.Library()

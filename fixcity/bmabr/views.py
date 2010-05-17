@@ -1,27 +1,11 @@
 # Create your views here.
-
-from ..flash_messages import flash
-from ..flash_messages import flash_error
-from .models import Borough
-from .models import CityRack
-from .models import CommunityBoard
-from .models import NYCDOTBulkOrder, BulkOrderForm
-from .models import Rack
-from .models import RackForm, SupportForm
-from .models import Source, TwitterSource, EmailSource
-from .models import StatementOfSupport
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.models import User, Group
-from django.contrib.auth.tokens import default_token_generator as token_generator
-from django.contrib.comments.forms import CommentForm
-from django.contrib.gis.geos.point import Point
-from django.contrib.gis.geos.polygon import Polygon
-from django.contrib.gis.shortcuts import render_to_kml
-from django.contrib.sites.models import Site
-from django.core import urlresolvers
+from django.db import transaction
+from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseNotAllowed
+from django.http import HttpResponseServerError
+from django.http import HttpResponseBadRequest
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 from django.core.cache import cache
 from django.core.files.uploadhandler import FileUploadHandler
 from django.core.mail import EmailMessage
@@ -29,21 +13,50 @@ from django.core.mail import send_mail
 from django.core.paginator import EmptyPage
 from django.core.paginator import InvalidPage
 from django.core.paginator import Paginator
-from django.db import transaction
+from django.core import urlresolvers
+
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.tokens import default_token_generator as token_generator
+
+from django.contrib.comments.forms import CommentForm
+
 from django.http import Http404
-from django.http import HttpResponse, HttpResponseRedirect
-from django.http import HttpResponseBadRequest
-from django.http import HttpResponseNotAllowed
-from django.http import HttpResponseServerError
 from django.shortcuts import get_object_or_404
-from django.shortcuts import render_to_response
-from django.template import Context, loader
-from django.template import RequestContext
-from django.utils import simplejson as json
 from django.utils.http import base36_to_int
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.gis.geos.point import Point
+from django.contrib.gis.geos.polygon import Polygon
+from django.contrib.gis.shortcuts import render_to_kml
+
+from django.contrib.sites.models import Site
+
+from django.template import Context, loader
+
+from fixcity.bmabr import bulkorder
+from fixcity.bmabr.models import Borough
+from fixcity.bmabr.models import CityRack
+from fixcity.bmabr.models import Rack
+from fixcity.bmabr.models import CommunityBoard
+from fixcity.bmabr.models import NYCDOTBulkOrder, BulkOrderForm
+from fixcity.bmabr.models import RackForm, SupportForm
+from fixcity.bmabr.models import StatementOfSupport
+from fixcity.bmabr.models import Source, TwitterSource, EmailSource
+from fixcity.flash_messages import flash
+from fixcity.flash_messages import flash_error
+
 from geopy import geocoders
+
+from django.utils import simplejson as json
+from django.conf import settings
+
 from recaptcha.client import captcha
+
 from voting.models import Vote
+
+import cStringIO
 import datetime
 import logging
 import sys

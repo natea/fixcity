@@ -1,14 +1,14 @@
-from .models import CityRack
-from .models import EmailSource
-from .models import NYCDOTBulkOrder
-from .models import Rack, Neighborhood, CommunityBoard, Borough
-from .models import SeeClickFixSource
-from .models import Source
-from .models import StatementOfSupport
-from .models import TwitterSource
 from attachments.admin import AttachmentInlines
-from django.contrib import admin as oldAdmin
 from django.contrib.gis import admin
+from django.contrib import admin as oldAdmin
+from fixcity.bmabr.models import Rack, Neighborhood, CommunityBoard, Borough
+from fixcity.bmabr.models import SeeClickFixSource
+from fixcity.bmabr.models import Source
+from fixcity.bmabr.models import EmailSource
+from fixcity.bmabr.models import TwitterSource
+from fixcity.bmabr.models import  StatementOfSupport
+from fixcity.bmabr.models import CityRack
+from fixcity.bmabr.models import NYCDOTBulkOrder
 
 class StatementOfSupportAdmin(admin.GeoModelAdmin):
     list_display = ('s_rack','email')

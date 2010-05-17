@@ -1,7 +1,7 @@
 # use a custom json serializer for racks
 
-from django.core.serializers.json import DjangoJSONEncoder
 from django.utils import simplejson as json
+from django.core.serializers.json import DjangoJSONEncoder
 
 def serialize_racks(racks):
     rack_structs = []

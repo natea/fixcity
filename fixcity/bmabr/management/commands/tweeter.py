@@ -2,12 +2,12 @@
 proof-of-concept twitter bot
 """
 
-from ...fixcity_bitly import shorten_url
-from .http import FixcityHttp
 from datetime import datetime
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
+from fixcity.bmabr.fixcity_bitly import shorten_url
+from http import FixcityHttp
 import logging
 import pickle
 import socket

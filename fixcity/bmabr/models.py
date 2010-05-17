@@ -1,9 +1,7 @@
-from django.contrib.auth.models import User
 from django.contrib.gis.db import models
-from django.db.models import Q
+from django.contrib.auth.models import User
 from django.forms import ModelForm, ValidationError
 from sorl.thumbnail.fields import ImageWithThumbnailsField
-
 
 RACK_IMAGE_LOCATION = 'images/racks/'
 
@@ -43,6 +41,7 @@ class RackManager(models.GeoManager):
                                  verify_objects=True,
                                  verify_access=True)
         elif verified == 'unverified':
+            from django.db.models import Q
             racks = racks.filter(Q(verify_surface=False) |
                                  Q(verify_access=False) |
                                  Q(verify_objects=False))
