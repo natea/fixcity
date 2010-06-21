@@ -139,7 +139,9 @@ class RackMaker(object):
             else:
                 self.notifier.on_parse_error()
 
-            if self.notifier.last_status in (SERVER_ERROR, SUCCESS):
+            if self.notifier.last_status == SERVER_TEMP_FAILURE:
+                pass
+            else:
                 self.save_last_status(tweet.id)
 
 

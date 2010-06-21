@@ -143,7 +143,7 @@ def reverse_geocode(request):
     key = ('reverse_geocode', point)
     result = cache.get(key)
     if result is None:
-        (new_place,new_point) = geocoders.Google(settings.GOOGLE_MAPS_KEY).reverse(point)
+        (new_place,new_point) = _geocoder.reverse(point)
         result = new_place
         cache.set(key, result, 60 * 60 * 24)
     return HttpResponse(result)
