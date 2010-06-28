@@ -23,6 +23,22 @@ SERVER_TEMP_FAILURE = 'server temp failure'
 USER_ERROR = 'user error'
 
 
+def with_socket_timeout(func):
+    """Decorator to work around underlying libs using httplib with no
+    socket timeout.  Not thread-safe, but at least tries to clean up
+    after itself.
+    """
+    new_timeout=60
+    def wrapped(*args, **kw):
+        old_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(new_timeout)
+        try:
+            return func(*args, **kw)
+        finally:
+            socket.setdefaulttimeout(old_timeout)
+    return wrapped
+    
+
 class TwitterFetcher(object):
 
     def __init__(self, twitter_api, username, notifier):
@@ -102,7 +118,8 @@ class RackMaker(object):
         statusfile = open(self.status_file_path, 'w')
         pickle.dump({'last_processed_id': last_processed_id}, statusfile)
         statusfile.close()
-        
+
+    @with_socket_timeout
     def main(self, recent_only=True):
         last_processed_id = self.load_last_status(recent_only)
         try:
@@ -111,22 +128,17 @@ class RackMaker(object):
                 raise Exception(
                     "We went over our twitter API rate limit. Resets at: %s"
                     % limit_status['reset_time'])
-        except tweepy.error.TweepError:
+        except (tweepy.error.TweepError, socket.error, socket.timeout):
             # Twitter is feeling sad again.
             # Let's bail out and hope they're back soon.
             return
-        twit = TwitterFetcher(self.twitter_api, self.username, self.notifier)
 
-        # Work around tweepy using httplib with no timeout.
-        old_timeout = socket.getdefaulttimeout()
-        socket.setdefaulttimeout(60)
+        twit = TwitterFetcher(self.twitter_api, self.username, self.notifier)
         try:
             all_tweets = twit.get_tweets(last_processed_id)
         except socket.timeout:
             logger.error("Timeout connecting to twitter")
             return
-        finally:
-            socket.setdefaulttimeout(old_timeout)
 
         for tweet in reversed(all_tweets):
             parsed = twit.parse(tweet)
@@ -139,9 +151,7 @@ class RackMaker(object):
             else:
                 self.notifier.on_parse_error()
 
-            if self.notifier.last_status == SERVER_TEMP_FAILURE:
-                pass
-            else:
+            if self.notifier.last_status != SERVER_TEMP_FAILURE:
                 self.save_last_status(tweet.id)
 
 
