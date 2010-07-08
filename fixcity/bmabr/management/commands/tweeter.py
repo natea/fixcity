@@ -125,9 +125,10 @@ class RackMaker(object):
         try:
             limit_status = self.twitter_api.rate_limit_status()
             if limit_status['remaining_hits'] <= 0:
-                raise Exception(
+                logger.error(
                     "We went over our twitter API rate limit. Resets at: %s"
                     % limit_status['reset_time'])
+                return
         except (tweepy.error.TweepError, socket.error, socket.timeout):
             # Twitter is feeling sad again.
             # Let's bail out and hope they're back soon.
