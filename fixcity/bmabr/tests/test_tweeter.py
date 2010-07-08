@@ -143,13 +143,15 @@ class TestTweeter(TestCase):
         builder.main()
         self.assertEqual(tweepy_mock.get_tweets.call_count, 0)
 
+    @mock.patch('logging.Logger.error')
     @mock.patch('tweepy.API')
-    def test_main__over_limit(self, MockTweepyAPI):
+    def test_main__over_limit(self, MockTweepyAPI, mock_error):
         tweepy_mock = MockTweepyAPI()
         tweepy_mock.rate_limit_status.return_value = {
             'remaining_hits': 0, 'reset_time': 'tomorrow'}
         builder = tweeter.RackMaker(settings, tweepy_mock, None)
-        self.assertRaises(Exception, builder.main)
+        builder.main()
+        self.assertEqual(mock_error.call_count, 1)
 
     @mock.patch('fixcity.bmabr.management.commands.tweeter.Notifier.notify_admin')
     @mock.patch('fixcity.bmabr.management.commands.tweeter.RackMaker.submit')
