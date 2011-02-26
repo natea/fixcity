@@ -27,6 +27,7 @@ install_requires=[
       'lxml',
       'reportlab',
 #      'django_compressor',
+      'Fabric',
       ]
 
 import sys

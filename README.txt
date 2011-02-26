@@ -1,17 +1,29 @@
 FixCity aka BikeRaction aka BuildMeABikeRack
 ============================================
 
-This is the code behind http://fixcity.org/ , a site that aims to help
+BostonBikeRacks aims to locate all the existing bike racks in Boston and make it possible for
+citizens to suggest where the City should place new bike racks.
+ 
+There is a crowdsourced game component that lets people use Google streetview to identify where the bikeracks are, and compete for who can find the most bike racks. A leaderboard shows who has found
+the most bikeracks.
+
+It is based on code that powers http://fixcity.org/ , a site that aims to help
 get bike racks built in New York City, by allowing ordinary people to
 combine efforts and get bulk orders submitted to the NYC Department of
 Transportation.
 
 It was built by OpenPlans, http://openplans.org.
 
-The canonical source code is at http://github.com/slinkp/fixcity
+The original source code is at http://github.com/slinkp/fixcity
 
 The project wiki is at https://projects.openplans.org/fixcity/wiki
 and the bug tracker is at https://projects.openplans.org/fixcity/report
+
+Amazon AWS
+==========
+
+Launch an EC2 instance (32-bit us-east EBS)
+ami-ccf405a5
 
 What's In a Name?
 =================
