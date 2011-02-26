@@ -1,11 +1,13 @@
 # Fixcity Fabfile
 
 from fabric.api import *
+from fabric.contrib import files
 
 """
 Base configuration
 """
 env.project_name = 'fixcity'
+env.database_name = '%(project_name)s' % env
 env.database_password = '5IQZe7WEix'
 env.site_media_prefix = "media"
 env.admin_media_prefix = "admin_media"
@@ -76,7 +78,9 @@ def setup():
 
     install_packages()
     checkout_code()
-    # setup_virtualenv()
+    create_virtualenv()
+    install_app()
+    setup_database()
     # clone_repo()
     # checkout_latest()
     # destroy_database()
@@ -85,6 +89,22 @@ def setup():
     # install_requirements()
     # install_apache_conf()
 
+def setup_database():
+    """Set up the database for the first time"""
+    _create_database()
+    _load_data()
+
+def _create_database():
+    """Create the database"""
+    sudo("sh %(path)s/%(project_name)s/scripts/create_template_postgis-debian.sh" % env)
+    sudo("createdb -T template_postgis %(database_name)s || echo DB already exists." % env, user='postgres', shell=False)
+
+def _load_data():
+    """Load the data"""
+    with cd("%(path)s" % env):
+        sudo('psql -U postgres -d bmabr -f fixcity/sql/gis_community_board.sql')
+
+    
 def install_packages():
     """Installs packages required by the djangozoom webapp & worker."""
 
@@ -99,12 +119,29 @@ def install_packages():
             'postgresql-server-dev-8.4',
             'proj',
             'python',
-            'python-dev']
+            'python-dev',
+            'python-virtualenv',
+            'git-core']
     sudo("apt-get update -y")
     sudo("apt-get upgrade -y")
     sudo('DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -q -y '+' '.join(pkgs))
     
 def checkout_code():
     """Check out the Fixcity code from Github"""
-    run('git clone %(repository_url)s %(path)s' % env)
+    if not files.exists('%(path)s/.git' % env):
+        run('git clone %(repository_url)s %(path)s' % env)
     
+def create_virtualenv():
+    """Make virtualenv"""
+    if not files.exists('%(path)s/bin/activate' % env):
+        run('virtualenv %(path)s' % env)
+    
+def install_app():
+    """Run the setup.py"""
+    with cd("%(path)s" % env):
+        run('source bin/activate; python setup.py develop')    
+
+def update_code():
+    """Git pull the code repo"""
+    with cd("%(path)s" % env):
+        run('git pull origin master')
