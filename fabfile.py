@@ -7,7 +7,7 @@ from fabric.contrib import files
 Base configuration
 """
 env.project_name = 'fixcity'
-env.database_name = '%(project_name)s' % env
+env.database_name = 'bmabr'
 env.database_password = '5IQZe7WEix'
 env.site_media_prefix = "media"
 env.admin_media_prefix = "admin_media"
@@ -96,14 +96,16 @@ def setup_database():
 
 def _create_database():
     """Create the database"""
-    sudo("sh %(path)s/%(project_name)s/scripts/create_template_postgis-debian.sh" % env)
-    sudo("createdb -T template_postgis %(database_name)s || echo DB already exists." % env, user='postgres', shell=False)
-
+    sudo("sh %(path)s/%(project_name)s/scripts/create_template_postgis-debian.sh" % env, user='postgres')
+    sudo('echo "CREATE USER %(project_name)s WITH PASSWORD \'%(database_password)s\';" | psql postgres' % env, user='postgres')
+    sudo("createdb -O %(project_name)s -T template_postgis %(database_name)s || echo DB already exists." % env, user='postgres', shell=False)
+    sudo(("""psql template1 -c "GRANT ALL ON DATABASE \"%(database_name)s\" to \"%(project_name)s\";" """) % env, user='postgres', shell=True)
+         
 def _load_data():
     """Load the data"""
     with cd("%(path)s" % env):
-        sudo('psql -U postgres -d bmabr -f fixcity/sql/gis_community_board.sql')
-
+        sudo('psql -d %(database_name)s -f fixcity/sql/gis_community_board.sql' % env, user='postgres')
+    sudo(("""psql template1 -c "GRANT ALL ON DATABASE \"%(database_name)s\" to \"%(project_name)s\";" """) % env, user='postgres', shell=True)
     
 def install_packages():
     """Installs packages required by the djangozoom webapp & worker."""
@@ -114,9 +116,7 @@ def install_packages():
             'libpq-dev',
             'libxml2-dev',
             'libxslt1-dev',
-            'postgis',
-            'postgresql-8.4',
-            'postgresql-server-dev-8.4',
+            'postgresql-8.4-postgis',
             'proj',
             'python',
             'python-dev',
@@ -145,3 +145,13 @@ def update_code():
     """Git pull the code repo"""
     with cd("%(path)s" % env):
         run('git pull origin master')
+        
+def setup_config():
+    """Upload the config file which should not be checked into version control."""
+    put("fixcity/config.ini", "%(path)s/fixcity/config.ini" % env)
+    
+def setup_apache():
+    with cd("/etc/apache2/sites-available"):
+        sudo("ln -s %(path)s/fixcity/apache/fixcity.conf .")
+    sudo("a2ensite fixcity.conf")
+    sudo("/etc/init.d/apache2 restart")
