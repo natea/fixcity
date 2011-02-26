@@ -152,6 +152,6 @@ def setup_config():
     
 def setup_apache():
     with cd("/etc/apache2/sites-available"):
-        sudo("ln -s %(path)s/fixcity/apache/fixcity.conf .")
+        sudo("ln -s %(path)s/fixcity/apache/fixcity.conf ." % env)
     sudo("a2ensite fixcity.conf")
     sudo("/etc/init.d/apache2 restart")
