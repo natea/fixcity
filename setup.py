@@ -13,7 +13,7 @@ install_requires=[
       'httplib2>=0.6',
       'poster',
       'mock',
-      'south',
+      'south==0.7.3',
       'tweepy',
       'python-bitly',
       'django-basic-apps',
