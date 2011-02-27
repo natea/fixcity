@@ -17,6 +17,13 @@ GOOGLE_ANALYTICS_KEY =
 
 GOOGLE_MAPS_KEY =
 
+# Boston, SRID = 3785
+DEFAULT_MAP_CENTER_X =  -7911476.210677946
+DEFAULT_MAP_CENTER_Y =  5214724.4353207499
+
+# NY -8231563.043935 4972717.0966493
+
+
 # This is for uploaded files. 
 # It's probably advisable to use an absolute path outside your source tree
 # so you don't have to remember to copy them if you do a new build.

@@ -93,6 +93,8 @@ def index(request):
     return render_to_response('index.html',
        {'request':request,
         'recent_racks': racks_query,
+        'map_center_x': settings.DEFAULT_MAP_CENTER_X,
+        'map_center_y': settings.DEFAULT_MAP_CENTER_Y
         },
        context_instance=RequestContext(request)
                               )
