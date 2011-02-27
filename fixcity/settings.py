@@ -21,6 +21,13 @@ DEBUG = config.getboolean('main', 'DEBUG')
 
 TEMPLATE_DEBUG = DEBUG
 
+CIVIC_API_SERVER = config.get('civicapi', 'SERVER')
+CIVIC_API_DATABASE = config.get('civicapi', 'DATABASE')
+
+DEFAULT_MAP_CENTER_X = config.get('main', 'DEFAULT_MAP_CENTER_X')
+DEFAULT_MAP_CENTER_Y = config.get('main', 'DEFAULT_MAP_CENTER_Y')
+
+
 ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )

@@ -71,6 +71,9 @@ class Rack(models.Model):
     verify_objects = models.BooleanField(default=False, blank=True)
     verify_access = models.BooleanField(default=False, blank=True)
 
+    civic_api_id  = models.CharField(max_length=64, blank=True, db_index=True)
+    civic_api_rev = models.CharField(max_length=64, blank=True)
+
     @property
     def verified(self):
         return self.verify_surface and self.verify_objects and self.verify_access
