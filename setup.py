@@ -26,6 +26,7 @@ install_requires=[
       'recaptcha-client',
       'lxml',
       'reportlab',
+      'couchdb'
 #      'django_compressor',
       ]
 

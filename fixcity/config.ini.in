@@ -56,6 +56,9 @@ STATUS_FILE_PATH = /tmp/twitter.pickle
 PUBLIC_KEY =
 PRIVATE_KEY =
 
+[civicapi]
+SERVER = http://ltucker.couchone.com/
+DATABASE = bos_bicycle_parking
 
 [db]
 

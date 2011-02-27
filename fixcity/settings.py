@@ -21,6 +21,10 @@ DEBUG = config.getboolean('main', 'DEBUG')
 
 TEMPLATE_DEBUG = DEBUG
 
+CIVIC_API_SERVER = config.get('civicapi', 'SERVER')
+CIVIC_API_DATABASE = config.get('civicapi', 'DATABASE')
+
+
 ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
