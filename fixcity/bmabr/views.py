@@ -124,7 +124,7 @@ def _geocode(text):
     # Cache a bit, since that's easier than ensuring that our AJAX
     # code doesn't call it with the same params a bunch of times.
     text = ' '.join(text.lower().strip().split())
-    key = ('_geocode', text)
+    key = '_geocode_%s' % text # ('_geocode', text)
     result = cache.get(key)
     if result is None:
         result = list(_geocoder.geocode(text, exactly_one=False))
